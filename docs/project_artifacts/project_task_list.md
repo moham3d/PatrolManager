@@ -1,0 +1,56 @@
+# Tasks
+
+- [x] Read and analyze key documents <!-- id: 0 -->
+- [x] Draft comprehensive project plan <!-- id: 1 -->
+- [x] Review and refine plan with user <!-- id: 2 -->
+- [x] **Phase 1**: Initialize Foundation (Server, Auth, DB) <!-- id: 3 -->
+- [x] **Phase 2**: Site Management Module <!-- id: 4 -->
+- [x] **Phase 3**: Patrol Operations Module <!-- id: 5 -->
+- [x] **Phase 4**: Incident & Real-time Dashboard <!-- id: 6 -->
+- [x] **Verification**: Fix admin seed script <!-- id: 7 -->
+- [x] **Verification**: Run automated API tests <!-- id: 8 -->
+- [x] **Phase 5**: Workforce & Scheduling (Module D) <!-- id: 9 -->
+- [x] **Phase 6**: Analytics & Reporting (Module E) <!-- id: 10 -->
+- [x] Phase 7: Gap Closure & Workflow Improvements
+- [x] Phase 8: Security Hardening & Documentation
+- [x] Phase 9: Shift Improvements (Recurring Shifts)
+    - [x] Update Shift Modal UI (Repeat Options)
+    - [x] Implement Bulk Create Logic in Controller
+    - [x] Verify Bulk Creation
+- [x] Phase 10: Site-Centric Dashboard Refactor
+    - [x] Update Controller to fetch Patrols & Incidents
+    - [x] Implement Tabbed UI in details.ejs
+    - [x] Move Staff, Shifts, Zones into Tabs
+- [x] Phase 11: Public Documentation & Manuals
+    - [x] Create Supervisor Manual
+    - [x] Make all Manuals Publicly Accessible
+    - [x] Embed Permission Matrix
+- [x] Phase 12: UX/UI Polish - Error Handling
+    - [x] Install connect-flash
+    - [x] Add Flash Middleware to Server
+    - [x] Create Toast Partial (Notyf)
+    - [x] Refactor Shift Controller (Clock In/Out)
+    - [x] Refactor Auth Middleware (Access Denied)
+- [x] Phase 13: Activate SOS Button
+    - [x] Wire up SOS Button in guard.ejs
+    - [x] Verify Panic Alert in Live Dashboard
+- [x] Phase 14: Incident Module Refactor
+    - [x] Endpoint: Add POST /incidents/:id/claim
+    - [x] Update index.ejs (Filters, Search, Card Layout)
+    - [x] Update Resolution Modal (Evidence Upload)
+    - [x] Verify Self-Assign for Guards
+- [x] Phase 15: Incident Enrichment & Details
+    - [x] DB: Migration/Update Incident Model (Add zoneId)
+    - [x] Create: Add Zone Dropdown to Report Form
+    - [x] Show: Implement Incident Details Page
+    - [x] Dashboard: Link Cards to Details Page
+- [x] Phase 16: Admin Dashboard & Live Map
+    - [x] Refactor: Extract Map Logic to Partial
+    - [x] Dashboard: Embed Live Map in admin.ejs
+    - [x] Backend: Pass active incidents/panics to Admin Dashboard route
+- [x] Phase 17: Live User Tracking
+    - [x] Backend: Update socketHandler to store and broadcast user locations
+    - [x] Frontend: Update Live Map to show User Markers
+    - [x] Client: Add Geolocation tracking script to layouts
+- [x] Phase 18: Mobile App Specification
+    - [x] Create android_app.md Source of Truth
