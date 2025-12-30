@@ -1,0 +1,180 @@
+<%- include('../partials/header') %>
+
+    <div class="container mx-auto px-4 py-6 max-w-lg">
+        <!-- Big Panic Button -->
+        <div class="mb-8 text-center">
+            <button id="panicBtn"
+                class="w-24 h-24 rounded-full bg-red-600 border-4 border-red-200 shadow-xl text-white font-bold text-xs animate-pulse hover:bg-red-700 transition focus:outline-none transform hover:scale-105">
+                SOS
+            </button>
+            <p class="text-xs text-red-500 mt-2 font-bold uppercase tracking-widest">Emergency Only</p>
+        </div>
+
+        <!-- Active Shift Card -->
+        <% if (activeShift) { %>
+            <div
+                class="bg-green-600 rounded-xl shadow-lg p-6 mb-6 text-white text-center transform hover:-translate-y-1 transition duration-300">
+                <div class="inline-block p-3 rounded-full bg-green-700 mb-3">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold mb-1">ON DUTY</h2>
+                <p class="opacity-90">
+                    <%= activeShift.site.name %>
+                </p>
+                <p class="text-xs mt-4 opacity-75">Started: <%= new Date(activeShift.startTime).toLocaleTimeString() %>
+                </p>
+
+                <form action="/shifts/clock-out" method="POST" class="mt-6" id="clockOutForm">
+                    <input type="hidden" name="latitude" id="lat">
+                    <input type="hidden" name="longitude" id="lng">
+                    <button type="button" onclick="getLocationAndSubmit()"
+                        class="w-full bg-white text-green-700 font-bold py-3 rounded-lg hover:bg-gray-100 shadow-md transition">
+                        CLOCK OUT
+                    </button>
+                </form>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <a href="/incidents/create"
+                    class="bg-white p-4 rounded-xl shadow-md text-center hover:bg-gray-50 transition border border-gray-100">
+                    <i class="fas fa-exclamation-circle text-orange-500 text-2xl mb-2"></i>
+                    <p class="font-bold text-gray-700 text-sm">Report Incident</p>
+                </a>
+                <a href="/patrols"
+                    class="bg-white p-4 rounded-xl shadow-md text-center hover:bg-gray-50 transition border border-gray-100">
+                    <i class="fas fa-walking text-blue-500 text-2xl mb-2"></i>
+                    <p class="font-bold text-gray-700 text-sm">Start Patrol</p>
+                </a>
+            </div>
+
+            <% } else { %>
+                <div class="bg-white rounded-xl shadow-lg p-8 mb-6 text-center border-t-4 border-gray-400">
+                    <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
+                        <i class="fas fa-coffee text-gray-400 text-3xl"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">Off Duty</h2>
+                    <% if (nextShift) { %>
+                        <p class="text-gray-600 mb-6">Next shift at <strong class="text-blue-600">
+                                <%= nextShift.site.name %>
+                            </strong><br>starts <%= new Date(nextShift.startTime).toLocaleString() %>
+                        </p>
+                        <% } else { %>
+                            <p class="text-gray-500 mb-6">No upcoming shifts scheduled.</p>
+                            <% } %>
+
+                                VIEW SCHEDULE
+                                </a>
+
+                                <% if (nextShift) { %>
+                                    <form action="/shifts/clock-in" method="POST" class="mt-4" id="clockInForm">
+                                        <input type="hidden" name="siteId" value="<%= nextShift.siteId %>">
+                                        <input type="hidden" name="latitude" id="inLat">
+                                        <input type="hidden" name="longitude" id="inLng">
+
+                                        <button type="button" onclick="clockIn()"
+                                            class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-md transition animate-pulse">
+                                            <i class="fas fa-sign-in-alt mr-2"></i> CLOCK IN NOW
+                                        </button>
+                                        <p class="text-xs text-gray-500 mt-2 text-center">Location required</p>
+                                    </form>
+                                    <% } %>
+                </div>
+                <% } %>
+    </div>
+
+    <script>
+        // Initialize Notyf if not already done (it might be in flash.ejs)
+        // If flash.ejs didn't run (no messages), we might need to init it.
+        // But flash.ejs includes the script tag conditionally.
+        // Safer to include it here or rely on global.
+        // Let's assume we need to ensure it's loaded.
+
+        function getLocationAndSubmit() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    document.getElementById('lat').value = position.coords.latitude;
+                    document.getElementById('lng').value = position.coords.longitude;
+                    document.getElementById('clockOutForm').submit();
+                }, function (error) {
+                    console.warn("GPS Error: " + error.message);
+                    // Fallback or let server handle missing
+                    document.getElementById('clockOutForm').submit();
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        function clockIn() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    document.getElementById('inLat').value = position.coords.latitude;
+                    document.getElementById('inLng').value = position.coords.longitude;
+                    document.getElementById('clockInForm').submit();
+                }, function (error) {
+                    console.warn("GPS Error: " + error.message);
+                    // Fallback
+                    document.getElementById('clockInForm').submit();
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+
+        // Panic Button Logic
+        const panicBtn = document.getElementById('panicBtn');
+        if (panicBtn) {
+            panicBtn.addEventListener('click', () => {
+                if (!confirm("🚨 ARE YOU SURE?\nThis will trigger a HIGH PRIORITY SOS alert to the Command Center.")) {
+                    return;
+                }
+
+                const originalText = panicBtn.innerText;
+                panicBtn.innerText = 'SENDING...';
+                panicBtn.disabled = true;
+
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        sendPanic(position.coords.latitude, position.coords.longitude);
+                    }, (err) => {
+                        // Send anyway without precise location if GPS fails
+                        console.error(err);
+                        sendPanic(null, null);
+                    }, { enableHighAccuracy: true, timeout: 5000 });
+                } else {
+                    sendPanic(null, null);
+                }
+
+                function sendPanic(lat, lng) {
+                    fetch('/incidents/panic', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            location: { lat, lng }
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.error) {
+                                alert('Failed to send SOS: ' + data.message);
+                            } else {
+                                // Show success feedback
+                                alert("🚨 SOS ALERT SENT! HELP IS ON THE WAY.");
+                                panicBtn.parentElement.innerHTML = '<div class="text-red-600 font-bold animate-pulse text-xl">SOS SIGNAL ACTIVE</div>';
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Network Error. CALL 911.');
+                            panicBtn.innerText = originalText;
+                            panicBtn.disabled = false;
+                        });
+                }
+            });
+        }
+    </script>
+
+    <%- include('../partials/footer') %>

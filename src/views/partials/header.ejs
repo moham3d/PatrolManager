@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title : 'PatrolShield' %>
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Leaflet Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        .leaflet-container {
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <nav class="bg-blue-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-2">
+            <div class="flex justify-between items-center">
+                <a href="/" class="text-xl font-bold flex items-center space-x-2">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>PatrolShield</span>
+                </a>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden text-white focus:outline-none hover:text-blue-200">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <div class="space-x-4">
+                        <a href="/sites" class="hover:text-blue-200 transition-colors">Sites</a>
+                        <a href="/patrols" class="hover:text-blue-200 transition-colors">Patrols</a>
+                        <a href="/incidents" class="hover:text-blue-200 transition-colors">Incidents</a>
+                        <a href="/reports" class="hover:text-blue-200 transition-colors">Data & Reports</a>
+                        <a href="/shifts" class="hover:text-blue-200 transition-colors">Shifts</a>
+
+                        <% if (typeof user !=='undefined' && user.Role && ['admin', 'manager'
+                            ].includes(user.Role.name)) { %>
+                            <a href="/users" class="hover:text-blue-200 transition-colors">Users</a>
+                            <% } %>
+
+                                <% if (typeof user !=='undefined' && user.Role) { %>
+                                    <% if (['admin', 'manager' ].includes(user.Role.name)) { %>
+                                        <a href="/docs/admin" class="hover:text-blue-200 transition-colors"><i
+                                                class="fas fa-book"></i> Manual</a>
+                                        <% } else { %>
+                                            <a href="/docs/guard" class="hover:text-blue-200 transition-colors"><i
+                                                    class="fas fa-book"></i> Manual</a>
+                                            <% } %>
+                                                <% } else { %>
+                                                    <a href="/docs/manual"
+                                                        class="hover:text-blue-200 transition-colors"><i
+                                                            class="fas fa-book"></i> Manual</a>
+                                                    <% } %>
+                    </div>
+                    <div class="border-l border-blue-700 pl-6">
+                        <% if (typeof user !=='undefined' && user) { %>
+                            <span class="mr-4">
+                                <%= user.name %>
+                            </span>
+                            <a href="/logout"
+                                class="text-sm bg-blue-700 px-3 py-1 rounded hover:bg-blue-600 transition-colors">Logout</a>
+                            <% } else { %>
+                                <a href="/login"
+                                    class="text-sm bg-blue-700 px-3 py-1 rounded hover:bg-blue-600 transition-colors">Login</a>
+                                <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu (Hidden by default) -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-blue-800">
+                <div class="flex flex-col space-y-3 mt-4">
+                    <a href="/sites" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Sites</a>
+                    <a href="/patrols" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Patrols</a>
+                    <a href="/incidents"
+                        class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Incidents</a>
+                    <a href="/reports" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Data &
+                        Reports</a>
+                    <a href="/shifts" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Shifts</a>
+
+                    <% if (typeof user !=='undefined' && user.Role && ['admin', 'manager' ].includes(user.Role.name)) {
+                        %>
+                        <a href="/users" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Users</a>
+                        <% } %>
+
+                            <% if (typeof user !=='undefined' && user.Role) { %>
+                                <% if (['admin', 'manager' ].includes(user.Role.name)) { %>
+                                    <a href="/docs/admin"
+                                        class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
+                                            class="fas fa-book"></i> Manual</a>
+                                    <% } else { %>
+                                        <a href="/docs/guard"
+                                            class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
+                                                class="fas fa-book"></i> Manual</a>
+                                        <% } %>
+                                            <% } else { %>
+                                                <a href="/docs/manual"
+                                                    class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
+                                                        class="fas fa-book"></i> Manual</a>
+                                                <% } %>
+
+                                                    <div class="border-t border-blue-800 pt-3 mt-2">
+                                                        <% if (typeof user !=='undefined' && user) { %>
+                                                            <div class="px-3 py-2 mb-2 text-blue-200 text-sm">Signed in
+                                                                as <%= user.name %>
+                                                            </div>
+                                                            <a href="/logout"
+                                                                class="block bg-blue-800 px-3 py-2 rounded text-center hover:bg-blue-700 transition-colors">Logout</a>
+                                                            <% } else { %>
+                                                                <a href="/login"
+                                                                    class="block bg-blue-800 px-3 py-2 rounded text-center hover:bg-blue-700 transition-colors">Login</a>
+                                                                <% } %>
+                                                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+
+            if (btn && menu) {
+                btn.addEventListener('click', () => {
+                    menu.classList.toggle('hidden');
+                });
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <main class="container mx-auto px-6 py-8 flex-grow">

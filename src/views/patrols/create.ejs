@@ -1,0 +1,179 @@
+<%- include('../partials/header') %>
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Create Patrol Route</h1>
+
+        <form action="/patrols" method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Route Name</label>
+                    <input name="name" type="text"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Site</label>
+                    <select id="siteSelect" name="siteId"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required onchange="loadCheckpoints()">
+                        <option value="">-- Select Site --</option>
+                        <% sites.forEach(site=> { %>
+                            <option value="<%= site.id %>">
+                                <%= site.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                <textarea name="description" rows="2"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+            </div>
+
+            <div class="flex space-x-6 mb-6">
+                <div class="w-1/2">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Patrol Type</label>
+                    <select name="type"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="ordered">Ordered (Sequential)</option>
+                        <option value="random">Randomized</option>
+                        <option value="freeroam">Free Roam</option>
+                    </select>
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Est. Duration (Min)</label>
+                    <input name="duration" type="number" value="30"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Select Checkpoints (In Order)</label>
+                <div id="checkpointsContainer"
+                    class="bg-gray-50 p-4 rounded border border-gray-200 h-64 overflow-y-auto">
+                    <p class="text-gray-500 italic">Select a site first to see checkpoints.</p>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+                Save Route
+            </button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <script>
+        let availableCheckpoints = [];
+        let selectedCheckpoints = [];
+        let sortable;
+
+        async function loadCheckpoints() {
+            const siteId = document.getElementById('siteSelect').value;
+            const container = document.getElementById('checkpointsContainer');
+
+            if (!siteId) {
+                container.innerHTML = '<p class="text-gray-500 italic">Select a site first to see checkpoints.</p>';
+                return;
+            }
+
+            container.innerHTML = '<p class="text-gray-500">Loading...</p>';
+
+            try {
+                const response = await fetch('/sites/' + siteId, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.site && data.site.checkpoints && data.site.checkpoints.length > 0) {
+                    availableCheckpoints = data.site.checkpoints; // Store for lookup
+                    renderCheckpointsUI();
+                } else {
+                    container.innerHTML = '<p class="text-orange-500">No checkpoints found for this site.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-red-500">Error loading checkpoints.</p>';
+            }
+        }
+
+        function renderCheckpointsUI() {
+            const container = document.getElementById('checkpointsContainer');
+
+            // 1. Available Pool (Left Side)
+            let html = `
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/2">
+                        <h3 class="font-bold text-gray-600 mb-2 text-sm uppercase">Available Checkpoints</h3>
+                        <div id="availableList" class="bg-gray-100 p-2 rounded h-64 overflow-y-auto space-y-2 border border-gray-300">
+                            ${availableCheckpoints.map(cp => createCheckpointItem(cp)).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-1/2">
+                        <h3 class="font-bold text-blue-600 mb-2 text-sm uppercase">Selected Route Order</h3>
+                        <div id="selectedList" class="bg-blue-50 p-2 rounded h-64 overflow-y-auto space-y-2 border border-blue-200">
+                             <p class="text-gray-400 text-xs text-center mt-10 pointer-events-none" id="emptyMsg">Drag checkpoints here</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="checkpoints" id="checkpointsInput">
+            `;
+
+            container.innerHTML = html;
+
+            // Initialize Sortable
+            new Sortable(document.getElementById('availableList'), {
+                group: 'shared', // set both lists to same group
+                animation: 150,
+                sort: false // To disable sorting in available list
+            });
+
+            new Sortable(document.getElementById('selectedList'), {
+                group: 'shared',
+                animation: 150,
+                onAdd: function (evt) {
+                    document.getElementById('emptyMsg').style.display = 'none';
+                    updateInput();
+                },
+                onRemove: function (evt) {
+                    if (document.getElementById('selectedList').children.length <= 1) { // 1 because of emptyMsg element
+                        document.getElementById('emptyMsg').style.display = 'block';
+                    }
+                    updateInput();
+                },
+                onSort: function (evt) {
+                    updateInput();
+                }
+            });
+        }
+
+        function createCheckpointItem(cp) {
+            return `
+                <div class="bg-white p-3 rounded shadow-sm cursor-move border border-gray-200 hover:border-blue-400 flex justify-between items-center" data-id="${cp.id}">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-grip-vertical text-gray-300"></i>
+                        <span class="font-medium text-gray-700">${cp.name}</span>
+                    </div>
+                    <span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 rounded uppercase">${cp.type}</span>
+                </div>
+            `;
+        }
+
+        function updateInput() {
+            const list = document.getElementById('selectedList');
+            const ids = [];
+            // Iterate over children to maintain order
+            for (let item of list.children) {
+                if (item.id !== 'emptyMsg') {
+                    ids.push(item.getAttribute('data-id'));
+                }
+            }
+            document.getElementById('checkpointsInput').value = ids.join(','); // Send as comma-separated string, controller handle split
+        }
+    </script>
+
+    <%- include('../partials/footer') %>

@@ -1,0 +1,245 @@
+<%- include('../partials/header') %>
+
+    <div class="flex flex-col h-[calc(100vh-64px)]">
+        <!-- Full height minus header -->
+
+        <div class="flex flex-grow overflow-hidden relative">
+            <!-- Map Container -->
+            <div id="command-map" class="flex-grow bg-gray-200 z-0"></div>
+
+            <!-- Sidebar Floating (or fixed width) -->
+            <div
+                class="w-96 bg-white shadow-2xl z-10 flex flex-col border-l border-gray-200 absolute right-0 top-0 bottom-0 md:relative">
+                <div class="p-4 bg-gray-900 text-white flex justify-between items-center shadow-md">
+                    <h2 class="font-bold text-lg"><i
+                            class="fas fa-satellite-dish mr-2 text-green-400 animate-pulse"></i> Live Feed</h2>
+                    <span id="connection-status" class="text-xs bg-red-500 px-2 py-0.5 rounded">Disconnected</span>
+                </div>
+
+                <!-- Tabs/Filters could go here -->
+
+                <div id="event-feed" class="flex-grow overflow-y-auto p-4 space-y-3 bg-gray-50">
+                    <div class="text-center text-gray-400 text-sm mt-10 empty-state">
+                        <i class="fas fa-radar text-3xl mb-2"></i>
+                        <p>Waiting for events...</p>
+                    </div>
+                    <!-- Dynamic Events will be appended here -->
+                </div>
+
+                <div class="p-4 bg-white border-t text-xs text-gray-500 text-center">
+                    Command Center v1.0 • Real-time Socket.IO
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio for alerts -->
+    <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"
+        preload="auto"></audio>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // --- Map Setup ---
+        const map = L.map('command-map').setView([51.505, -0.09], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const markers = {}; // Store markers by ID "type_id"
+
+        // --- Icons ---
+        const incidentIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color: #ef4444; width: 15px; height: 15px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
+            iconSize: [15, 15],
+            iconAnchor: [7, 7]
+        });
+
+        const panicIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div class='animate-ping' style='background-color: #c084fc; width: 20px; height: 20px; border-radius: 50%; opacity: 0.7;'></div><div style='background-color: #7e22ce; width: 12px; height: 12px; border-radius: 50%; position: absolute; top: 4px; left: 4px; border: 2px solid white;'></div>",
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        // --- Socket Setup ---
+        const socket = io();
+        const statusSpan = document.getElementById('connection-status');
+        const feedContainer = document.getElementById('event-feed');
+        const emptyState = document.querySelector('.empty-state');
+        const alertSound = document.getElementById('alert-sound');
+
+        socket.on('connect', () => {
+            statusSpan.textContent = "Connected";
+            statusSpan.classList.replace('bg-red-500', 'bg-green-500');
+            socket.emit('join_room', 'command_center'); // Optional room logic
+            console.log("Socket connected");
+        });
+
+        socket.on('disconnect', () => {
+            statusSpan.textContent = "Disconnected";
+            statusSpan.classList.replace('bg-green-500', 'bg-red-500');
+        });
+
+        // --- Event Handling ---
+
+        function addToFeed(html) {
+            if (emptyState) emptyState.style.display = 'none';
+            const div = document.createElement('div');
+            div.className = "bg-white p-3 rounded shadow-sm border-l-4 border-blue-500 text-sm animate__animated animate__fadeInRight";
+            div.innerHTML = html;
+            feedContainer.prepend(div); // Newest on top
+        }
+
+        function addMarker(id, type, lat, lng, popupContent, isPanic = false) {
+            if (!lat || !lng) return;
+
+            const key = `${type}_${id}`;
+            if (markers[key]) return; // Already exists
+
+            const icon = isPanic ? panicIcon : incidentIcon;
+            const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(popupContent);
+
+            markers[key] = marker;
+
+            // Auto pan if panic
+            if (isPanic) {
+                map.setView([lat, lng], 16);
+                alertSound.play().catch(e => console.log("Audio blocked", e));
+            }
+        }
+
+        function removeMarker(id, type) {
+            const key = `${type}_${id}`;
+            if (markers[key]) {
+                map.removeLayer(markers[key]);
+                delete markers[key];
+            }
+        }
+
+        // --- Listeners ---
+
+        // 1. Initial Load
+        fetch('/incidents/active')
+            .then(res => res.json())
+            .then(data => {
+                // Incidents
+                data.incidents.forEach(inc => {
+                    if (inc.location) {
+                        const lat = inc.location.coordinates[0];
+                        const lng = inc.location.coordinates[1];
+                        addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b><br>${inc.description}`);
+                        addToFeed(`
+                        <div class="flex justify-between">
+                            <span class="font-bold text-gray-700">${inc.type}</span>
+                            <span class="text-xs text-gray-400">${new Date(inc.createdAt).toLocaleTimeString()}</span>
+                        </div>
+                        <p class="text-gray-600 mt-1">${inc.description}</p>
+                        <div class="mt-2 text-xs text-right">
+                             <button onclick="resolve('${inc.id}', 'incident')" class="text-blue-500 hover:underline">Resolve</button>
+                        </div>
+                    `);
+                    }
+                });
+
+                // Panics
+                data.panics.forEach(panic => {
+                    if (panic.location) {
+                        const lat = panic.location.coordinates[0];
+                        const lng = panic.location.coordinates[1];
+                        addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>Guard ID: ${panic.guardId}`, true);
+                        addToFeed(`
+                        <div class="flex justify-between border-l-4 border-red-500 pl-2">
+                            <span class="font-bold text-red-600 animate-pulse">PANIC ALERT</span>
+                            <span class="text-xs text-gray-400">${new Date(panic.triggeredAt).toLocaleTimeString()}</span>
+                        </div>
+                        <p class="text-gray-800 mt-1 font-bold">Guard #${panic.guardId} needs help!</p>
+                         <div class="mt-2 text-xs text-right">
+                             <button onclick="resolve('${panic.id}', 'panic')" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">ACKNOWLEDGE</button>
+                        </div>
+                    `);
+                    }
+                });
+
+                // Adjust map bounds if markers exist
+                // const group = new L.featureGroup(Object.values(markers));
+                // if(group.getLayers().length > 0) map.fitBounds(group.getBounds().pad(0.2));
+            });
+
+        // 2. Real-time Events
+        socket.on('new_incident', (inc) => {
+            if (inc.location) {
+                const lat = inc.location.coordinates[0];
+                const lng = inc.location.coordinates[1];
+                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b><br>${inc.description}`);
+            }
+
+            addToFeed(`
+            <div class="flex justify-between">
+                <span class="font-bold text-gray-700">New: ${inc.type}</span>
+                <span class="text-xs text-gray-400">Just now</span>
+            </div>
+            <p class="text-gray-600 mt-1">${inc.description}</p>
+             <div class="mt-2 text-xs text-right">
+                 <button onclick="resolve('${inc.id}', 'incident')" class="text-blue-500 hover:underline">Resolve</button>
+            </div>
+        `);
+        });
+
+        socket.on('panic_alert', (panic) => {
+            console.log("PANIC RECEIVED", panic);
+            if (panic.location) {
+                // Depending on how location is sent (might be object lat/lng or GeoJSON)
+                // Check controller: sends { lat, lng } directly in event? No, sends `location` object which seems to be original input body?
+                // Let's safe check. Controller: location property of body.
+                const lat = panic.location.lat;
+                const lng = panic.location.lng;
+                addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>${panic.guard}`, true);
+            }
+
+            addToFeed(`
+            <div class="flex justify-between border-l-4 border-purple-600 pl-2 bg-red-50">
+                <span class="font-bold text-purple-700 text-lg animate-pulse">⚠️ PANIC ALERT</span>
+                <span class="text-xs text-gray-500">Just now</span>
+            </div>
+             <p class="text-gray-800 mt-1 font-bold">Guard: ${panic.guard}</p>
+             <div class="mt-2 text-xs text-right">
+                 <button onclick="resolve('${panic.id}', 'panic')" class="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 shadow shadow-purple-300">ACKNOWLEDGE</button>
+            </div>
+        `);
+        });
+
+        socket.on('incident_resolved', (data) => {
+            removeMarker(data.id, 'incident');
+        });
+
+        socket.on('panic_resolved', (data) => {
+            removeMarker(data.id, 'panic');
+        });
+
+        // --- Actions ---
+        window.resolve = function (id, type) {
+            if (!confirm('Mark this as resolved?')) return;
+
+            fetch(`/incidents/${id}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove from feed or marker handled by socket event
+                        console.log("Resolved");
+                    }
+                });
+        }
+
+    </script>
+
+    <style>
+        /* Custom Map Styles if needed */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+    </style>
+
+    <%- include('../partials/footer') %>

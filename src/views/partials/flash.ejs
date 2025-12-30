@@ -1,0 +1,15 @@
+<script>
+    const notyf = new Notyf({
+        duration: 4000,
+        position: { x: 'center', y: 'top' },
+        dismissible: true
+    });
+
+    <% if (success.length > 0) { %>
+        notyf.success('<%= success[0] %>');
+    <% } %>
+
+    <% if (error.length > 0) { %>
+        notyf.error('<%= error[0] %>');
+    <% } %>
+</script>

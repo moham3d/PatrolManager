@@ -1,0 +1,72 @@
+<%- include('../partials/header') %>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-gray-800">Sites</h1>
+        <a href="/sites/create" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 shadow">
+            <i class="fas fa-plus mr-2"></i> Add New Site
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
+        <table class="min-w-full leading-normal">
+            <thead>
+                <tr>
+                    <th
+                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Name
+                    </th>
+                    <th
+                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Address
+                    </th>
+                    <th
+                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Zones
+                    </th>
+                    <th
+                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <% sites.forEach(function(site) { %>
+                    <tr>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap font-bold">
+                                <%= site.name %>
+                            </p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <p class="text-gray-900 whitespace-no-wrap">
+                                <%= site.address || '-' %>
+                            </p>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <span class="relative inline-block px-3 py-1 font-semibold text-blue-900 leading-tight">
+                                <span aria-hidden class="absolute inset-0 bg-blue-200 opacity-50 rounded-full"></span>
+                                <span class="relative">
+                                    <%= site.zones ? site.zones.length : 0 %> Zones
+                                </span>
+                            </span>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <a href="/sites/<%= site.id %>" class="text-blue-600 hover:text-blue-900 mr-3">View</a>
+                            <a href="/sites/<%= site.id %>/edit" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                        </td>
+                    </tr>
+                    <% }); %>
+
+                        <% if (sites.length===0) { %>
+                            <tr>
+                                <td colspan="4"
+                                    class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center text-gray-500">
+                                    No sites found. Create one to get started.
+                                </td>
+                            </tr>
+                            <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <%- include('../partials/footer') %>

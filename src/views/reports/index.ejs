@@ -1,0 +1,233 @@
+<%- include('../partials/header') %>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-6">Analytics Dashboard</h1>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Incident Priority Chart -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Incidents by Priority</h2>
+                <div class="relative h-64">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Incident Type Chart -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Incidents by Type</h2>
+                <div class="relative h-64">
+                    <canvas id="typeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shift Analytics Row -->
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Shift Intelligence</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Hours by Site -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Total Patrol Hours by Site</h2>
+                <div class="relative h-64">
+                    <canvas id="siteHoursChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Guard Efficiency -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4">Guard Efficiency (Patrols/Shift)</h2>
+                <div class="relative h-64">
+                    <canvas id="guardEfficiencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
+            <!-- Missed Checkpoints chart is now below -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Missed Checkpoints (Recent)
+                </h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                    Patrol runs that were completed with less than 100% coverage.
+                </p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="missedTable">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Guard</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Route Template</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Progress</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="missedBody">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Loading data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadIncidentCharts();
+            loadShiftCharts();
+            loadMissedCheckpoints();
+        });
+
+        async function loadShiftCharts() {
+            try {
+                const res = await fetch('/reports/api/shift-analytics');
+                const data = await res.json();
+
+                // 1. Site Hours Chart
+                const ctxS = document.getElementById('siteHoursChart').getContext('2d');
+                new Chart(ctxS, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(data.siteHours),
+                        datasets: [{
+                            data: Object.values(data.siteHours),
+                            backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+
+                // 2. Guard Efficiency Chart
+                const guardNames = Object.keys(data.guardPerformance);
+                const efficiencyData = guardNames.map(name => {
+                    const perf = data.guardPerformance[name];
+                    return perf.shifts > 0 ? (perf.patrols / perf.shifts).toFixed(1) : 0;
+                });
+
+                const ctxG = document.getElementById('guardEfficiencyChart').getContext('2d');
+                new Chart(ctxG, {
+                    type: 'bar',
+                    data: {
+                        labels: guardNames,
+                        datasets: [{
+                            label: 'Avg. Patrols per Shift',
+                            data: efficiencyData,
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+
+            } catch (err) { console.error("Error loading shift charts", err); }
+        }
+
+        async function loadIncidentCharts() {
+            try {
+                const res = await fetch('/reports/api/incident-summary');
+                const data = await res.json();
+
+                // Priority Chart context
+                const ctxP = document.getElementById('priorityChart').getContext('2d');
+                new Chart(ctxP, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(data.byPriority),
+                        datasets: [{
+                            data: Object.values(data.byPriority),
+                            backgroundColor: [
+                                '#10B981', // Low - Green
+                                '#FBBF24', // Medium - Yellow
+                                '#F97316', // High - Orange
+                                '#EF4444'  // Critical - Red
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // Type Chart context
+                const ctxT = document.getElementById('typeChart').getContext('2d');
+                new Chart(ctxT, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data.byType),
+                        datasets: [{
+                            label: 'Count',
+                            data: Object.values(data.byType),
+                            backgroundColor: '#3B82F6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadMissedCheckpoints() {
+            try {
+                const res = await fetch('/reports/api/missed-checkpoints');
+                const runs = await res.json();
+
+                const tbody = document.getElementById('missedBody');
+                tbody.innerHTML = '';
+
+                if (runs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Great job! No incomplete patrols found.</td></tr>';
+                    return;
+                }
+
+                runs.forEach(run => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(run.date).toLocaleDateString()} ${new Date(run.date).toLocaleTimeString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${run.guard}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${run.template}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 max-w-[100px]">
+                            <div class="bg-red-600 h-2.5 rounded-full" style="width: ${run.completionPercent}%"></div>
+                        </div>
+                        <span class="text-xs mt-1 block">${run.totalVisited} / ${run.totalExpected} (${run.completionPercent}%)</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 uppercase">
+                            ${run.status}
+                        </span>
+                    </td>
+                `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('missedBody').innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">Error loading data.</td></tr>';
+            }
+        }
+    </script>
+
+    <%- include('../partials/footer') %>

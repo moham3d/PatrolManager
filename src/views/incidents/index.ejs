@@ -1,0 +1,286 @@
+<%- include('../partials/header') %>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-gray-800">Incidents</h1>
+        <a href="/incidents/create" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 shadow">
+            Report Incident
+        </a>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="mb-6 bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="w-full md:w-1/3">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" id="searchInput" placeholder="Search incidents..."
+                    class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+        <div class="flex gap-2 w-full md:w-auto overflow-x-auto">
+            <select id="statusFilter" class="border rounded-lg px-3 py-2 text-gray-700 bg-white focus:outline-none">
+                <option value="all">All Status</option>
+                <option value="new">New</option>
+                <option value="investigating">Investigating</option>
+                <option value="resolved">Resolved</option>
+            </select>
+            <select id="priorityFilter" class="border rounded-lg px-3 py-2 text-gray-700 bg-white focus:outline-none">
+                <option value="all">All Priorities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Incident Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="incidentGrid">
+        <% incidents.forEach(function(incident) { %>
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300 incident-card"
+                data-status="<%= incident.status %>" data-priority="<%= incident.priority %>"
+                data-search="<%= incident.type.toLowerCase() %> <%= incident.description ? incident.description.toLowerCase() : '' %> <%= incident.Site ? incident.Site.name.toLowerCase() : '' %>">
+
+                <!-- Card Header -->
+                <div class="p-5 border-b border-gray-100 flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <% let pColor='gray' ; if(incident.priority==='high' ) pColor='orange' ;
+                                if(incident.priority==='critical' ) pColor='red' ; if(incident.priority==='medium' )
+                                pColor='yellow' ; if(incident.priority==='low' ) pColor='green' ; %>
+                                <span
+                                    class="px-2 py-0.5 rounded text-xs font-bold uppercase bg-<%= pColor %>-100 text-<%= pColor %>-800">
+                                    <%= incident.priority %>
+                                </span>
+                                <span class="text-xs text-gray-400">
+                                    <%= new Date(incident.createdAt).toLocaleDateString() %>
+                                </span>
+                        </div>
+                        <h3 class="font-bold text-gray-800 text-lg hover:text-blue-600 transition">
+                            <a href="/incidents/<%= incident.id %>">
+                                <%= incident.type %>
+                            </a>
+                        </h3>
+                    </div>
+                    <% let sColor='blue' ; if(incident.status==='new' ) sColor='purple' ;
+                        if(incident.status==='resolved' ) sColor='green' ; %>
+                        <span
+                            class="px-3 py-1 rounded-full text-xs font-bold bg-<%= sColor %>-100 text-<%= sColor %>-800">
+                            <%= incident.status %>
+                        </span>
+                </div>
+
+                <!-- Card Body -->
+                <div class="p-5 space-y-3">
+                    <p class="text-gray-600 text-sm line-clamp-2">
+                        <%= incident.description || 'No description provided.' %>
+                    </p>
+
+                    <div class="flex items-center text-sm text-gray-500">
+                        <i class="fas fa-map-marker-alt w-5 text-center mr-2"></i>
+                        <%= incident.Site ? incident.Site.name : 'Unknown Site' %>
+                    </div>
+
+                    <div class="flex items-center text-sm text-gray-500">
+                        <i class="fas fa-user w-5 text-center mr-2"></i>
+                        <% if (incident.assignee) { %>
+                            <span class="font-semibold text-gray-700">
+                                <%= incident.assignee.name %>
+                            </span>
+                            <% } else { %>
+                                <span class="italic text-gray-400">Unassigned</span>
+                                <% } %>
+                    </div>
+                </div>
+
+                <!-- Card Footer (Actions) -->
+                <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                    <!-- Manager Assign Action -->
+                    <% if (['manager', 'supervisor' ].includes(user.Role.name)) { %>
+                        <button onclick="openAssignModal('<%= incident.id %>', '<%= incident.type %>')"
+                            class="text-gray-600 hover:text-blue-600 font-bold text-sm px-3 py-1">
+                            <i class="<%= incident.assignee ? 'fas fa-exchange-alt' : 'fas fa-user-plus' %> mr-1"></i>
+                            <%= incident.assignee ? 'Re-assign' : 'Assign' %>
+                        </button>
+                        <% } %>
+
+                            <!-- Guard Claim Action -->
+                            <% if (!incident.assignee && ['guard'].includes(user.Role.name)) { %>
+                                <form action="/incidents/<%= incident.id %>/claim" method="POST" class="inline">
+                                    <button type="submit"
+                                        class="bg-blue-600 text-white hover:bg-blue-700 font-bold text-sm px-4 py-2 rounded shadow transition">
+                                        Im on it (Claim)
+                                    </button>
+                                </form>
+                                <% } %>
+
+                                    <!-- Resolve Action -->
+                                    <% if (incident.status !=='resolved' ) { %>
+                                        <% if (incident.assignedTo===user.id || ['manager', 'admin'
+                                            ].includes(user.Role.name)) { %>
+                                            <button onclick="openResolveModal('<%= incident.id %>')"
+                                                class="bg-green-600 text-white hover:bg-green-700 font-bold text-sm px-4 py-2 rounded shadow transition">
+                                                Resolve
+                                            </button>
+                                            <% } %>
+                                                <% } else { %>
+                                                    <span
+                                                        class="text-green-600 font-bold text-sm flex items-center px-3">
+                                                        <i class="fas fa-check-circle mr-1"></i> Done
+                                                    </span>
+                                                    <% } %>
+                </div>
+            </div>
+            <% }) %>
+    </div>
+
+    <% if (incidents.length===0) { %>
+        <div class="text-center py-12 bg-white rounded-lg shadow">
+            <div class="text-gray-400 text-5xl mb-4"><i class="fas fa-clipboard-check"></i></div>
+            <h3 class="text-xl font-bold text-gray-700">No Incidents Found</h3>
+            <p class="text-gray-500">Everything looks clear!</p>
+        </div>
+        <% } %>
+
+            <script>
+                // Simple Client-Side Filtering
+                const searchInput = document.getElementById('searchInput');
+                const statusFilter = document.getElementById('statusFilter');
+                const priorityFilter = document.getElementById('priorityFilter');
+                const cards = document.querySelectorAll('.incident-card');
+
+                function filterIncidents() {
+                    const query = searchInput.value.toLowerCase();
+                    const status = statusFilter.value;
+                    const priority = priorityFilter.value;
+
+                    cards.forEach(card => {
+                        const cardStatus = card.dataset.status;
+                        const cardPriority = card.dataset.priority;
+                        const cardSearch = card.dataset.search;
+
+                        const matchQuery = cardSearch.includes(query);
+                        const matchStatus = status === 'all' || cardStatus === status;
+                        const matchPriority = priority === 'all' || cardPriority === priority;
+
+                        if (matchQuery && matchStatus && matchPriority) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                }
+
+                searchInput.addEventListener('input', filterIncidents);
+                statusFilter.addEventListener('change', filterIncidents);
+                priorityFilter.addEventListener('change', filterIncidents);
+            </script>
+
+            <!-- Assign Modal -->
+            <div id="assignModal"
+                class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm animate__animated animate__fadeInUp">
+                    <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                        <h3 class="font-bold text-lg text-gray-800">Assign Incident</h3>
+                        <button onclick="document.getElementById('assignModal').classList.add('hidden')"
+                            class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+                    </div>
+                    <form id="assignForm" method="POST" class="p-6">
+                        <p class="mb-4 text-sm text-gray-600">Assign <span id="modalIncidentType"
+                                class="font-bold"></span> to:
+                        </p>
+                        <div class="mb-4">
+                            <select name="userId"
+                                class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                required>
+                                <% users.forEach(user=> { %>
+                                    <option value="<%= user.id %>">
+                                        <%= user.name %>
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button"
+                                onclick="document.getElementById('assignModal').classList.add('hidden')"
+                                class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg mr-2">Cancel</button>
+                            <button type="submit"
+                                class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md">Assign</button>
+                            <script>
+                                function openAssignModal(id, type) {
+                                    document.getElementById('assignForm').action = `/incidents/${id}/assign`;
+                                    document.getElementById('modalIncidentType').textContent = type;
+                                    document.getElementById('assignModal').classList.remove('hidden');
+                                }
+                            </script>
+
+                            <!-- Resolve Modal -->
+                            <div id="resolveModal"
+                                class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+                                <div
+                                    class="bg-white rounded-xl shadow-2xl w-full max-w-sm animate__animated animate__fadeInUp">
+                                    <div
+                                        class="px-6 py-4 border-b flex justify-between items-center bg-green-50 rounded-t-xl">
+                                        <h3 class="font-bold text-lg text-gray-800">Resolve Incident</h3>
+                                        <button
+                                            onclick="document.getElementById('resolveModal').classList.add('hidden')"
+                                            class="text-gray-400 hover:text-gray-600"><i
+                                                class="fas fa-times"></i></button>
+                                    </div>
+                                    <form id="resolveForm" method="POST" enctype="multipart/form-data" class="p-6">
+                                        <!-- Hidden Type -->
+                                        <input type="hidden" name="type" value="incident">
+
+                                        <p class="mb-4 text-sm text-gray-600">You are marking this incident as
+                                            <strong>Resolved</strong>.
+                                        </p>
+
+                                        <div class="mb-4">
+                                            <label class="block text-gray-700 text-xs font-bold mb-2">Resolution
+                                                Notes</label>
+                                            <textarea name="notes" rows="3"
+                                                class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                                placeholder="Describe how it was fixed..."></textarea>
+                                        </div>
+
+                                        <div class="mb-6">
+                                            <label class="block text-gray-700 text-xs font-bold mb-2">Evidence (Optional
+                                                Photo)</label>
+                                            <input type="file" name="evidence" accept="image/*"
+                                                class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                                        </div>
+
+                                        <div class="flex justify-end">
+                                            <button type="button"
+                                                onclick="document.getElementById('resolveModal').classList.add('hidden')"
+                                                class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg mr-2">Cancel</button>
+                                            <button type="submit"
+                                                class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md">Mark
+                                                Resolved</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <script>
+                                function openAssignModal(id, type) {
+                                    document.getElementById('assignForm').action = `/incidents/${id}/assign`;
+                                    document.getElementById('modalIncidentType').textContent = type;
+                                    document.getElementById('assignModal').classList.remove('hidden');
+                                }
+
+                                function openResolveModal(id) {
+                                    // Because our backend expects POST /:id/resolve
+                                    // We need to handle multipart if uploading file, so standard form submit is best.
+                                    // But wait, the previous simple resolve didn't take notes. 
+                                    // We need to update the controller to accept notes/evidence if we want this to work fully.
+                                    // For now, let's target the existing API resolve or standard resolve.
+                                    // Standard resolve in `incidentController.resolve` currently just toggles status.
+                                    // `resolveApi` takes notes/evidence. Let's redirect form to `resolveApi` style or update `resolve` method.
+                                    // IMPORTANT: existing `resolve` method in controller might not handle files.
+                                    // Let's assume we will update the controller next.
+                                    document.getElementById('resolveForm').action = `/incidents/${id}/resolve`;
+                                    document.getElementById('resolveModal').classList.remove('hidden');
+                                }
+                            </script>
+
+                            <%- include('../partials/footer') %>

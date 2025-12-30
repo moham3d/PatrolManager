@@ -1,0 +1,134 @@
+<%- include('../partials/header') %>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">
+                <%= title %>
+            </h1>
+            <a href="/sites" class="text-gray-600 hover:text-gray-800">
+                <i class="fas fa-arrow-left mr-1"></i> Back
+            </a>
+        </div>
+
+        <% if (typeof error !=='undefined' ) { %>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">
+                    <%= error %>
+                </span>
+            </div>
+            <% } %>
+
+                <form action="/sites<%= site && site.id ? '/' + site.id : '' %>" method="POST">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
+                                    Site Name
+                                </label>
+                                <input
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    id="name" name="name" type="text" placeholder="e.g. Headquarters"
+                                    value="<%= site ? site.name : '' %>" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="address">
+                                    Address
+                                </label>
+                                <input
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    id="address" name="address" type="text" placeholder="e.g. 123 Security Blvd"
+                                    value="<%= site ? site.address : '' %>">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="details">
+                                    Details / Notes
+                                </label>
+                                <textarea
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    id="details" name="details" rows="4"><%= site ? site.details : '' %></textarea>
+                            </div>
+
+                            <!-- GPS Storage -->
+                            <input type="hidden" id="latitude" name="lat" value="">
+                            <input type="hidden" id="longitude" name="lng" value="">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2">
+                                Site Location <span class="text-xs font-normal text-gray-500">(Click on map to set
+                                    position)</span>
+                            </label>
+                            <div id="map" class="h-64 rounded-lg border border-gray-300 shadow-inner"></div>
+                            <div id="coords-display" class="mt-2 text-xs text-gray-600 italic">No coordinates set.</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end border-t pt-4">
+                        <button
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded shadow text-lg transition"
+                            type="submit">
+                            <%= site && site.id ? 'Update Site' : 'Create Site' %>
+                        </button>
+                    </div>
+                </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const initialLat = 51.505;
+            const initialLng = -0.09;
+
+            const map = L.map('map').setView([initialLat, initialLng], 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            let marker;
+
+            const latInput = document.getElementById('latitude');
+            const lngInput = document.getElementById('longitude');
+            const coordsDisplay = document.getElementById('coords-display');
+
+            function updateMarker(lat, lng) {
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                }
+                latInput.value = lat.toFixed(6);
+                lngInput.value = lng.toFixed(6);
+                coordsDisplay.textContent = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
+
+            map.on('click', function (e) {
+                updateMarker(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Try to get user location
+            map.locate({ setView: true, maxZoom: 16 });
+
+            map.on('locationfound', function (e) {
+                // Only update marker if it hasn't been set manually or via edit
+                if (!marker) {
+                    // We don't necessarily want to set the marker automatically on location found
+                    // unless it's a new site and user hasn't clicked yet.
+                }
+            });
+
+        // If editing, handle initial data
+        <% if (site && site.lat && site.lng) { %>
+            const savedLat = <%= site.lat %>;
+                const savedLng = <%= site.lng %>;
+                map.setView([savedLat, savedLng], 15);
+                updateMarker(savedLat, savedLng);
+        <% } %>
+    });
+    </script>
+
+    <%- include('../partials/footer') %>

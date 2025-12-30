@@ -1,0 +1,78 @@
+</main>
+<footer class="bg-gray-800 text-white py-6 mt-12">
+    <div class="container mx-auto px-6 text-center">
+        <p>&copy; 2025 PatrolShield Enterprise. All rights reserved.</p>
+    </div>
+</footer>
+
+<% if (user) { %>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (!navigator.geolocation) return;
+
+            // Wait for socket connection
+            const checkSocket = setInterval(() => {
+                if (typeof socket !== 'undefined' && socket.connected) {
+                    clearInterval(checkSocket);
+                    startTracking();
+                }
+            }, 1000);
+
+            function startTracking() {
+                console.log("Starting Location Tracking for: <%= user.name %>");
+
+                function registerIdentity() {
+                    console.log("Registering Identity for Tracking...");
+                    socket.emit('register_user', {
+                        userId: '<%= user.id %>',
+                        name: '<%= user.name %>',
+                        role: '<%= user.Role ? user.Role.name : "unknown" %>'
+                    });
+                }
+
+                // Register immediately
+                registerIdentity();
+
+                // Re-register on reconnection (server restart handling)
+                socket.on('connect', () => {
+                    registerIdentity();
+                });
+
+                // Watch Position
+                navigator.geolocation.watchPosition((pos) => {
+                    const { latitude, longitude } = pos.coords;
+                    socket.emit('update_location', { lat: latitude, lng: longitude });
+                }, (err) => {
+                    console.error("Location access denied or error:", err);
+                    // Show error to user
+                    let msg = 'Location Access Denied: Enable GPS to be visible on map.';
+
+                    if (!window.isSecureContext) {
+                        msg = '⚠️ GPS Blocked: Browser requires HTTPS for Location. Use localhost or a secure tunnel (ngrok).';
+                    } else if (err.code === 1) { // PERMISSION_DENIED
+                        msg = '⚠️ Location Permission Denied. Please allow access in browser settings.';
+                    } else if (err.code === 2) { // POSITION_UNAVAILABLE
+                        msg = '⚠️ GPS Unavailable on this device.';
+                    } else if (err.code === 3) { // TIMEOUT
+                        msg = '⚠️ GPS Timeout. Try moving to a better signal area.';
+                    }
+
+                    if (typeof notyf !== 'undefined') {
+                        notyf.error({ message: msg, duration: 8000 });
+                    } else {
+                        alert(msg);
+                    }
+                }, {
+                    enableHighAccuracy: true,
+                    maximumAge: 30000,
+                    timeout: 27000
+                });
+            }
+        });
+    </script>
+    <% } %>
+        <%- include('flash') %>
+            <%- include('socketClient') %>
+                </body>
+
+                </html>

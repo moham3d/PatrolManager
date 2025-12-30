@@ -1,0 +1,182 @@
+<!-- Live Map Widget -->
+<div class="bg-white rounded-lg shadow overflow-hidden relative" style="height: 500px;">
+    <div id="command-map" class="h-full w-full z-0"></div>
+
+    <!-- Floating Status Pill -->
+    <div class="absolute top-4 right-4 z-[400] bg-white px-3 py-1 rounded-full shadow flex items-center gap-2">
+        <span class="relative flex h-3 w-3">
+            <span id="ping-dot"
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span id="status-dot" class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+        </span>
+        <span id="connection-text" class="text-xs font-bold text-gray-700">LIVE</span>
+    </div>
+</div>
+
+<!-- Audio for alerts -->
+<audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // --- Map Setup ---
+        const map = L.map('command-map').setView([30.0444, 31.2357], 12); // Default to Cairo or generic
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const markers = {}; // Store markers by ID "type_id"
+
+        // --- Icons ---
+        const incidentIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+
+        const panicIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div class='animate-ping' style='background-color: #c084fc; width: 20px; height: 20px; border-radius: 50%; opacity: 0.7;'></div><div style='background-color: #7e22ce; width: 12px; height: 12px; border-radius: 50%; position: absolute; top: 4px; left: 4px; border: 2px solid white;'></div>",
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        // --- Socket Setup ---
+        // Reuse global socket from socketClient if available
+        const socket = window.socket || io();
+        const statusDot = document.getElementById('status-dot');
+        const pingDot = document.getElementById('ping-dot');
+        const alertSound = document.getElementById('alert-sound');
+
+        socket.on('connect', () => {
+            statusDot.classList.replace('bg-red-500', 'bg-green-500');
+            pingDot.classList.remove('hidden');
+        });
+
+        socket.on('disconnect', () => {
+            statusDot.classList.replace('bg-green-500', 'bg-red-500');
+            pingDot.classList.add('hidden');
+        });
+
+        // --- Marker Logic ---
+        function addMarker(id, type, lat, lng, popupContent, isPanic = false) {
+            if (!lat || !lng) return;
+            const key = `${type}_${id}`;
+            if (markers[key]) return;
+
+            const icon = isPanic ? panicIcon : incidentIcon;
+            const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(popupContent);
+            markers[key] = marker;
+
+            if (isPanic) {
+                map.setView([lat, lng], 16);
+                alertSound.play().catch(e => console.log("Audio blocked", e));
+            }
+        }
+
+        function removeMarker(id, type) {
+            const key = `${type}_${id}`;
+            if (markers[key]) {
+                map.removeLayer(markers[key]);
+                delete markers[key];
+            }
+        }
+
+        // --- Initialize from Data passed to View ---
+        // Expecting 'initialMapData' global variable or similar, but simpler to fetch if API exists.
+        // Or we can use the data passed to the template if we serialize it to JS.
+        // Let's use the fetch approach for reliability on page load, 
+        // OR render it into a script tag if passed from controller.
+        // The controller changes are next. Let's assume we fetch '/incidents/active' just like monitor.ejs
+
+        fetch('/incidents/active')
+            .then(res => res.json())
+            .then(data => {
+                const bounds = [];
+
+                data.incidents.forEach(inc => {
+                    if (inc.location) {
+                        const lat = inc.location.coordinates[0];
+                        const lng = inc.location.coordinates[1];
+                        addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b><br>${inc.description}<br><a href="/incidents/${inc.id}">View</a>`);
+                        bounds.push([lat, lng]);
+                    }
+                });
+
+                data.panics.forEach(panic => {
+                    if (panic.location) {
+                        const lat = panic.location.coordinates[0];
+                        const lng = panic.location.coordinates[1];
+                        addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>Guard ID: ${panic.guardId}`, true);
+                        bounds.push([lat, lng]);
+                    }
+                });
+
+                if (bounds.length > 0) {
+                    map.fitBounds(bounds, { padding: [50, 50] });
+                }
+            });
+
+        // --- User Marker Logic ---
+        const userMarkers = {}; // Store markers by userId
+
+        const guardIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
+        function updateUserMarker(data) {
+            // data: { userId, name, role, lat, lng }
+            if (userMarkers[data.userId]) {
+                userMarkers[data.userId].setLatLng([data.lat, data.lng]);
+                userMarkers[data.userId].setPopupContent(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span>`);
+            } else {
+                const marker = L.marker([data.lat, data.lng], { icon: guardIcon }).addTo(map)
+                    .bindPopup(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span>`);
+                userMarkers[data.userId] = marker;
+            }
+        }
+
+        socket.on('active_users_list', (users) => {
+            users.forEach(u => updateUserMarker(u));
+        });
+
+        socket.on('user_location_update', (data) => {
+            updateUserMarker(data);
+        });
+
+        socket.on('user_disconnected', (userId) => {
+            if (userMarkers[userId]) {
+                map.removeLayer(userMarkers[userId]);
+                delete userMarkers[userId];
+            }
+        });
+
+        // Request initial list
+        socket.emit('request_active_users');
+        socket.emit('join_room', 'command_center');
+
+        // --- Real-time Listeners (Incidents) ---
+        socket.on('new_incident', (inc) => {
+            if (inc.location) {
+                const lat = inc.location.coordinates[0];
+                const lng = inc.location.coordinates[1];
+                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b><br>${inc.description}`);
+            }
+        });
+
+        socket.on('panic_alert', (panic) => {
+            // Adjust property access based on event payload
+            // Backend sends: { id, guard, location, time }
+            if (panic.location) {
+                const lat = panic.location.lat;
+                const lng = panic.location.lng;
+                addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>${panic.guard}`, true);
+            }
+        });
+
+        socket.on('incident_resolved', (data) => removeMarker(data.id, 'incident'));
+        socket.on('panic_resolved', (data) => removeMarker(data.id, 'panic'));
+    });
+</script>

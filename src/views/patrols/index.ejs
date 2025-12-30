@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-semibold text-gray-800">Patrol Types</h1>
+        <a href="/patrols/create" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 shadow">
+            <i class="fas fa-plus mr-2"></i> New Route
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% templates.forEach(function(template) { %>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">
+                            <%= template.name %>
+                        </h2>
+                        <p class="text-sm text-gray-500">
+                            <%= template.Site ? template.Site.name : 'Unknown Site' %>
+                        </p>
+                    </div>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                        <%= template.type %>
+                    </span>
+                </div>
+                <p class="text-gray-600 mb-4">
+                    <%= template.description || 'No description' %>
+                </p>
+                <div class="border-t pt-4 flex justify-between items-center text-sm text-gray-500">
+                    <span><i class="far fa-clock mr-1"></i>
+                        <%= template.estimatedDurationMinutes %> min
+                    </span>
+                    <span><i class="fas fa-map-marker-alt mr-1"></i>
+                        <%= template.checkpointsList ? template.checkpointsList.length : 0 %> points
+                    </span>
+                </div>
+            </div>
+            <% }); %>
+
+                <% if (templates.length===0) { %>
+                    <div class="col-span-3 text-center py-10 text-gray-500">
+                        No patrol routes defined. Create one to get started.
+                    </div>
+                    <% } %>
+    </div>
+
+    <%- include('../partials/footer') %>

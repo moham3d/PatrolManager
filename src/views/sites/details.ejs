@@ -1,0 +1,778 @@
+<%- include('../partials/header') %>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <div class="flex flex-col md:flex-row justify-between items-start mb-6 gap-6">
+        <div class="flex-grow">
+            <!-- SETUP WIZARD PROGRESS BAR -->
+            <% let progress=0; if (site.zones && site.zones.length> 0) progress += 50;
+                if (site.checkpoints && site.checkpoints.length > 0) progress += 50;
+                %>
+                <div class="mb-6 bg-gray-100 rounded-full h-4 relative overflow-hidden shadow-inner">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                        style="width: <%= progress %>%"></div>
+                    <div
+                        class="absolute inset-0 flex items-center justify-between px-4 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                        <span class="<%= progress >= 0 ? 'text-blue-800' : '' %>">1. Site Created</span>
+                        <span class="<%= progress >= 50 ? 'text-blue-800' : '' %>">2. Zones Added</span>
+                        <span class="<%= progress >= 100 ? 'text-white mix-blend-difference' : '' %>">3. Ready</span>
+                    </div>
+                </div>
+
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <%= site.name %>
+                </h1>
+                <p class="text-gray-600 mb-2"><i class="fas fa-map-marker-alt mr-2 text-red-500"></i>
+                    <%= site.address || 'No address provided' %>
+                </p>
+                <div class="space-x-2 mt-4">
+                    <a href="/sites/<%= site.id %>/edit"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-500 shadow transition inline-block">
+                        <i class="fas fa-edit mr-1"></i> Edit Site
+                    </a>
+                    <form action="/sites/<%= site.id %>/delete" method="POST" class="inline"
+                        onsubmit="return confirm('Are you sure? This will delete all associated zones and checkpoints.');">
+                        <button type="submit"
+                            class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 shadow transition">
+                            <i class="fas fa-trash-alt mr-1"></i> Delete
+                        </button>
+                    </form>
+                </div>
+                <div class="mt-4">
+                    <a href="/sites/<%= site.id %>/print-qr" target="_blank"
+                        class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 shadow transition inline-block">
+                        <i class="fas fa-qrcode mr-1"></i> Print QR Codes
+                    </a>
+                </div>
+        </div>
+
+        <div class="w-full md:w-1/3">
+            <div id="site-map" class="h-48 w-full rounded-lg shadow-md border border-gray-200"></div>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="mb-6 border-b border-gray-200">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="siteTabs">
+            <li class="mr-2">
+                <button onclick="switchTab('overview')" id="tab-overview"
+                    class="inline-block p-4 text-blue-600 border-b-2 border-blue-600 rounded-t-lg active hover:text-blue-600 hover:border-blue-300">Overview</button>
+            </li>
+            <li class="mr-2">
+                <button onclick="switchTab('schedule')" id="tab-schedule"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 text-gray-500">Schedule</button>
+            </li>
+            <li class="mr-2">
+                <button onclick="switchTab('staff')" id="tab-staff"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 text-gray-500">Staff</button>
+            </li>
+            <li class="mr-2">
+                <button onclick="switchTab('patrols')" id="tab-patrols"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 text-gray-500">Patrols</button>
+            </li>
+            <li class="mr-2">
+                <button onclick="switchTab('incidents')" id="tab-incidents"
+                    class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 text-gray-500">Incidents</button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- TAB CONTENT: OVERVIEW -->
+    <div id="content-overview" class="tab-content block">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Zones Section -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-700">Zones</h2>
+                    <button onclick="openModal('zoneModal')"
+                        class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition font-bold shadow-sm">
+                        <i class="fas fa-plus mr-1"></i> ADD ZONE
+                    </button>
+                </div>
+                <div class="p-6">
+                    <% if (site.zones && site.zones.length> 0) { %>
+                        <div class="space-y-3">
+                            <% site.zones.forEach(zone=> { %>
+                                <div
+                                    class="flex justify-between items-center border-b border-gray-50 pb-3 last:border-0 hover:bg-gray-50 px-2 -mx-2 rounded transition">
+                                    <div>
+                                        <h3 class="font-bold text-gray-800">
+                                            <%= zone.name %>
+                                        </h3>
+                                        <p class="text-xs text-gray-500">
+                                            <%= zone.description || 'No description' %>
+                                        </p>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button
+                                            onclick="openEditZone('<%= zone.id %>', '<%= zone.name %>', '<%= zone.description %>')"
+                                            class="text-gray-400 hover:text-blue-600" title="Edit">
+                                            <i class="fas fa-pencil-alt text-xs"></i>
+                                        </button>
+                                        <form action="/sites/zones/<%= zone.id %>/delete" method="POST"
+                                            onsubmit="return confirm('Delete Zone?');" class="inline">
+                                            <button type="submit" class="text-gray-400 hover:text-red-600"
+                                                title="Delete">
+                                                <i class="fas fa-trash text-xs"></i>
+                                            </button>
+                                        </form>
+                                        <span
+                                            class="text-[10px] font-mono bg-gray-200 text-gray-600 px-2 py-0.5 rounded uppercase">ID:
+                                            <%= zone.id %>
+                                        </span>
+                                    </div>
+                                </div>
+                                <% }) %>
+                        </div>
+                        <% } else { %>
+                            <div class="text-center py-8 bg-blue-50 border-2 border-dashed border-blue-200 rounded-xl cursor-pointer hover:bg-blue-100 transition group"
+                                onclick="openModal('zoneModal')">
+                                <i class="fas fa-plus text-blue-600 text-xl mb-3"></i>
+                                <h3 class="font-bold text-blue-900">Define Your First Zone</h3>
+                            </div>
+                            <% } %>
+                </div>
+            </div>
+
+            <!-- Checkpoints Section -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-700">Checkpoints</h2>
+                    <button onclick="openModal('checkpointModal')"
+                        class="bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-blue-700 transition font-bold shadow-sm">
+                        <i class="fas fa-plus mr-1"></i> ADD CHECKPOINT
+                    </button>
+                </div>
+                <div class="p-6">
+                    <% if (site.checkpoints && site.checkpoints.length> 0) { %>
+                        <div class="space-y-4">
+                            <% site.checkpoints.forEach(cp=> { %>
+                                <div
+                                    class="flex justify-between items-start border-b border-gray-50 pb-3 last:border-0 hover:bg-gray-50 px-2 -mx-2 rounded transition">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <h3 class="font-bold text-gray-800">
+                                                <%= cp.name %>
+                                            </h3>
+                                            <span
+                                                class="text-[10px] <%= cp.type === 'nfc' ? 'bg-orange-100 text-orange-800' : (cp.type === 'qr' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800') %> px-2 py-0.5 rounded-full font-bold uppercase">
+                                                <%= cp.type %>
+                                            </span>
+                                        </div>
+                                        <p class="text-[10px] font-mono text-gray-400">UID: <%= cp.uid || '---' %>
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <div class="flex space-x-1">
+                                            <button
+                                                onclick="openEditCheckpoint('<%= cp.id %>', '<%= cp.name %>', '<%= cp.type %>', '<%= cp.uid %>', '<%= cp.zoneId %>', '<%= cp.lat %>', '<%= cp.lng %>')"
+                                                class="text-gray-400 hover:text-blue-600" title="Edit">
+                                                <i class="fas fa-pencil-alt text-xs"></i>
+                                            </button>
+                                            <form action="/sites/checkpoints/<%= cp.id %>/delete" method="POST"
+                                                onsubmit="return confirm('Delete Checkpoint?');" class="inline">
+                                                <button type="submit" class="text-gray-400 hover:text-red-600"
+                                                    title="Delete">
+                                                    <i class="fas fa-trash text-xs"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }) %>
+                        </div>
+                        <% } else { %>
+                            <div class="text-center py-6 text-gray-400 italic">No checkpoints yet.</div>
+                            <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB CONTENT: SCHEDULE -->
+    <div id="content-schedule" class="tab-content hidden">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-700">Upcoming Shifts</h2>
+                <button onclick="openModal('shiftModal')"
+                    class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-indigo-700 transition font-bold shadow-sm">
+                    <i class="fas fa-calendar-plus mr-1"></i> ASSIGN SHIFT
+                </button>
+            </div>
+            <div class="p-6">
+                <% if (site.shifts && site.shifts.length> 0) { %>
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Guard</th>
+                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+                                <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Time</th>
+                                <th class="px-4 py-2"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <% site.shifts.forEach(shift=> { %>
+                                <tr>
+                                    <td class="px-4 py-3 items-center flex gap-2">
+                                        <div
+                                            class="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-xs font-bold text-gray-600">
+                                            <%= shift.user ? shift.user.name.charAt(0) : '?' %>
+                                        </div>
+                                        <span class="text-sm text-gray-700">
+                                            <%= shift.user ? shift.user.name : 'Unknown' %>
+                                        </span>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">
+                                        <%= new Date(shift.startTime).toLocaleDateString() %>
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">
+                                        <%= new Date(shift.startTime).toLocaleTimeString([], {hour: '2-digit' ,
+                                            minute:'2-digit'}) %> - <%= new Date(shift.endTime).toLocaleTimeString([],
+                                                {hour: '2-digit' , minute:'2-digit'}) %>
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <form action="/shifts/<%= shift.id %>/delete" method="POST" class="inline"
+                                            onsubmit="return confirm('Cancel this shift?')">
+                                            <button type="submit"
+                                                class="text-red-400 hover:text-red-600 text-xs font-bold">CANCEL</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                    <% } else { %>
+                        <div class="text-center py-6">
+                            <p class="text-gray-400 italic">No upcoming shifts scheduled.</p>
+                        </div>
+                        <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB CONTENT: STAFF -->
+    <div id="content-staff" class="tab-content hidden">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-700">Assigned Staff</h2>
+                <button onclick="openModal('staffModal')"
+                    class="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-green-700 transition font-bold shadow-sm">
+                    <i class="fas fa-user-plus mr-1"></i> ASSIGN STAFF
+                </button>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Managers -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-500 uppercase mb-3 border-b pb-1">Managers</h3>
+                    <% const managers=site.staff ? site.staff.filter(u=> u.Role && u.Role.name === 'manager') : [] %>
+                        <% if (managers.length> 0) { %>
+                            <ul class="space-y-2">
+                                <% managers.forEach(manager=> { %>
+                                    <li class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded">
+                                        <div class="flex items-center gap-2">
+                                            <div
+                                                class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">
+                                                <%= manager.name.charAt(0) %>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-800">
+                                                    <%= manager.name %>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <form action="/sites/<%= site.id %>/remove-staff" method="POST"
+                                            onsubmit="return confirm('Remove manager?');">
+                                            <input type="hidden" name="userId" value="<%= manager.id %>">
+                                            <button type="submit" class="text-red-400 hover:text-red-600"><i
+                                                    class="fas fa-times"></i></button>
+                                        </form>
+                                    </li>
+                                    <% }) %>
+                            </ul>
+                            <% } else { %>
+                                <p class="text-sm text-gray-400 italic">No managers assigned.</p>
+                                <% } %>
+                </div>
+                <!-- Guards -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-500 uppercase mb-3 border-b pb-1">Guards</h3>
+                    <% const guardsList=site.staff ? site.staff.filter(u=> u.Role && u.Role.name === 'guard') : [] %>
+                        <% if (guardsList.length> 0) { %>
+                            <ul class="space-y-2">
+                                <% guardsList.forEach(guard=> { %>
+                                    <li class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded">
+                                        <div class="flex items-center gap-2">
+                                            <div
+                                                class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-xs">
+                                                <%= guard.name.charAt(0) %>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm font-bold text-gray-800">
+                                                    <%= guard.name %>
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <form action="/sites/<%= site.id %>/remove-staff" method="POST"
+                                            onsubmit="return confirm('Remove guard?');">
+                                            <input type="hidden" name="userId" value="<%= guard.id %>">
+                                            <button type="submit" class="text-red-400 hover:text-red-600"><i
+                                                    class="fas fa-times"></i></button>
+                                        </form>
+                                    </li>
+                                    <% }) %>
+                            </ul>
+                            <% } else { %>
+                                <p class="text-sm text-gray-400 italic">No guards assigned.</p>
+                                <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB CONTENT: PATROLS -->
+    <div id="content-patrols" class="tab-content hidden">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-700">Recent Patrols</h2>
+            </div>
+            <div class="p-6">
+                <% if (site.patrolRuns && site.patrolRuns.length> 0) { %>
+                    <ul class="space-y-3">
+                        <% site.patrolRuns.forEach(run=> { %>
+                            <li class="border-b last:border-0 pb-3">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <p class="font-bold text-gray-800">
+                                            <%= run.guard ? run.guard.name : 'Unknown' %>
+                                        </p>
+                                        <p class="text-xs text-gray-500">
+                                            <%= new Date(run.startTime).toLocaleString() %>
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="px-2 py-1 rounded text-xs font-bold <%= run.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                                        <%= run.status %>
+                                    </span>
+                                </div>
+                            </li>
+                            <% }) %>
+                    </ul>
+                    <% } else { %>
+                        <p class="text-gray-400 italic text-center">No recent patrols.</p>
+                        <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB CONTENT: INCIDENTS -->
+    <div id="content-incidents" class="tab-content hidden">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-gray-700">Recent Incidents</h2>
+                <a href="/incidents" class="text-xs text-blue-600 hover:underline">View All</a>
+            </div>
+            <div class="p-6">
+                <% if (site.incidents && site.incidents.length> 0) { %>
+                    <div class="space-y-4">
+                        <% site.incidents.forEach(inc=> { %>
+                            <div class="border rounded-lg p-3 hover:bg-gray-50 transition">
+                                <div class="flex justify-between mb-1">
+                                    <span class="font-bold text-gray-800">
+                                        <%= inc.type %>
+                                    </span>
+                                    <span
+                                        class="text-xs px-2 py-0.5 rounded-full <%= inc.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800' %>">
+                                        <%= inc.priority %>
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2Line">
+                                    <%= inc.description %>
+                                </p>
+                                <div class="flex justify-between items-center text-xs text-gray-500">
+                                    <span>Reported by: <%= inc.reporter ? inc.reporter.name : 'Unknown' %></span>
+                                    <span>
+                                        <%= new Date(inc.createdAt).toLocaleDateString() %>
+                                    </span>
+                                </div>
+                            </div>
+                            <% }) %>
+                    </div>
+                    <% } else { %>
+                        <p class="text-gray-400 italic text-center">No incidents reported.</p>
+                        <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals (Shift & Staff) -->
+    <div id="staffModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate__animated animate__fadeInUp">
+            <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">Assign Staff</h3>
+                <button onclick="closeModal('staffModal')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form action="/sites/<%= site.id %>/add-staff" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Select User</label>
+                    <select name="userId"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+                        required>
+                        <option value="">-- Choose User --</option>
+                        <% if (locals.allUsers) { %>
+                            <% allUsers.sort((a,b)=> (a.Role?.name > b.Role?.name) ? 1 : -1).forEach(user => { %>
+                                <!-- Filter out already assigned -->
+                                <% const isAssigned=site.staff && site.staff.some(s=> s.id === user.id); %>
+                                    <% if (!isAssigned) { %>
+                                        <option value="<%= user.id %>">
+                                            <%= user.name %> (<%= user.Role ? user.Role.name : 'Unknown' %>)
+                                        </option>
+                                        <% } %>
+                                            <% }) %>
+                                                <% } %>
+                    </select>
+                </div>
+                <button type="submit"
+                    class="w-full py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md">Assign
+                    User</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shift Modal -->
+    <div id="shiftModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate__animated animate__fadeInUp">
+            <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">Schedule Shift</h3>
+                <button onclick="closeModal('shiftModal')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form action="/shifts/create" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="siteId" value="<%= site.id %>">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Select Guard</label>
+                    <select name="userId"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                        required>
+                        <% const availableGuards=site.staff ? site.staff.filter(u=> u.Role && u.Role.name === 'guard') :
+                            [] %>
+                            <% if(availableGuards.length> 0) { %>
+                                <% availableGuards.forEach(guard=> { %>
+                                    <option value="<%= guard.id %>">
+                                        <%= guard.name %>
+                                    </option>
+                                    <% }) %>
+                                        <% } else { %>
+                                            <option value="" disabled selected>No guards assigned to site</option>
+                                            <% } %>
+                    </select>
+                    <% if(availableGuards.length===0) { %>
+                        <p class="text-red-500 text-xs mt-1">Please assign guards to the site first.</p>
+                        <% } %>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Date</label>
+                    <input type="date" name="date" class="w-full border rounded-lg px-4 py-2 outline-none" required>
+                </div>
+
+                <!-- Recurring Options -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Repeat</label>
+                        <select name="repeatFrequency" id="repeatFreq" onchange="toggleRepeatDate()"
+                            class="w-full border rounded-lg px-4 py-2 outline-none">
+                            <option value="none">Does not repeat</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                        </select>
+                    </div>
+                    <div id="repeatUntilDiv" class="hidden">
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Until</label>
+                        <input type="date" name="repeatUntil" id="repeatUntil"
+                            class="w-full border rounded-lg px-4 py-2 outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Start</label>
+                        <input type="time" name="startTime" class="w-full border rounded-lg px-4 py-2 outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">End</label>
+                        <input type="time" name="endTime" class="w-full border rounded-lg px-4 py-2 outline-none"
+                            required>
+                    </div>
+                </div>
+                <button type="submit"
+                    class="w-full py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-md">Schedule</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Zone Modals -->
+    <div id="zoneModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate__animated animate__fadeInUp">
+            <div class="bg-gray-50 px-6 py-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg" id="zoneModalTitle">Add New Zone</h3>
+                <button onclick="closeModal('zoneModal')" class="text-gray-400 hover:text-gray-600"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <form id="zoneForm" action="/sites/<%= site.id %>/zones" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Zone Name</label>
+                    <input name="name" id="zoneName" type="text" placeholder="e.g. Server Room, Perimeter A"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                    <textarea name="description" id="zoneDesc" rows="2"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('zoneModal')"
+                        class="px-6 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Checkpoint Modal (Create & Edit) -->
+    <div id="checkpointModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row animate__animated animate__fadeInUp">
+            <div class="md:w-1/2 p-6 space-y-4">
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-xl mb-4" id="cpModalTitle">Add Checkpoint</h3>
+                </div>
+                <form id="checkpointForm" action="/sites/<%= site.id %>/checkpoints" method="POST" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Name</label>
+                            <input name="name" id="cpName" type="text" placeholder="Tag Name"
+                                class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500"
+                                required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Type</label>
+                            <select name="type" id="cpType"
+                                class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500">
+                                <option value="nfc">NFC Tag</option>
+                                <option value="qr">QR Code</option>
+                                <option value="gps">GPS Location</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Tag UID
+                                (Optional)</label>
+                            <input name="uid" id="cpUid" type="text" placeholder="S/N or ID"
+                                class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Zone</label>
+                            <select name="zoneId" id="cpZoneId"
+                                class="w-full border rounded px-3 py-2 text-sm focus:ring-1 focus:ring-blue-500">
+                                <option value="">-- No Zone --</option>
+                                <% site.zones.forEach(zone=> { %>
+                                    <option value="<%= zone.id %>">
+                                        <%= zone.name %>
+                                    </option>
+                                    <% }) %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <p class="text-xs text-blue-800 font-bold mb-2 uppercase">GPS Coordinates</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="cp_lat" name="lat" readonly placeholder="Latitude"
+                                class="w-full bg-white border rounded px-3 py-1.5 text-xs">
+                            <input type="text" id="cp_lng" name="lng" readonly placeholder="Longitude"
+                                class="w-full bg-white border rounded px-3 py-1.5 text-xs">
+                        </div>
+                        <p class="text-[10px] text-blue-500 mt-2 font-medium">Click on the map on the right to set tag
+                            location.</p>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" onclick="closeModal('checkpointModal')"
+                            class="px-6 py-2 text-gray-600 text-sm font-bold hover:bg-gray-100 rounded">Cancel</button>
+                        <button type="submit"
+                            class="px-6 py-2 bg-blue-600 text-white text-sm font-bold rounded hover:bg-blue-700 shadow-md">Save</button>
+                    </div>
+                </form>
+            </div>
+            <div id="checkpointMap" class="md:w-1/2 h-64 md:h-auto bg-gray-100 relative">
+                <div class="absolute inset-0 z-0" id="cp-map-inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const siteCoords = [
+        <%= site.lat || 51.505 %>,
+        <%= site.lng || -0.09 %>
+    ];
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Check URL Params for Wizard Actions
+            const urlParams = new URLSearchParams(window.location.search);
+            const action = urlParams.get('action');
+            const success = urlParams.get('success');
+
+            if (action === 'add-zone') {
+                setTimeout(() => openModal('zoneModal'), 500); // Small delay for UX
+            }
+            if (action === 'add-checkpoint') {
+                setTimeout(() => openModal('checkpointModal'), 500);
+            }
+            if (success === 'true') {
+                // Optional: Show confetti or toast
+                console.log("Wizard Step Complete!");
+            }
+            // Site Preview Map
+            const map = L.map('site-map', { zoomControl: false, scrollWheelZoom: false }).setView(siteCoords, 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        <% if (site.lat && site.lng) { %>
+                L.marker(siteCoords).addTo(map);
+        <% } %>
+
+                // Checkpoint Selection Map
+                let cpMap;
+            let cpMarker;
+
+            window.initCpMap = function () {
+                setTimeout(() => {
+                    if (!cpMap) {
+                        cpMap = L.map('cp-map-inner').setView(siteCoords, 16);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(cpMap);
+                        cpMap.on('click', function (e) {
+                            if (cpMarker) cpMarker.setLatLng(e.latlng);
+                            else cpMarker = L.marker(e.latlng).addTo(cpMap);
+                            document.getElementById('cp_lat').value = e.latlng.lat.toFixed(6);
+                            document.getElementById('cp_lng').value = e.latlng.lng.toFixed(6);
+                        });
+                    } else {
+                        cpMap.invalidateSize();
+                    }
+                }, 100);
+            };
+
+            window.openModal = function (id) {
+                document.getElementById(id).classList.remove('hidden');
+
+                // Reset Forms for "Add" mode
+                if (id === 'zoneModal') {
+                    document.getElementById('zoneForm').action = "/sites/<%= site.id %>/zones";
+                    document.getElementById('zoneModalTitle').innerText = "Add New Zone";
+                    document.getElementById('zoneName').value = "";
+                    document.getElementById('zoneDesc').value = "";
+                }
+
+                if (id === 'checkpointModal') {
+                    document.getElementById('checkpointForm').action = "/sites/<%= site.id %>/checkpoints";
+                    document.getElementById('cpModalTitle').innerText = "Add Checkpoint";
+                    document.getElementById('cpName').value = "";
+                    document.getElementById('cpUid').value = "";
+                    document.getElementById('cpType').value = "nfc";
+                    document.getElementById('cpZoneId').value = "";
+                    document.getElementById('cp_lat').value = "";
+                    document.getElementById('cp_lng').value = "";
+                    if (cpMarker) {
+                        cpMap.removeLayer(cpMarker);
+                        cpMarker = null;
+                    }
+                    window.initCpMap();
+                }
+            }
+
+            window.openEditZone = function (id, name, desc) {
+                document.getElementById('zoneModal').classList.remove('hidden');
+                document.getElementById('zoneForm').action = "/sites/zones/" + id + "/update";
+                document.getElementById('zoneModalTitle').innerText = "Edit Zone";
+                document.getElementById('zoneName').value = name;
+                document.getElementById('zoneDesc').value = desc;
+            }
+
+            window.openEditCheckpoint = function (id, name, type, uid, zoneId, lat, lng) {
+                document.getElementById('checkpointModal').classList.remove('hidden');
+                document.getElementById('checkpointForm').action = "/sites/checkpoints/" + id + "/update";
+                document.getElementById('cpModalTitle').innerText = "Edit Checkpoint";
+                document.getElementById('cpName').value = name;
+                document.getElementById('cpType').value = type;
+                document.getElementById('cpUid').value = (uid && uid !== 'null') ? uid : "";
+                document.getElementById('cpZoneId').value = (zoneId && zoneId !== 'null') ? zoneId : "";
+                document.getElementById('cp_lat').value = (lat && lat !== 'null') ? lat : "";
+                document.getElementById('cp_lng').value = (lng && lng !== 'null') ? lng : "";
+
+                window.initCpMap();
+                setTimeout(() => {
+                    if (lat && lng && lat !== 'null') {
+                        const savedLatLng = [parseFloat(lat), parseFloat(lng)];
+                        if (cpMarker) cpMarker.setLatLng(savedLatLng);
+                        else cpMarker = L.marker(savedLatLng).addTo(cpMap);
+                        cpMap.setView(savedLatLng, 17);
+                    }
+                }, 200);
+            }
+
+            window.closeModal = function (id) {
+                document.getElementById(id).classList.add('hidden');
+            }
+
+            window.toggleRepeatDate = function () {
+                const val = document.getElementById('repeatFreq').value;
+                const div = document.getElementById('repeatUntilDiv');
+                const input = document.getElementById('repeatUntil');
+                if (val !== 'none') {
+                    div.classList.remove('hidden');
+                    input.required = true;
+                } else {
+                    div.classList.add('hidden');
+                    input.required = false;
+                    input.value = '';
+                }
+            }
+            window.switchTab = function (tabName) {
+                // Hide all contents
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('block'));
+
+                // Show specific content
+                const content = document.getElementById('content-' + tabName);
+                if (content) {
+                    content.classList.remove('hidden');
+                    content.classList.add('block');
+                }
+
+                // Update Button Styles
+                document.querySelectorAll('[id^="tab-"]').forEach(btn => {
+                    btn.classList.remove('text-blue-600', 'border-blue-600', 'active', 'border-b-2');
+                    btn.classList.add('text-gray-500', 'border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                    if (!btn.classList.contains('border-b-2')) btn.classList.add('border-b-2'); // Restore generic border class
+                });
+
+                const activeBtn = document.getElementById('tab-' + tabName);
+                if (activeBtn) {
+                    activeBtn.classList.remove('text-gray-500', 'border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                    activeBtn.classList.add('text-blue-600', 'border-blue-600', 'active');
+                }
+            }
+
+            // Init tabs
+            window.switchTab('overview');
+        });
+    </script>
+
+    <%- include('../partials/footer') %>

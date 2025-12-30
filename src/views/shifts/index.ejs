@@ -1,0 +1,166 @@
+<%- include('../partials/header') %>
+
+    <div class="max-w-6xl mx-auto mt-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-semibold text-gray-800">Shift Logs</h1>
+            <% if (user.role==='manager' || user.role==='supervisor' ) { %>
+                <button onclick="document.getElementById('createShiftModal').classList.remove('hidden')"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+                    <i class="fas fa-calendar-plus mr-2"></i> Assign Shift
+                </button>
+                <% } %>
+        </div>
+
+        <div class="bg-white shadow overflow-x-auto sm:rounded-lg mb-8">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            Officer</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            Site</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            Status</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            Schedule</th>
+                        <th
+                            class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <% shifts.forEach(shift=> { %>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-no-wrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <span
+                                            class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
+                                            <%= shift.user ? shift.user.name.charAt(0) : '?' %>
+                                        </span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm leading-5 font-medium text-gray-900">
+                                            <%= shift.user ? shift.user.name : 'Unknown User' %>
+                                        </div>
+                                        <div class="text-sm leading-5 text-gray-500">
+                                            <%= shift.user && shift.user.Role ? shift.user.Role.name : '---' %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500">
+                                <%= shift.site ? shift.site.name : 'Unassigned' %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-no-wrap">
+                                <% if(shift.status==='active' ) { %>
+                                    <span
+                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                                    <% } else if(shift.status==='completed' ) { %>
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Completed</span>
+                                        <% } else { %>
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                <%= shift.status %>
+                                            </span>
+                                            <% } %>
+                            </td>
+                            <td class="px-6 py-4 whitespace-no-wrap text-sm leading-5 text-gray-500">
+                                <div class="font-bold">
+                                    <%= new Date(shift.startTime).toLocaleDateString() %>
+                                </div>
+                                <div>
+                                    <%= new Date(shift.startTime).toLocaleTimeString() %> - <%= new
+                                            Date(shift.endTime).toLocaleTimeString() %>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-no-wrap text-sm leading-5 font-medium">
+                                <% if (user.role==='manager' ) { %>
+                                    <form action="/shifts/<%= shift.id %>/delete" method="POST"
+                                        onsubmit="return confirm('Delete this shift?');">
+                                        <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
+                                    </form>
+                                    <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                            <% if(shifts.length===0) { %>
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No shifts recorded.</td>
+                                </tr>
+                                <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Shift Modal -->
+    <div id="createShiftModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate__animated animate__fadeInUp">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="font-bold text-lg text-gray-800">Assign Shift</h3>
+                <button onclick="document.getElementById('createShiftModal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <form action="/shifts/create" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Guard</label>
+                    <select name="userId"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        required>
+                        <% users.forEach(u=> { %>
+                            <option value="<%= u.id %>">
+                                <%= u.name %> (<%= u.email %>)
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Site</label>
+                    <select name="siteId"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        required>
+                        <% sites.forEach(s=> { %>
+                            <option value="<%= s.id %>">
+                                <%= s.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Date</label>
+                    <input type="date" name="date"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">Start Time</label>
+                        <input type="time" name="startTime"
+                            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">End Time</label>
+                        <input type="time" name="endTime"
+                            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            required>
+                    </div>
+                </div>
+                <div class="flex justify-end pt-4">
+                    <button type="button" onclick="document.getElementById('createShiftModal').classList.add('hidden')"
+                        class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg mr-2">Cancel</button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md">Assign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

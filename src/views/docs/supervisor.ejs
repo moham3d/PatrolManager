@@ -1,0 +1,95 @@
+<%- include('../partials/header') %>
+
+    <div class="container mx-auto px-6 py-8">
+        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+            <div class="bg-indigo-900 text-white px-8 py-6">
+                <h1 class="text-3xl font-bold"><i class="fas fa-user-tie mr-3"></i>Supervisor Manual</h1>
+                <p class="text-indigo-200 mt-2">Field Operations & Team Leadership Guide</p>
+            </div>
+
+            <div class="p-8 prose max-w-none">
+
+                <section class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">1. Role Overview</h2>
+                    <p class="text-gray-600">As a <strong>Supervisor</strong>, you are the bridge between Management and
+                        Guards. Your primary responsibilities are:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div class="bg-indigo-50 p-4 rounded border-l-4 border-indigo-500">
+                            <h3 class="font-bold text-indigo-900">Incident Resolution</h3>
+                            <p class="text-sm">Taking ownership of reported issues and closing them.</p>
+                        </div>
+                        <div class="bg-indigo-50 p-4 rounded border-l-4 border-indigo-500">
+                            <h3 class="font-bold text-indigo-900">Quality Control</h3>
+                            <p class="text-sm">Ensuring patrols are completed on time and correctly.</p>
+                        </div>
+                        <div class="bg-indigo-50 p-4 rounded border-l-4 border-indigo-500">
+                            <h3 class="font-bold text-indigo-900">Emergency Response</h3>
+                            <p class="text-sm">First responder for Panic Alerts and Critical Incidents.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">2. Incident Management</h2>
+                    <p>When a Guard reports an incident, it appears on your <strong>Incidents Dashboard</strong>.</p>
+
+                    <h3 class="text-lg font-bold text-gray-700 mt-4">Step-by-Step Resolution:</h3>
+                    <ol class="list-decimal pl-5 space-y-2 text-gray-700">
+                        <li><strong>Acknowledge:</strong> Change status from <code>New</code> to
+                            <code>Investigating</code>. This lets the guard know you are aware.</li>
+                        <li><strong>Assign:</strong> If you cannot handle it personally, click "Assign" and choose a
+                            specific Guard or Maintenance user.</li>
+                        <li><strong>Resolve:</strong> Once the issue is fixed (e.g., window repaired, intruder removed),
+                            add <strong>Resolution Notes</strong> and change status to <code>Resolved</code> or
+                            <code>Closed</code>.</li>
+                    </ol>
+                </section>
+
+                <section class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">3. Patrol Supervision</h2>
+                    <p>Use the <strong>Live Map</strong> to track your team in real-time.</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-700">
+                        <li><strong>Grey Marker:</strong> Guard is offline or off-duty.</li>
+                        <li><strong>Green Marker:</strong> Guard is active and within the Geofence.</li>
+                        <li><strong>Red Marker:</strong> Guard is OUTSIDE the designated Zone (Geofence Breach).</li>
+                    </ul>
+                    <div class="mt-4 p-4 bg-yellow-50 rounded border border-yellow-200">
+                        <p class="text-sm text-yellow-800"><strong><i class="fas fa-info-circle"></i> Tip:</strong> If a
+                            Patrol Run is marked "Incomplete" for too long, contact the guard via radio/phone
+                            immediately.</p>
+                    </div>
+                </section>
+
+                <section class="mb-10">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">4. Field Tools</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1"><i class="fas fa-qrcode text-indigo-600"></i></div>
+                            <div class="ml-3">
+                                <h3 class="font-bold text-gray-800">Print QR Codes</h3>
+                                <p class="text-sm text-gray-600">If a checkpoint tag is damaged, go to <strong>Site
+                                        Details > Checkpoints</strong> and click "Print QR". You can replace it
+                                    immediately.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1"><i class="fas fa-user-plus text-indigo-600"></i></div>
+                            <div class="ml-3">
+                                <h3 class="font-bold text-gray-800">Emergency Staffing</h3>
+                                <p class="text-sm text-gray-600">If a guard calls in sick, you can use the
+                                    <strong>Schedule</strong> tab to assign a replacement guard instantly.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+            <div class="bg-gray-100 px-8 py-4 border-t flex justify-between items-center">
+                <span class="text-gray-500 text-sm">&copy; 2025 PatrolShield</span>
+                <a href="/docs/manual" class="text-indigo-600 hover:text-indigo-800 font-bold text-sm">Back to Main
+                    Manual</a>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

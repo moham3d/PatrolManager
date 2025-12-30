@@ -1,0 +1,208 @@
+<%- include('../partials/header') %>
+
+    <div class="max-w-4xl mx-auto py-8">
+
+        <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+            <div class="bg-blue-900 text-white px-8 py-6">
+                <h1 class="text-3xl font-bold">PatrolShield User Manual</h1>
+                <p class="text-blue-200 mt-2">v1.0.0 Enterprise Edition</p>
+            </div>
+
+            <div class="p-8 prose max-w-none">
+
+                <!-- Quick Nav -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10 not-prose">
+                    <a href="/docs/admin"
+                        class="flex items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition group">
+                        <div
+                            class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl mr-4 group-hover:scale-110 transition">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-blue-900">Admin Guide</h3>
+                            <p class="text-xs text-blue-700">Setup & Configuration</p>
+                        </div>
+                    </a>
+
+                    <a href="/docs/supervisor"
+                        class="flex items-center p-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition group">
+                        <div
+                            class="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xl mr-4 group-hover:scale-110 transition">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-indigo-900">Supervisor Guide</h3>
+                            <p class="text-xs text-indigo-700">Field Ops & Leadership</p>
+                        </div>
+                    </a>
+
+                    <a href="/docs/guard"
+                        class="flex items-center p-4 bg-green-50 hover:bg-green-100 rounded-lg border border-green-200 transition group">
+                        <div
+                            class="w-12 h-12 bg-green-600 text-white rounded-full flex items-center justify-center text-xl mr-4 group-hover:scale-110 transition">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-green-900">Guard Guide</h3>
+                            <p class="text-xs text-green-700">Daily Duties & App</p>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="mb-8 border-b pb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Core Concepts</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-blue-900"><i class="fas fa-map-marker-alt mr-2"></i> Sites</h3>
+                            <p class="text-sm text-gray-600 mt-2">Physical locations you secure. Defined by a Geofence
+                                polygon. Contains <strong>Checkpoints</strong> (NFC/QR) and <strong>Zones</strong>.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="font-bold text-blue-900"><i class="fas fa-route mr-2"></i> Patrols</h3>
+                            <p class="text-sm text-gray-600 mt-2">Structured routes taken by guards. Can be ordered or
+                                random. Guards use the Mobile App to scan checkpoints.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-12">
+
+                    <!-- Section 1 -->
+                    <section>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">1. Managing Workflow (For Managers)</h2>
+
+                        <h3 class="text-lg font-bold text-gray-700 mt-6">Step 1: Assigning Shifts</h3>
+                        <p>Go to <strong>Shifts</strong> page. Click "Assign Shift". Select a Guard, Site, Date, and
+                            Time Range. This links the Guard to the Site for that duration.</p>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-2">
+                            <p class="text-sm text-yellow-700"><strong>Note:</strong> Guards cannot clock in unless they
+                                have an active Shift assigned for the current time.</p>
+                        </div>
+
+                        <h3 class="text-lg font-bold text-gray-700 mt-6">Step 2: Assigning Incidents</h3>
+                        <p>When a Guard reports an incident (e.g., "Broken Window"), it appears as "New" on the
+                            <strong>Incidents Dashboard</strong>.
+                        </p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li>Click <strong>Assign</strong> next to the incident.</li>
+                            <li>Select a user (e.g., Maintenance Staff or Supervisor).</li>
+                            <li>The status changes to <code>investigating</code>.</li>
+                            <li>The assignee resolves it via Mobile or Web.</li>
+                        </ul>
+                    </section>
+
+                    <!-- Section 2 -->
+                    <section>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">2. Field Operations (For Guards)</h2>
+
+                        <h3 class="text-lg font-bold text-gray-700 mt-6">Clocking In</h3>
+                        <p>Open the Mobile App. Ensure GPS is on. Click "Clock In".</p>
+                        <p class="text-sm text-gray-500 italic mt-1">Error: "Too far from site"? Move inside the
+                            Geofence circle.</p>
+
+                        <h3 class="text-lg font-bold text-gray-700 mt-6">Visitor Management</h3>
+                        <p>Tap "Visitors" on the tablet. You will see a list of <strong>Expected Visitors</strong> for
+                            today (pre-registered by Managers). Tap "Check In" when they arrive.</p>
+                    </section>
+
+                    <!-- Section 3 -->
+                    <section>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">3. Analytics & Alerts</h2>
+
+                        <h3 class="text-lg font-bold text-gray-700 mt-6">Late Arrival Alerts</h3>
+                        <p>If a guard is scheduled for 09:00 AM but hasn't clocked in by 09:15 AM, the system emits a
+                            <strong>Late Arrival Alert</strong> on the Dashboard.
+                        </p>
+
+                        <h3 class="text-lg font-bold text-gray-700 mt-6">Daily Activity Reports (DAR)</h3>
+                        <p>Go to <strong>Data & Reports</strong>. meaningful PDF summaries of all patrols, incidents,
+                            and attendance logs for any given day. Perfect for client emails.</p>
+                    </section>
+
+                    <!-- Section 4 -->
+                    <section>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">4. Permissions & Roles</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm text-left text-gray-700 border">
+                                <thead class="bg-gray-100 text-gray-900 border-b uppercase font-bold">
+                                    <tr>
+                                        <th class="px-4 py-2">Action</th>
+                                        <th class="px-4 py-2 text-center">Admin</th>
+                                        <th class="px-4 py-2 text-center">Manager</th>
+                                        <th class="px-4 py-2 text-center">Supervisor</th>
+                                        <th class="px-4 py-2 text-center">Guard</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <!-- Site Management -->
+                                    <tr class="bg-blue-50 font-bold">
+                                        <td colspan="5" class="px-4 py-1">Site Management</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-2">Create/Delete Site</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-2">Manage Zones</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                    </tr>
+
+                                    <!-- Shifts -->
+                                    <tr class="bg-blue-50 font-bold">
+                                        <td colspan="5" class="px-4 py-1">Shifts</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-2">Create Shift</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-2">View Calendar</td>
+                                        <td class="text-center text-green-600">All</td>
+                                        <td class="text-center text-green-600">Assigned</td>
+                                        <td class="text-center text-green-600">Assigned</td>
+                                        <td class="text-center text-green-600">Own</td>
+                                    </tr>
+
+                                    <!-- Patrols -->
+                                    <tr class="bg-blue-50 font-bold">
+                                        <td colspan="5" class="px-4 py-1">Patrols</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-2">Perform Patrol</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-4 py-2">Live Map</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-green-600">✔</td>
+                                        <td class="text-center text-gray-300">✖</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                </div>
+
+            </div>
+            <div class="bg-gray-100 px-8 py-4 border-t">
+                <p class="text-center text-gray-500 text-sm">&copy; 2025 PatrolShield Enterprise. <a href="/"
+                        class="text-blue-600 hover:underline">Back to Dashboard</a></p>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

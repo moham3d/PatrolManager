@@ -1,0 +1,105 @@
+<%- include('../partials/header') %>
+
+    <div class="max-w-xl mx-auto bg-white p-8 rounded-lg shadow">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">
+            <%= title %>
+        </h1>
+
+        <form action="/incidents" method="POST" enctype="multipart/form-data">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Issue Type</label>
+                <input name="type" type="text" placeholder="e.g. Broken Lighting, Water Leak"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    required>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Priority</label>
+                <select name="priority"
+                    class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Site</label>
+                    <select name="siteId" id="siteSelect"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required>
+                        <option value="">Select a Site...</option>
+                        <% sites.forEach(site=> { %>
+                            <option value="<%= site.id %>">
+                                <%= site.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Zone (Optional)</label>
+                    <select name="zoneId" id="zoneSelect"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        disabled>
+                        <option value="">Select a Zone...</option>
+                        <% zones.forEach(zone=> { %>
+                            <option value="<%= zone.id %>" data-site="<%= zone.siteId %>">
+                                <%= zone.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <script>
+                document.getElementById('siteSelect').addEventListener('change', function () {
+                    const siteId = this.value;
+                    const zoneSelect = document.getElementById('zoneSelect');
+                    const options = zoneSelect.querySelectorAll('option[data-site]');
+
+                    zoneSelect.value = "";
+
+                    if (siteId) {
+                        zoneSelect.disabled = false;
+                        let count = 0;
+                        options.forEach(opt => {
+                            if (opt.dataset.site === siteId) {
+                                opt.hidden = false;
+                                count++;
+                            } else {
+                                opt.hidden = true;
+                            }
+                        });
+                        // If no zones for this site, maybe keep disabled or show "No zones"
+                    } else {
+                        zoneSelect.disabled = true;
+                    }
+                });
+            </script>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Details</label>
+                <textarea name="description" rows="4"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Evidence (Photo)</label>
+                <input type="file" name="evidence" accept="image/*"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            </div>
+
+            <!-- Hidden lat/lng for now, or imagine a map picker -->
+            <input type="hidden" name="location[lat]" value="0">
+            <input type="hidden" name="location[lng]" value="0">
+
+            <button type="submit"
+                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline w-full">
+                Submit Report
+            </button>
+        </form>
+    </div>
+
+    <%- include('../partials/footer') %>

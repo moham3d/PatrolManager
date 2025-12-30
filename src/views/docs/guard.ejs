@@ -1,0 +1,75 @@
+<%- include('../partials/header') %>
+
+    <div class="container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6"><i class="fas fa-user-shield mr-2"></i>Guard Manual</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">1. Starting Your Day</h2>
+
+                <h3 class="text-lg font-bold text-gray-800 mt-4"><i
+                        class="fas fa-calendar-check mr-2 text-blue-500"></i> Check Your Schedule</h3>
+                <p class="text-gray-600 mb-2">Login and view the <strong>Dashboard</strong>. You will see your "Next
+                    Shift".</p>
+
+                <h3 class="text-lg font-bold text-gray-800 mt-4"><i class="fas fa-sign-in-alt mr-2 text-green-500"></i>
+                    Clock In</h3>
+                <p class="text-gray-600 mb-2">When you arrive at the Site:</p>
+                <ol class="list-decimal pl-5 text-gray-600 space-y-1">
+                    <li>Open Agnecy App or Web Dashboard.</li>
+                    <li>Ensure GPS is enabled.</li>
+                    <li>Click the <strong>CLOCK IN NOW</strong> button.</li>
+                    <li>Your status changes to <span class="text-green-600 font-bold">ON DUTY</span>.</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">2. Routine Duties</h2>
+
+                <h3 class="text-lg font-bold text-gray-800 mt-4"><i class="fas fa-walking mr-2 text-blue-500"></i>
+                    Conducting Patrols</h3>
+                <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                    <li>Click <strong>Start Patrol</strong> on the dashboard.</li>
+                    <li>Select the Route (e.g., "Perimeter Check").</li>
+                    <li>Walk to each checkpoint and scan the QR/NFC.</li>
+                    <li>Complete the run to log your activity.</li>
+                </ul>
+
+                <h3 class="text-lg font-bold text-gray-800 mt-4"><i class="fas fa-users mr-2 text-purple-500"></i>
+                    Visitor Management</h3>
+                <ul class="list-disc pl-5 text-gray-600 space-y-1">
+                    <li>Go to <strong>Visitors</strong> tab.</li>
+                    <li>View the "Expected" list.</li>
+                    <li>When a guest arrives, ask for ID and click <strong>Check In</strong>.</li>
+                    <li>When they leave, click <strong>Check Out</strong>.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h2 class="text-2xl font-bold mb-4 text-red-600">3. Emergency Protocols</h2>
+            <div class="flex items-start space-x-4">
+                <div class="flex-shrink-0">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">Reporting Incidents</h3>
+                    <p class="text-gray-600 mb-2">If you witness theft, vandalism, or safety hazards:</p>
+                    <ol class="list-decimal pl-5 text-gray-600 mb-4">
+                        <li>Click <strong>Report Incident</strong>.</li>
+                        <li>Select Priority (Low, Medium, High, Critical).</li>
+                        <li>Take a photo (Evidence).</li>
+                        <li>Submit. Managers are notified instantly.</li>
+                    </ol>
+
+                    <h3 class="text-xl font-bold text-red-600">PANIC BUTTON</h3>
+                    <p class="text-gray-600">Use the big Red Button on your Dashboard <strong>ONLY</strong> if you are
+                        in immediate physical danger and cannot type a report.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

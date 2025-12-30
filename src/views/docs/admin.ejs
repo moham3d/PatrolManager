@@ -1,0 +1,59 @@
+<%- include('../partials/header') %>
+
+    <div class="container mx-auto px-6 py-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6"><i class="fas fa-cogs mr-2"></i>Administration Manual</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">User Management</h2>
+                <p class="mb-4 text-gray-700">Manage guards, managers, and admin accounts.</p>
+                <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                    <li><strong>Create User:</strong> Go to Users > Add New. Assign 'Guard' role for field staff.</li>
+                    <li><strong>Edit Roles:</strong> You can promote a User to Manager.</li>
+                    <li><strong>Deactivate:</strong> Suspend access for terminated employees immediately.</li>
+                </ul>
+                <div class="mt-4">
+                    <a href="/users" class="text-blue-600 hover:text-blue-800 font-semibold">Go to Users &rarr;</a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Site Configuration</h2>
+                <p class="mb-4 text-gray-700">Set up client sites and patrol routes.</p>
+                <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                    <li><strong>Zones:</strong> Define areas within a site (e.g., "North Parking").</li>
+                    <li><strong>Checkpoints:</strong> Generate QR codes for defined zones.</li>
+                    <li><strong>Routes:</strong> Create ordered lists of checkpoints for patrols.</li>
+                </ul>
+                <div class="mt-4">
+                    <a href="/sites" class="text-blue-600 hover:text-blue-800 font-semibold">Manage Sites &rarr;</a>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Reports & Analytics</h2>
+                <p class="mb-4 text-gray-700">View performance metrics and download logs.</p>
+                <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                    <li><strong>Incident Reports:</strong> Filter by date and severity.</li>
+                    <li><strong>Patrol Logs:</strong> Verify that rounds were completed on time.</li>
+                    <li><strong>Export:</strong> Download PDF/CSV reports for clients.</li>
+                </ul>
+                <div class="mt-4">
+                    <a href="/reports" class="text-blue-600 hover:text-blue-800 font-semibold">View Reports &rarr;</a>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold mb-4 text-blue-900">Shift Scheduling</h2>
+                <p class="mb-4 text-gray-700">Assign guards to sites and times.</p>
+                <ul class="list-disc pl-5 text-gray-700 space-y-2">
+                    <li><strong>Create Shift:</strong> Assign a user to a site for a specific time range.</li>
+                    <li><strong>Overlap:</strong> System will warn if a user is double-booked.</li>
+                </ul>
+                <div class="mt-4">
+                    <a href="/shifts" class="text-blue-600 hover:text-blue-800 font-semibold">Manage Shifts &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

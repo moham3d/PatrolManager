@@ -1,0 +1,170 @@
+<%- include('../partials/header') %>
+
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Visitor Management</h1>
+            <p class="text-gray-600">Track guests and deliveries</p>
+        </div>
+        <button onclick="document.getElementById('registerVisitorModal').classList.remove('hidden')"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition">
+            <i class="fas fa-user-plus mr-2"></i> Pre-Register Visitor
+        </button>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <h3 class="text-xs uppercase text-blue-500 font-bold">Expected Today</h3>
+            <p class="text-2xl font-bold text-gray-800">
+                <%= visitors.filter(v=> v.status === 'expected').length %>
+            </p>
+        </div>
+        <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+            <h3 class="text-xs uppercase text-green-500 font-bold">Checked In</h3>
+            <p class="text-2xl font-bold text-gray-800">
+                <%= visitors.filter(v=> v.status === 'checked_in').length %>
+            </p>
+        </div>
+    </div>
+
+    <!-- Visitors List -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-x-auto">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-bold">
+                        <th class="px-6 py-4">Visitor</th>
+                        <th class="px-6 py-4">Host / Purpose</th>
+                        <th class="px-6 py-4">Expected</th>
+                        <th class="px-6 py-4">Site</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <% visitors.forEach(v=> { %>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-4 font-medium text-gray-800">
+                                <%= v.name %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-bold text-gray-700">
+                                    <%= v.hostName %>
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    <%= v.purpose %>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600 text-sm">
+                                <%= new Date(v.expectedArrivalTime).toLocaleString() %>
+                            </td>
+                            <td class="px-6 py-4 text-gray-600">
+                                <%= v.site ? v.site.name : 'Unknown' %>
+                            </td>
+                            <td class="px-6 py-4">
+                                <% if(v.status==='expected' ) { %>
+                                    <span
+                                        class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold">Expected</span>
+                                    <% } else if(v.status==='checked_in' ) { %>
+                                        <span
+                                            class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">On
+                                            Site</span>
+                                        <% } else if(v.status==='checked_out' ) { %>
+                                            <span
+                                                class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-bold">Left</span>
+                                            <% } else { %>
+                                                <span
+                                                    class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-bold">
+                                                    <%= v.status %>
+                                                </span>
+                                                <% } %>
+                            </td>
+                            <td class="px-6 py-4 flex space-x-2">
+                                <% if(v.status==='expected' ) { %>
+                                    <form action="/visitors/<%= v.id %>/check-in" method="POST">
+                                        <button
+                                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">Check
+                                            In</button>
+                                    </form>
+                                    <% } else if(v.status==='checked_in' ) { %>
+                                        <form action="/visitors/<%= v.id %>/check-out" method="POST">
+                                            <button
+                                                class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs font-bold">Check
+                                                Out</button>
+                                        </form>
+                                        <% } %>
+                            </td>
+                        </tr>
+                        <% }) %>
+                            <% if (visitors.length===0) { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-8 text-gray-400 italic">No visitors expected.
+                                    </td>
+                                </tr>
+                                <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Create Modal -->
+    <div id="registerVisitorModal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate__animated animate__fadeInUp">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="font-bold text-lg text-gray-800">Pre-Register Visitor</h3>
+                <button onclick="document.getElementById('registerVisitorModal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form action="/visitors/register" method="POST" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Visitor Name</label>
+                    <input type="text" name="name"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="John Doe" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Site</label>
+                    <select name="siteId"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        required>
+                        <% sites.forEach(site=> { %>
+                            <option value="<%= site.id %>">
+                                <%= site.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Host Name</label>
+                    <input type="text" name="hostName"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Person being visited" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Purpose</label>
+                    <input type="text" name="purpose"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        placeholder="Meeting, Delivery, etc.">
+                </div>
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Expected Arrival</label>
+                    <input type="datetime-local" name="expectedArrivalTime"
+                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        required>
+                </div>
+
+                <div class="flex justify-end pt-4">
+                    <button type="button"
+                        onclick="document.getElementById('registerVisitorModal').classList.add('hidden')"
+                        class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg mr-2">Cancel</button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>

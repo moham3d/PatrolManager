@@ -1,0 +1,47 @@
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Expose globally for other scripts (like footer tracking)
+        window.socket = io();
+        const socket = window.socket;
+
+        // Listen for Panic Alerts (Global)
+        socket.on('panic_alert', (data) => {
+            console.log('PANIC RECEIVED:', data);
+
+            // 1. Play Alarm Sound (if user interacted)
+            const audio = new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg');
+            audio.play().catch(e => console.warn('Audio blocked:', e));
+
+            // 2. Show Persistent Error Toast
+            if (typeof notyf !== 'undefined') {
+                let msg = `<b>🚨 PANIC ALERT!</b><br>Guard: ${data.guard}<br>Time: ${new Date(data.time).toLocaleTimeString()}`;
+
+                if (data.location && data.location.lat) {
+                    msg += `<br><a href="https://www.google.com/maps?q=${data.location.lat},${data.location.lng}" target="_blank" class="underline font-bold text-yellow-300">📍 VIEW GPS LOCATION</a>`;
+                }
+
+                msg += `<br><a href="/dashboard" class="underline font-bold text-white block mt-1">VIEW LIVE DASHBOARD</a>`;
+
+                notyf.error({
+                    message: msg,
+                    duration: 0, // Infinite duration until dismissed
+                    dismissible: true
+                });
+            } else {
+                alert(`🚨 PANIC: ${data.guard} triggered SOS at ${new Date(data.time).toLocaleTimeString()}`);
+            }
+        });
+
+        // Listen for New Incidents
+        socket.on('new_incident', (data) => {
+            if (typeof notyf !== 'undefined') {
+                notyf.open({
+                    type: 'info',
+                    message: `<b>New Incident:</b> ${data.type} (${data.priority})`,
+                    duration: 5000
+                });
+            }
+        });
+    });
+</script>
