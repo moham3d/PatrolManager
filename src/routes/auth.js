@@ -30,14 +30,14 @@ router.post('/login', (req, res, next) => {
             // Note: Our test runner sends Accept: application/json
             // But we also want to support browser form submit (which wants redirect)
 
-            res.format({
-                'text/html': () => res.redirect('/dashboard'),
-                'application/json': () => {
-                    // Generate JWT for mobile
-                    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
-                    res.json({ message: 'Logged in', token, user });
-                }
-            });
+            // Mobile/API always wants JSON
+            if (req.xhr || req.headers.accept?.includes('json') || req.body.email) {
+                const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+                return res.json({ message: 'Logged in', token, user });
+            }
+
+            // Browser
+            res.redirect('/dashboard');
         });
     })(req, res, next);
 });
