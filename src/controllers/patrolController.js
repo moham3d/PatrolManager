@@ -199,17 +199,20 @@ exports.startPatrol = async (req, res) => {
         const guardId = req.user.id;
 
         // 1. Check for Active Shift
-        const activeShift = await Shift.findOne({
+        let activeShift = await Shift.findOne({
             where: {
                 userId: guardId,
                 status: 'active'
             }
         });
 
+        // Mobile Compatibility: Auto-start shift if none exists
         if (!activeShift) {
-            return res.status(403).json({
-                error: true,
-                message: 'You must Clock In before starting a patrol.'
+            console.log(`ℹ️ Auto-Clocking In guard ${guardId} for patrol.`);
+            activeShift = await Shift.create({
+                userId: guardId,
+                startTime: new Date(),
+                status: 'active'
             });
         }
 

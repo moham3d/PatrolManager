@@ -35,14 +35,35 @@ exports.create = async (req, res) => {
 exports.store = async (req, res) => {
     try {
         // Handle file upload here if Multer was set up (not yet in this scope, skipping for now)
-        const { type, priority, description, siteId, zoneId, location } = req.body;
+        const { type, priority, description, siteId, zoneId, location, imageBase64 } = req.body;
 
         let geom = null;
         if (location && location.lat && location.lng) {
             geom = { type: 'Point', coordinates: [location.lat, location.lng] };
         }
 
-        const evidencePath = req.file ? '/uploads/incidents/' + req.file.filename : null;
+        let evidencePath = req.file ? '/uploads/incidents/' + req.file.filename : null;
+
+        // Mobile: Handle Base64 Upload
+        if (!evidencePath && imageBase64) {
+            try {
+                const fs = require('fs');
+                const path = require('path');
+                const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+                const filename = `mobile_${Date.now()}_${Math.floor(Math.random() * 1000)}.jpg`;
+                const uploadDir = path.join(__dirname, '../../public/uploads/incidents');
+
+                if (!fs.existsSync(uploadDir)) {
+                    fs.mkdirSync(uploadDir, { recursive: true });
+                }
+
+                fs.writeFileSync(path.join(uploadDir, filename), base64Data, 'base64');
+                evidencePath = '/uploads/incidents/' + filename;
+            } catch (e) {
+                console.error('Base64 Upload Error:', e);
+                // Continue without image or return error? Mobile app expects success.
+            }
+        }
 
         const incident = await Incident.create({
             type,
