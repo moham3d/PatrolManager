@@ -103,10 +103,35 @@ exports.store = async (req, res) => {
 
 // GET /patrols/my-today (For officer to see assigned patrols - simplified)
 exports.myPatrols = async (req, res) => {
-    // Return all templates for the site the guard is currently at? 
-    // Or just all public templates. Let's return all for now.
-    const templates = await PatrolTemplate.findAll({ include: [Site] });
-    res.json(templates);
+    try {
+        console.log('GET /patrols/my-schedule hit by user:', req.user.id);
+        const templates = await PatrolTemplate.findAll({
+            include: [{ model: Site }]
+        });
+
+        // Enrich with Checkpoint Data
+        const enrichedTemplates = await Promise.all(templates.map(async (tmpl) => {
+            const t = tmpl.toJSON();
+            if (t.checkpointsList && t.checkpointsList.length > 0) {
+                const checkpoints = await Checkpoint.findAll({
+                    where: { id: t.checkpointsList }
+                });
+                // Maintain order
+                t.checkpoints = t.checkpointsList
+                    .map(id => checkpoints.find(cp => cp.id === id))
+                    .filter(cp => cp !== undefined);
+            } else {
+                t.checkpoints = [];
+            }
+            return t;
+        }));
+
+        console.log('Found templates:', enrichedTemplates.length);
+        res.json(enrichedTemplates);
+    } catch (err) {
+        console.error('Error in myPatrols:', err);
+        res.status(500).json({ error: true, message: err.message });
+    }
 };
 
 // POST /patrols/start
