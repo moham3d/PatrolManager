@@ -89,27 +89,40 @@ exports.create = async (req, res) => {
         const createdShifts = await Shift.bulkCreate(shiftsToCreate);
 
         res.format({
-            'text/html': () => res.redirect(req.get('Referer') || '/shifts'),
+            'text/html': () => {
+                req.flash('success', `${createdShifts.length} shift(s) scheduled successfully`);
+                res.redirect(`/sites/${siteId}?tab=schedule`);
+            },
             'application/json': () => res.status(201).json({ count: createdShifts.length, shifts: createdShifts })
         });
 
     } catch (err) {
         console.error(err);
-        res.status(400).send('Error creating shift(s): ' + err.message);
+        req.flash('error', 'Error creating shift(s): ' + err.message);
+        res.redirect(`/sites/${req.body.siteId}?tab=schedule`);
     }
 };
 
 exports.destroy = async (req, res) => {
     try {
-        await Shift.destroy({ where: { id: req.params.id } });
+        const shift = await Shift.findByPk(req.params.id);
+        if (shift) {
+            const siteId = shift.siteId;
+            await shift.destroy();
+            req.flash('success', 'Shift cancelled successfully');
 
-        res.format({
-            'text/html': () => res.redirect('/shifts'),
-            'application/json': () => res.json({ message: 'Shift deleted' })
-        });
+            res.format({
+                'text/html': () => res.redirect(`/sites/${siteId}?tab=schedule`),
+                'application/json': () => res.json({ message: 'Shift deleted' })
+            });
+        } else {
+            req.flash('error', 'Shift not found');
+            res.redirect('back');
+        }
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error deleting shift');
+        req.flash('error', 'Error cancelling shift');
+        res.redirect('back');
     }
 };
 

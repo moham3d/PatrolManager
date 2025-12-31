@@ -14,4 +14,5 @@ interface PatrolRepository {
     suspend fun endPatrol(): Flow<Resource<Unit>>
     fun getActivePatrol(): Flow<PatrolEntity?>
     suspend fun getCompletedPatrols(): List<PatrolEntity>
+    suspend fun sendHeartbeat(lat: Double, lng: Double, activeRunId: Int?)
 }

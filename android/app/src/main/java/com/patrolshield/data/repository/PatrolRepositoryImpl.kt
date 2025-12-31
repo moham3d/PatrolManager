@@ -193,4 +193,12 @@ class PatrolRepositoryImpl @Inject constructor(
         calendar.set(java.util.Calendar.MILLISECOND, 0)
         return patrolDao.getCompletedPatrolsAfter(calendar.timeInMillis)
     }
+
+    override suspend fun sendHeartbeat(lat: Double, lng: Double, activeRunId: Int?) {
+        try {
+            api.sendHeartbeat(com.patrolshield.data.remote.dto.HeartbeatRequest(lat, lng, activeRunId))
+        } catch (e: Exception) {
+            // fail silently for heartbeat
+        }
+    }
 }

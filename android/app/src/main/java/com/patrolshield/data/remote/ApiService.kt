@@ -31,4 +31,10 @@ interface ApiService {
 
     @GET("supervisor/live-patrols")
     suspend fun getLivePatrols(): Response<List<LivePatrolDto>>
+
+    @POST("patrols/heartbeat")
+    suspend fun sendHeartbeat(@Body request: HeartbeatRequest): Response<Unit>
+
+    @GET("manager/stats")
+    suspend fun getManagerStats(): Response<ManagerStatsDto>
 }

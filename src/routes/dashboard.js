@@ -59,6 +59,41 @@ router.get('/', ensureAuth, async (req, res) => {
             return res.render('dashboard/manager', { title: 'Manager Dashboard', stats, recentIncidents, sites: user.assignedSites });
         }
 
+        else if (role === 'supervisor') {
+            // [AUDIT FIX] Supervisor Dashboard
+            // Similar to Manager but usually just for their ONE site.
+            const user = await User.findByPk(req.user.id, {
+                include: [{ model: Site, as: 'assignedSites' }]
+            });
+
+            const siteIds = user.assignedSites.map(s => s.id);
+
+            const stats = {
+                mySites: siteIds.length,
+                activeShifts: await Shift.count({
+                    where: {
+                        status: 'active',
+                        siteId: siteIds.length ? { [Op.in]: siteIds } : -1
+                    }
+                }),
+                pendingIncidents: await Incident.count({
+                    where: {
+                        status: 'new',
+                        siteId: siteIds.length ? { [Op.in]: siteIds } : -1
+                    }
+                })
+            };
+
+            const recentIncidents = await Incident.findAll({
+                where: { siteId: siteIds.length ? { [Op.in]: siteIds } : -1 },
+                limit: 5,
+                order: [['createdAt', 'DESC']],
+                include: [{ model: User, as: 'reporter' }, { model: Site }]
+            });
+
+            return res.render('dashboard/supervisor', { title: 'Supervisor Dashboard', stats, recentIncidents, sites: user.assignedSites });
+        }
+
         else {
             // Guard
             const activeShift = await Shift.findOne({

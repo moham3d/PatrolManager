@@ -8,6 +8,10 @@ import com.patrolshield.domain.repository.AuthRepository
 import com.patrolshield.domain.repository.IncidentRepository
 import com.patrolshield.domain.repository.NotificationRepository
 import com.patrolshield.domain.repository.PatrolRepository
+import com.patrolshield.data.repository.SupervisorRepositoryImpl
+import com.patrolshield.domain.repository.SupervisorRepository
+import com.patrolshield.data.repository.ManagerRepositoryImpl
+import com.patrolshield.domain.repository.ManagerRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -45,6 +49,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSupervisorRepository(
-        supervisorRepositoryImpl: com.patrolshield.data.repository.SupervisorRepositoryImpl
-    ): com.patrolshield.domain.repository.SupervisorRepository
+        supervisorRepositoryImpl: SupervisorRepositoryImpl
+    ): SupervisorRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindManagerRepository(
+        managerRepositoryImpl: ManagerRepositoryImpl
+    ): ManagerRepository
 }

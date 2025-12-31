@@ -1,0 +1,191 @@
+<%- include('../partials/header') %>
+
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Edit Patrol Route: <%= template.name %>
+        </h1>
+
+        <form action="/patrols/<%= template.id %>" method="POST">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Route Name</label>
+                    <input name="name" type="text" value="<%= template.name %>"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Site</label>
+                    <select id="siteSelect" name="siteId"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        required onchange="loadCheckpoints()">
+                        <% sites.forEach(site=> { %>
+                            <option value="<%= site.id %>" <%=template.siteId===site.id ? 'selected' : '' %>>
+                                <%= site.name %>
+                            </option>
+                            <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                <textarea name="description" rows="2"
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"><%= template.description %></textarea>
+            </div>
+
+            <div class="flex space-x-6 mb-6">
+                <div class="w-1/2">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Patrol Type</label>
+                    <select name="type"
+                        class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="ordered" <%=template.type==='ordered' ? 'selected' : '' %>>Ordered (Sequential)
+                        </option>
+                        <option value="random" <%=template.type==='random' ? 'selected' : '' %>>Randomized</option>
+                        <option value="freeroam" <%=template.type==='freeroam' ? 'selected' : '' %>>Free Roam</option>
+                    </select>
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Est. Duration (Min)</label>
+                    <input name="duration" type="number" value="<%= template.estimatedDurationMinutes %>"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Select Checkpoints (In Order)</label>
+                <div id="checkpointsContainer"
+                    class="bg-gray-50 p-4 rounded border border-gray-200 h-64 overflow-y-auto">
+                    <p class="text-gray-500 italic">Loading...</p>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+                Update Route
+            </button>
+        </form>
+    </div>
+
+    <!-- Pass template data to JS -->
+    <script>
+        const initialCheckpoints = <%= JSON.stringify(template.checkpointsList || []) %>;
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <script>
+        let availableCheckpoints = [];
+        let selectedCheckpoints = []; // Stores IDs
+
+        // On Load (Wait for DOM)
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCheckpoints();
+        });
+
+        async function loadCheckpoints() {
+            const siteId = document.getElementById('siteSelect').value;
+            const container = document.getElementById('checkpointsContainer');
+
+            if (!siteId) return;
+
+            try {
+                const response = await fetch('/sites/' + siteId, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+
+                if (data.site && data.site.checkpoints && data.site.checkpoints.length > 0) {
+                    availableCheckpoints = data.site.checkpoints;
+                    renderCheckpointsUI();
+                } else {
+                    container.innerHTML = '<p class="text-orange-500">No checkpoints found for this site.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-red-500">Error loading checkpoints.</p>';
+            }
+        }
+
+        function renderCheckpointsUI() {
+            const container = document.getElementById('checkpointsContainer');
+
+            // Set of selected IDs to filter available list
+            const selectedSet = new Set(initialCheckpoints);
+
+            // Available: In DB but not in our list
+            const availableList = availableCheckpoints.filter(cp => !selectedSet.has(cp.id));
+
+            // Selected: In our list, map to objects (preserve order)
+            const selectedList = initialCheckpoints.map(id => availableCheckpoints.find(cp => cp.id === id)).filter(cp => cp !== undefined);
+
+
+            let html = `
+                <div class="flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:w-1/2">
+                        <h3 class="font-bold text-gray-600 mb-2 text-sm uppercase">Available Checkpoints</h3>
+                        <div id="availableList" class="bg-gray-100 p-2 rounded h-64 overflow-y-auto space-y-2 border border-gray-300">
+                            ${availableList.map(cp => createCheckpointItem(cp)).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-1/2">
+                        <h3 class="font-bold text-blue-600 mb-2 text-sm uppercase">Selected Route Order</h3>
+                        <div id="selectedList" class="bg-blue-50 p-2 rounded h-64 overflow-y-auto space-y-2 border border-blue-200">
+                             ${selectedList.map(cp => createCheckpointItem(cp)).join('')}
+                             <p class="text-gray-400 text-xs text-center mt-4 pointer-events-none" id="emptyMsg" style="display:${selectedList.length ? 'none' : 'block'}">Drag checkpoints here</p>
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="checkpoints" id="checkpointsInput" value="${initialCheckpoints.join(',')}">
+            `;
+
+            container.innerHTML = html;
+
+            new Sortable(document.getElementById('availableList'), {
+                group: 'shared',
+                animation: 150,
+                sort: false
+            });
+
+            new Sortable(document.getElementById('selectedList'), {
+                group: 'shared',
+                animation: 150,
+                onAdd: function (evt) {
+                    document.getElementById('emptyMsg').style.display = 'none';
+                    updateInput();
+                },
+                onRemove: function (evt) {
+                    if (document.getElementById('selectedList').querySelectorAll('[data-id]').length === 0) {
+                        document.getElementById('emptyMsg').style.display = 'block';
+                    }
+                    updateInput();
+                },
+                onSort: function (evt) {
+                    updateInput();
+                }
+            });
+        }
+
+        function createCheckpointItem(cp) {
+            return `
+                <div class="bg-white p-3 rounded shadow-sm cursor-move border border-gray-200 hover:border-blue-400 flex justify-between items-center" data-id="${cp.id}">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-grip-vertical text-gray-300"></i>
+                        <span class="font-medium text-gray-700">${cp.name}</span>
+                    </div>
+                    <span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 rounded uppercase">${cp.type}</span>
+                </div>
+            `;
+        }
+
+        function updateInput() {
+            const list = document.getElementById('selectedList');
+            const ids = [];
+            for (let item of list.children) {
+                if (item.hasAttribute('data-id')) {
+                    ids.push(item.getAttribute('data-id'));
+                }
+            }
+            document.getElementById('checkpointsInput').value = ids.join(',');
+        }
+    </script>
+
+    <%- include('../partials/footer') %>

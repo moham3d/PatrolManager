@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
         roleId: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        isActive: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true
         }
     }, {
         hooks: {

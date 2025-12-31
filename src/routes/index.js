@@ -28,5 +28,7 @@ router.use('/shifts', require('./shifts'));
 router.use('/reports', require('./reports'));
 router.use('/visitors', require('./visitors'));
 router.use('/users', require('./users'));
+router.use('/supervisor', require('./supervisor'));
+router.use('/manager', require('./manager'));
 router.use('/docs', require('./docs'));
 module.exports = router;

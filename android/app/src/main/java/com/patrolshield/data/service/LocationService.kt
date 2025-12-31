@@ -28,6 +28,9 @@ class LocationService : Service() {
 
     @Inject
     lateinit var logDao: LogDao
+    
+    @Inject
+    lateinit var patrolRepository: com.patrolshield.domain.repository.PatrolRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: com.google.android.gms.location.FusedLocationProviderClient
@@ -43,6 +46,14 @@ class LocationService : Service() {
             override fun onLocationResult(result: LocationResult) {
                 result.locations.lastOrNull()?.let { location ->
                     serviceScope.launch {
+                        // 1. Send Live Heartbeat
+                        // We need active run ID. Repository exposes Flow, but we need sync access or latest value.
+                        // For MVP we can just pass null for runID or try to fetch it.
+                        // Ideally LocationService shouldn't know about business logic, but strict clean arch is hard here.
+                        // Let's just send location.
+                        patrolRepository.sendHeartbeat(location.latitude, location.longitude, null)
+
+                        // 2. Log Locally (Existing Logic)
                         val payload = mapOf(
                             "lat" to location.latitude,
                             "lng" to location.longitude,

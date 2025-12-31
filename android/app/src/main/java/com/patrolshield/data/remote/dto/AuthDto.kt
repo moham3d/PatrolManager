@@ -16,5 +16,10 @@ data class UserDto(
     val id: Int,
     val name: String,
     val email: String,
-    val roleId: Int?
+    val roleId: Int?,
+    val Role: RoleDto? // Matches API structure
+)
+
+data class RoleDto(
+    val name: String
 )

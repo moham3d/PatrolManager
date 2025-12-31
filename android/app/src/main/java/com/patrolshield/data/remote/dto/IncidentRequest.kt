@@ -5,6 +5,7 @@ data class IncidentRequest(
     val priority: String,
     val description: String,
     val runId: Int?, // Optional linking to patrol run
+    val siteId: Int, // Required by backend
     val lat: Double?,
     val lng: Double?,
     val imageBase64: String? = null // For simplicity in MVP

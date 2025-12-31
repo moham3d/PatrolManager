@@ -21,9 +21,9 @@ class IncidentRepositoryImpl @Inject constructor(
         type: String,
         priority: String,
         description: String,
+        siteId: Int,
         lat: Double?,
-        lng: Double?,
-        imagePath: String?
+        lng: Double?
     ): Flow<Resource<Unit>> = flow {
         emit(Resource.Loading())
 
@@ -32,7 +32,7 @@ class IncidentRepositoryImpl @Inject constructor(
             type = type,
             priority = priority,
             description = description,
-            localEvidencePath = imagePath,
+            localEvidencePath = null,
             lat = lat,
             lng = lng,
             timestamp = System.currentTimeMillis()
@@ -42,17 +42,15 @@ class IncidentRepositoryImpl @Inject constructor(
 
         try {
             // Attempt to upload
-            // Note: For MVP we might just send JSON. Image upload usually requires Multipart.
-            // As I defined 'imageBase64' in DTO, let's assume we convert if exists.
-            
             val request = IncidentRequest(
                 type = type,
                 priority = priority,
                 description = description,
                 runId = null, // Could grab active patrol run from DB if needed
+                siteId = siteId,
                 lat = lat,
                 lng = lng,
-                imageBase64 = null // Implementing base64 encoding would be "extra", skipping for MVP speed unless requested.
+                imageBase64 = null
             )
             
             val response = api.reportIncident(request)

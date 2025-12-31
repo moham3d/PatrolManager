@@ -30,9 +30,10 @@ class MainActivity : ComponentActivity() {
         kotlinx.coroutines.runBlocking {
             val user = userDao.getUser()
             if (user != null && !user.token.isNullOrEmpty()) {
-                startDestination = when (user.role) {
+                startDestination = when (user.role.lowercase()) {
                     "supervisor" -> "supervisor_dashboard"
                     "admin" -> "admin_dashboard"
+                    "manager" -> "manager_dashboard"
                     else -> "dashboard" // Default to Guard
                 }
             }
@@ -46,9 +47,10 @@ class MainActivity : ComponentActivity() {
                         composable("login") {
                             LoginScreen(
                                 onNavigateToDashboard = { role ->
-                                    val dest = when (role) {
+                                    val dest = when (role.lowercase()) {
                                         "supervisor" -> "supervisor_dashboard"
                                         "admin" -> "admin_dashboard"
+                                        "manager" -> "manager_dashboard"
                                         else -> "dashboard"
                                     }
                                     navController.navigate(dest) {
@@ -83,6 +85,16 @@ class MainActivity : ComponentActivity() {
                                     kotlinx.coroutines.runBlocking { userDao.clearUser() }
                                     navController.navigate("login") {
                                         popUpTo("admin_dashboard") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable("manager_dashboard") {
+                            com.patrolshield.presentation.dashboard.ManagerDashboard(
+                                onLogout = {
+                                    kotlinx.coroutines.runBlocking { userDao.clearUser() }
+                                    navController.navigate("login") {
+                                        popUpTo("manager_dashboard") { inclusive = true }
                                     }
                                 }
                             )

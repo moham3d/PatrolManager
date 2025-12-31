@@ -5,6 +5,7 @@ const models = {
     User: require('./User')(db, Sequelize),
     Role: require('./Role')(db, Sequelize),
     Permission: require('./Permission')(db, Sequelize),
+    RolePermission: require('./RolePermission')(db, Sequelize),
     Site: require('./Site')(db, Sequelize),
     Zone: require('./Zone')(db, Sequelize),
     Checkpoint: require('./Checkpoint')(db, Sequelize),

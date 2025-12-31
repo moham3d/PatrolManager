@@ -8,7 +8,7 @@ router.post('/clock-in', ensureAuth, shiftController.clockIn);
 router.post('/clock-out', ensureAuth, shiftController.clockOut);
 
 // Manager Routes
-router.post('/create', ensureAuth, ensureRole(['manager', 'supervisor']), shiftController.create);
-router.post('/:id/delete', ensureAuth, ensureRole(['manager']), shiftController.destroy);
+router.post('/create', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), shiftController.create);
+router.post('/:id/delete', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), shiftController.destroy);
 
 module.exports = router;

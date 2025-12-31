@@ -150,7 +150,7 @@ async function seed() {
             defaults: {
                 description: 'Check main gates and parking.',
                 checkpointsList: [cp1.id, cp2.id, cp3.id],
-                estimatedDuration: 30,
+                estimatedDurationMinutes: 30,
                 siteId: cfc.id
             }
         });

@@ -34,10 +34,9 @@ class AuthRepositoryImpl @Inject constructor(
                         id = userDto.id,
                         name = userDto.name,
                         email = userDto.email,
-                        role = when (userDto.roleId) {
+                        role = userDto.Role?.name ?: when (userDto.roleId) {
                             1 -> "admin"
-                            2 -> "supervisor"
-                            3 -> "guard"
+                            3 -> "supervisor" // Fallback based on seeder order
                             else -> "guard"
                         }, 
                         token = loginResponse.token

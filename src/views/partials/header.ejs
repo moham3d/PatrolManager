@@ -142,4 +142,20 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const notyf = new Notyf({
+                duration: 3000,
+                position: { x: 'right', y: 'top' }
+            });
+
+            <% if (locals.success && locals.success.length > 0) { %>
+                notyf.success("<%= success %>");
+            <% } %>
+
+            <% if (locals.error && locals.error.length > 0) { %>
+                notyf.error("<%= error %>");
+            <% } %>
+        });
+    </script>
     <main class="container mx-auto px-6 py-8 flex-grow">

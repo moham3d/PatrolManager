@@ -50,16 +50,15 @@ exports.show = async (req, res) => {
                 {
                     model: Shift,
                     as: 'shifts',
-                    required: false,
-                    where: {
-                        startTime: { [require('sequelize').Op.gte]: new Date() } // Future shifts only
-                    },
+                    separate: true, // Fixes SQLITE_ERROR by running separate query
+                    limit: 20,
+                    order: [['startTime', 'DESC']],
                     include: [{ model: User, as: 'user' }]
                 },
                 {
                     model: Incident,
                     as: 'incidents',
-                    required: false,
+                    separate: true,
                     limit: 10,
                     order: [['createdAt', 'DESC']],
                     include: [{ model: User, as: 'reporter' }]
@@ -67,15 +66,13 @@ exports.show = async (req, res) => {
                 {
                     model: PatrolRun,
                     as: 'patrolRuns',
-                    required: false,
+                    separate: true,
                     limit: 10,
                     order: [['startTime', 'DESC']],
                     include: [{ model: User, as: 'guard' }]
                 }
             ],
-            order: [
-                [{ model: Shift, as: 'shifts' }, 'startTime', 'ASC']
-            ]
+            // Removed global order to fix SQLITE_ERROR. Shifts/Incidents are sorted in their separate queries.
         });
 
         if (!site) {
@@ -89,11 +86,11 @@ exports.show = async (req, res) => {
             if (!isStaff) return res.status(403).send('Access Denied');
         }
 
-        // Fetch potential staff (guards and managers)
+        // Fetch potential staff (guards, managers, and supervisors)
         const allUsers = await User.findAll({
             include: [{
                 model: Role,
-                where: { name: ['guard', 'manager'] }
+                where: { name: ['guard', 'manager', 'supervisor'] }
             }],
             order: [['name', 'ASC']]
         });
@@ -115,14 +112,37 @@ exports.addStaff = async (req, res) => {
         const site = await Site.findByPk(req.params.id);
         const user = await User.findByPk(userId);
 
-        if (!site || !user) return res.status(404).send('Site or User not found');
+        if (!site || !user) {
+            req.flash('error', 'Site or User not found');
+            return res.redirect(`/sites/${req.params.id}?tab=staff`);
+        }
+
+        // [AUDIT FIX] User Hierarchy: Supervisors are limited to ONE site.
+        const userRole = await user.getRole(); // Assuming lazy loading or we fetched it
+        if (userRole && userRole.name.toLowerCase() === 'supervisor') {
+            const assignedSites = await user.getAssignedSites();
+            if (assignedSites.length > 0) {
+                // Check if actually adding a different site (though UI usually adds one by one)
+                const isSameSite = assignedSites.some(s => s.id == site.id);
+                if (!isSameSite) {
+                    return res.format({
+                        'text/html': () => {
+                            req.flash('error', 'Compliance Error: Supervisors can only be assigned to one site.');
+                            res.redirect('/sites/' + site.id + '?tab=staff');
+                        },
+                        'application/json': () => res.status(400).json({ error: 'Supervisors limited to one site' })
+                    });
+                }
+            }
+        }
 
         await site.addStaff(user);
-
+        req.flash('success', 'Staff assigned successfully');
         res.redirect('/sites/' + site.id + '?tab=staff');
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error adding staff');
+        req.flash('error', 'Error adding staff');
+        res.redirect('/sites/' + req.params.id + '?tab=staff');
     }
 };
 
@@ -132,14 +152,18 @@ exports.removeStaff = async (req, res) => {
         const site = await Site.findByPk(req.params.id);
         const user = await User.findByPk(userId);
 
-        if (!site || !user) return res.status(404).send('Site or User not found');
+        if (!site || !user) {
+            req.flash('error', 'Site or User not found');
+            return res.redirect(`/sites/${req.params.id}?tab=staff`);
+        }
 
         await site.removeStaff(user);
-
+        req.flash('success', 'Staff removed successfully');
         res.redirect('/sites/' + site.id + '?tab=staff');
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error removing staff');
+        req.flash('error', 'Error removing staff');
+        res.redirect(`/sites/${req.params.id}?tab=staff`);
     }
 };
 
@@ -186,12 +210,16 @@ exports.update = async (req, res) => {
         });
 
         res.format({
-            'text/html': () => res.redirect('/sites/' + req.params.id),
+            'text/html': () => {
+                req.flash('success', 'Site updated successfully');
+                res.redirect('/sites/' + req.params.id);
+            },
             'application/json': () => res.json({ message: 'Updated' })
         });
     } catch (err) {
         console.error(err);
-        res.send(500);
+        req.flash('error', 'Error updating site');
+        res.redirect(`/sites/${req.params.id}`);
     }
 };
 
@@ -204,12 +232,16 @@ exports.addZone = async (req, res) => {
         const zone = await Zone.create({ name, description, siteId });
 
         res.format({
-            'text/html': () => res.redirect('/sites/' + siteId + '?action=add-checkpoint'),
+            'text/html': () => {
+                req.flash('success', 'Zone added');
+                res.redirect('/sites/' + siteId + '?action=add-checkpoint');
+            },
             'application/json': () => res.status(201).json(zone)
         });
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error adding zone');
+        req.flash('error', 'Error adding zone');
+        res.redirect(`/sites/${req.params.id}`);
     }
 };
 
@@ -244,10 +276,12 @@ exports.updateZone = async (req, res) => {
         await Zone.update({ name, description }, { where: { id: req.params.id } });
         // Redirect back to site from referer ideally, or find siteId
         const zone = await Zone.findByPk(req.params.id);
+        req.flash('success', 'Zone updated');
         res.redirect('/sites/' + zone.siteId);
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error updating zone');
+        req.flash('error', 'Error updating zone');
+        res.redirect('/sites');
     }
 };
 
@@ -256,13 +290,15 @@ exports.deleteZone = async (req, res) => {
         const zone = await Zone.findByPk(req.params.id);
         if (zone) {
             await zone.destroy();
+            req.flash('success', 'Zone deleted');
             res.redirect('/sites/' + zone.siteId);
         } else {
             res.status(404).send('Zone not found');
         }
     } catch (err) {
         console.error(err);
-        res.status(500).send('Error deleting zone');
+        req.flash('error', 'Error deleting zone');
+        res.redirect('/sites');
     }
 };
 

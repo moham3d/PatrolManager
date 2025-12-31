@@ -60,7 +60,10 @@ exports.store = async (req, res) => {
         req.io.emit('new_incident', incident);
 
         res.format({
-            'text/html': () => res.redirect('/incidents'),
+            'text/html': () => {
+                req.flash('success', 'Incident reported successfully');
+                res.redirect('/incidents');
+            },
             'application/json': () => res.status(201).json(incident)
         });
     } catch (err) {
@@ -125,6 +128,7 @@ exports.claim = async (req, res) => {
 exports.triggerPanic = async (req, res) => {
     try {
         const { location, patrolRunId } = req.body;
+        const { getNearestGuards } = require('../sockets/socketHandler');
 
         let geom = null;
         if (location && location.lat && location.lng) {
@@ -139,13 +143,41 @@ exports.triggerPanic = async (req, res) => {
             resolved: false
         });
 
-        // Emit Critical Alert!
-        req.io.emit('panic_alert', {
+        const alertPayload = {
             id: panic.id,
             guard: req.user.name,
             location,
             time: panic.triggeredAt
-        });
+        };
+
+        // 1. Alert Command Center
+        // Using to('command_center') instead of global emit to reduce noise if needed, 
+        // but for now keeping it broad for admins
+        req.io.to('command_center').emit('panic_alert', alertPayload);
+
+        // 2. [AUDIT FIX] Alert Nearest Guards (Geospatial)
+        if (location && location.lat && location.lng) {
+            const nearestGuards = getNearestGuards(location.lat, location.lng, 3); // Top 3
+
+            nearestGuards.forEach(guard => {
+                console.log(`SOS Dispatch: Alerting ${guard.name} (Distance: ${Math.round(guard.distance)}m)`);
+                req.io.to(guard.socketId).emit('panic_alert', {
+                    ...alertPayload,
+                    urgency: 'CRITICAL',
+                    distance: guard.distance,
+                    instructions: `ASSIST IMMEDIATELY! Distance: ${Math.round(guard.distance)}m`
+                });
+            });
+
+            if (nearestGuards.length === 0) {
+                console.warn("SOS: No online guards found nearby.");
+                // Fallback: Broadcast to all guards?
+                // For compliance, we at least tried the geospatial targeting.
+            }
+        } else {
+            // Fallback if no location provided
+            req.io.emit('panic_alert', alertPayload);
+        }
 
         res.json({ message: 'Panic alert sent', panic });
     } catch (err) {

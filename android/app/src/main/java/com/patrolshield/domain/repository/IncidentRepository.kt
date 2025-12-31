@@ -5,11 +5,11 @@ import kotlinx.coroutines.flow.Flow
 
 interface IncidentRepository {
     suspend fun reportIncident(
-        type: String, 
-        priority: String, 
+        type: String,
+        priority: String,
         description: String,
+        siteId: Int,
         lat: Double?,
-        lng: Double?,
-        imagePath: String? = null
+        lng: Double?
     ): Flow<Resource<Unit>>
 }

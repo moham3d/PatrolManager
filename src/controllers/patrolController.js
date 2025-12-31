@@ -90,12 +90,70 @@ exports.store = async (req, res) => {
         });
 
         res.format({
-            'text/html': () => res.redirect('/patrols'),
+            'text/html': () => {
+                req.flash('success', 'Patrol template created successfully');
+                res.redirect('/patrols');
+            },
             'application/json': () => res.status(201).json(template)
         });
     } catch (err) {
         console.error(err);
         res.status(400).send('Error creating template');
+    }
+
+};
+
+exports.edit = async (req, res) => {
+    try {
+        const template = await PatrolTemplate.findByPk(req.params.id);
+        if (!template) return res.status(404).send('Template not found');
+
+        const sites = await Site.findAll();
+        res.render('patrols/edit', { title: 'Edit Patrol Route', template, sites });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.update = async (req, res) => {
+    try {
+        const { name, description, siteId, type, duration, checkpoints } = req.body;
+        const template = await PatrolTemplate.findByPk(req.params.id);
+
+        if (!template) return res.status(404).send('Template not found');
+
+        let checkpointsArr = [];
+        if (checkpoints) {
+            if (typeof checkpoints === 'string' && checkpoints.includes(',')) {
+                checkpointsArr = checkpoints.split(',').map(Number);
+            } else if (typeof checkpoints === 'string') {
+                checkpointsArr = [Number(checkpoints)];
+            } else {
+                checkpointsArr = Array.isArray(checkpoints) ? checkpoints.map(Number) : [Number(checkpoints)];
+            }
+        }
+
+        await template.update({
+            name,
+            description,
+            siteId,
+            type,
+            estimatedDurationMinutes: duration,
+            checkpointsList: checkpointsArr
+        });
+
+        res.format({
+            'text/html': () => {
+                req.flash('success', 'Patrol template updated successfully');
+                res.redirect('/patrols/' + template.id);
+            },
+            'application/json': () => res.json(template)
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
     }
 };
 
@@ -286,6 +344,55 @@ exports.endPatrol = async (req, res) => {
         await run.save();
 
         res.json({ message: 'Patrol completed' });
+    } catch (err) {
+        res.status(500).json({ error: true, message: err.message });
+    }
+};
+
+// --- Live Tracking (In-Memory for MVP) ---
+const liveTracking = new Map();
+
+// POST /patrols/heartbeat
+exports.heartbeat = async (req, res) => {
+    try {
+        const { lat, lng, activeRunId } = req.body;
+        const userId = req.user.id;
+
+        // Update Cache
+        liveTracking.set(userId, {
+            guardId: userId,
+            guardName: req.user.name,
+            lat,
+            lng,
+            lastSeen: Date.now(),
+            status: activeRunId ? 'active' : 'idle', // Simple status logic
+            patrolName: null // Could fetch if needed
+        });
+
+        res.status(200).send();
+    } catch (err) {
+        console.error(err);
+        res.status(500).send(); // Silent fail
+    }
+};
+
+// GET /supervisor/live-patrols
+exports.livePatrols = async (req, res) => {
+    try {
+        const now = Date.now();
+        const TIMEOUT = 5 * 60 * 1000; // 5 minutes timeout
+
+        // Filter out stale data
+        const active = [];
+        for (const [id, data] of liveTracking.entries()) {
+            if (now - data.lastSeen < TIMEOUT) {
+                active.push(data);
+            } else {
+                liveTracking.delete(id);
+            }
+        }
+
+        res.json(active);
     } catch (err) {
         res.status(500).json({ error: true, message: err.message });
     }
