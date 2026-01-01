@@ -31,7 +31,7 @@ router.post('/login', (req, res, next) => {
             // But we also want to support browser form submit (which wants redirect)
 
             // Mobile/API always wants JSON
-            if (req.xhr || req.headers.accept?.includes('json') || req.body.email) {
+            if (req.xhr || req.headers.accept?.includes('json')) {
                 const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
                 return res.json({ message: 'Logged in', token, user });
             }
