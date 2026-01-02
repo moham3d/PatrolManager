@@ -9,6 +9,7 @@ data class LoginResponse(
     val message: String,
     val token: String?,
     val user: UserDto?,
+    val activeShift: ShiftDto? = null,
     val error: Boolean = false
 )
 

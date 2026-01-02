@@ -35,6 +35,7 @@ class LocationService : Service() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var locationClient: com.google.android.gms.location.FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
+    private var activeRunId: Int? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -47,11 +48,7 @@ class LocationService : Service() {
                 result.locations.lastOrNull()?.let { location ->
                     serviceScope.launch {
                         // 1. Send Live Heartbeat
-                        // We need active run ID. Repository exposes Flow, but we need sync access or latest value.
-                        // For MVP we can just pass null for runID or try to fetch it.
-                        // Ideally LocationService shouldn't know about business logic, but strict clean arch is hard here.
-                        // Let's just send location.
-                        patrolRepository.sendHeartbeat(location.latitude, location.longitude, null)
+                        patrolRepository.sendHeartbeat(location.latitude, location.longitude, activeRunId)
 
                         // 2. Log Locally (Existing Logic)
                         val payload = mapOf(
@@ -101,6 +98,13 @@ class LocationService : Service() {
         
         startForeground(1, notification)
         
+        // Monitor Active Patrol
+        serviceScope.launch {
+            patrolRepository.getActivePatrol().collect { patrol ->
+                activeRunId = patrol?.remoteId
+            }
+        }
+
         startLocationUpdates()
     }
 

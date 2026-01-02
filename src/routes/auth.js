@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const { Shift } = require('../models');
 
 // Show Login Page
 router.get('/login', (req, res) => {
@@ -33,7 +34,17 @@ router.post('/login', (req, res, next) => {
             // Mobile/API always wants JSON
             if (req.xhr || req.headers.accept?.includes('json')) {
                 const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
-                return res.json({ message: 'Logged in', token, user });
+
+                // Fetch Active Shift
+                Shift.findOne({
+                    where: { userId: user.id, status: 'active' }
+                }).then(activeShift => {
+                    return res.json({ message: 'Logged in', token, user, activeShift });
+                }).catch(err => {
+                    console.error('Error fetching active shift', err);
+                    return res.json({ message: 'Logged in', token, user, activeShift: null });
+                });
+                return;
             }
 
             // Browser

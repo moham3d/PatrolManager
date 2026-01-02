@@ -30,5 +30,6 @@ router.use('/visitors', require('./visitors'));
 router.use('/users', require('./users'));
 router.use('/supervisor', require('./supervisor'));
 router.use('/manager', require('./manager'));
+router.use('/admin', require('./admin'));
 router.use('/docs', require('./docs'));
 module.exports = router;

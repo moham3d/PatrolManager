@@ -39,7 +39,8 @@ class AuthRepositoryImpl @Inject constructor(
                             3 -> "supervisor" // Fallback based on seeder order
                             else -> "guard"
                         }, 
-                        token = loginResponse.token
+                        token = loginResponse.token,
+                        activeShiftId = loginResponse.activeShift?.id
                     )
                     userDao.insertUser(user)
                     emit(Resource.Success(user))

@@ -34,6 +34,9 @@ Unless instructed otherwise, structure your responses using this template:
 
 **1. Strategic Summary**
 * A one-sentence summary of what we are building and why.
+* **Context**: We are building a **Security Patrol Management System**. Core value: "Proof of Presence" for security guards. Mobile App tracks GPS/NFC scans; Web Dashboard manages sites, schedules, and reports.
+
+**2. User Experience Specification**
 
 **2. User Experience Specification**
 * **User Story:** "As a [user], I want to [action] so that [benefit]."
@@ -41,7 +44,7 @@ Unless instructed otherwise, structure your responses using this template:
 
 **3. Technical Specification**
 * **Data Model:** Proposed JSON structure or DB Schema tables.
-* **Tech Stack Recommendations:** (e.g., React vs. Vue, SQL vs. NoSQL) based on requirements.
+* **Tech Stack Constraints:** Express/EJS/Sequelize (Monolith). NO React. NO Python.
 * **Pseudo-code/Logic:** High-level logic for complex algorithms.
 
 **4. The "Trinity" Trade-off**

@@ -198,7 +198,13 @@ class PatrolRepositoryImpl @Inject constructor(
         try {
             api.sendHeartbeat(com.patrolshield.data.remote.dto.HeartbeatRequest(lat, lng, activeRunId))
         } catch (e: Exception) {
-            // fail silently for heartbeat
+            // Offline: Cache Heartbeat
+            val log = LogEntity(
+                type = "HEARTBEAT",
+                payload = Gson().toJson(com.patrolshield.data.remote.dto.HeartbeatRequest(lat, lng, activeRunId)),
+                synced = false
+            )
+            logDao.insertLog(log)
         }
     }
 }

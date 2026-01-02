@@ -13,7 +13,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.patrolshield.presentation.login.LoginScreen
+import com.patrolshield.presentation.login.LoginScreen
 import com.patrolshield.presentation.dashboard.GuardDashboard
+import com.patrolshield.presentation.visitor.VisitorScreen
+import com.patrolshield.presentation.shift.ClockInScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -34,7 +37,9 @@ class MainActivity : ComponentActivity() {
                     "supervisor" -> "supervisor_dashboard"
                     "admin" -> "admin_dashboard"
                     "manager" -> "manager_dashboard"
-                    else -> "dashboard" // Default to Guard
+                    else -> {
+                        if (user.activeShiftId != null) "dashboard" else "clock_in"
+                    }
                 }
             }
         }
@@ -51,10 +56,25 @@ class MainActivity : ComponentActivity() {
                                         "supervisor" -> "supervisor_dashboard"
                                         "admin" -> "admin_dashboard"
                                         "manager" -> "manager_dashboard"
-                                        else -> "dashboard"
+                                        else -> "clock_in" // Guards must clock in first
                                     }
                                     navController.navigate(dest) {
                                         popUpTo("login") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        composable("clock_in") {
+                            ClockInScreen(
+                                onClockInSuccess = {
+                                    navController.navigate("dashboard") {
+                                        popUpTo("clock_in") { inclusive = true }
+                                    }
+                                },
+                                onLogout = {
+                                    kotlinx.coroutines.runBlocking { userDao.clearUser() }
+                                    navController.navigate("login") {
+                                        popUpTo("clock_in") { inclusive = true }
                                     }
                                 }
                             )
@@ -66,7 +86,15 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onStartPatrol = {
                                     navController.navigate("patrol")
+                                },
+                                onNavigateToVisitors = {
+                                    navController.navigate("visitors")
                                 }
+                            )
+                        }
+                        composable("visitors") {
+                            VisitorScreen(
+                                onBack = { navController.popBackStack() }
                             )
                         }
                         composable("supervisor_dashboard") {
@@ -86,7 +114,31 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("login") {
                                         popUpTo("admin_dashboard") { inclusive = true }
                                     }
-                                }
+                                },
+                                onNavigateToUsers = { navController.navigate("admin_users") },
+                                onNavigateToSites = { navController.navigate("admin_sites") }
+                            )
+                        }
+                        composable("admin_users") {
+                            com.patrolshield.presentation.user.UserListScreen(
+                                onBack = { navController.popBackStack() },
+                                onNavigateToCreate = { navController.navigate("admin_user_create") }
+                            )
+                        }
+                        composable("admin_user_create") {
+                            com.patrolshield.presentation.user.UserCreateScreen(
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable("admin_sites") {
+                            com.patrolshield.presentation.site.SiteListScreen(
+                                onBack = { navController.popBackStack() },
+                                onNavigateToCreate = { navController.navigate("admin_site_create") }
+                            )
+                        }
+                        composable("admin_site_create") {
+                            com.patrolshield.presentation.site.SiteCreateScreen(
+                                onBack = { navController.popBackStack() }
                             )
                         }
                         composable("manager_dashboard") {

@@ -37,4 +37,32 @@ interface ApiService {
 
     @GET("manager/stats")
     suspend fun getManagerStats(): Response<ManagerStatsDto>
+
+    @GET("visitors/today")
+    suspend fun getVisitorsToday(): Response<List<VisitorDto>>
+
+    @GET("sites")
+    suspend fun getSites(): Response<SiteListResponse>
+
+    @POST("visitors/{id}/check-in")
+    suspend fun checkInVisitor(@retrofit2.http.Path("id") id: Int): Response<VisitorDto>
+
+    @POST("shifts/clock-in")
+    suspend fun clockIn(@Body request: ClockInRequest): Response<ShiftResponse>
+
+    @POST("shifts/clock-out")
+    suspend fun clockOut(@Body request: ClockOutRequest): Response<Unit>
+
+    // Admin
+    @GET("admin/stats")
+    suspend fun getAdminStats(): Response<AdminStatsDto>
+
+    @GET("admin/users")
+    suspend fun getUsers(): Response<List<UserDto>>
+
+    @POST("admin/users")
+    suspend fun createUser(@Body request: CreateUserRequest): Response<CreateUserResponse>
+
+    @POST("sites")
+    suspend fun createSite(@Body request: CreateSiteRequest): Response<SiteDto>
 }

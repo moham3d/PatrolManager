@@ -2,10 +2,17 @@
 trigger: always_on
 ---
 
+## 0. App Context (Auto-Generated)
+**Tech Stack**: Node.js (v20+), Express (v5), Sequelize (v6), EJS, Passport (Dual Auth).
+**Database**: SQLite (Dev) / Postgres (Prod).
+**Existing Models**: `User`, `Site`, `PatrolTemplate`, `PatrolRun`, `Checkpoint`, `CheckpointVisit`, `Incident`, `Shift`.
+**Existing Controllers**: `patrolController.js`, `incidentController.js`, `reportController.js`.
+
 ## 1. Context & Mission
 We are migrating a legacy Python/FastAPI + React application (`api/` and `web/`) into a **New Monolithic Node.js Application** (`src/`).
-The new system uses **Express.js**, **Sequelize**, and **EJS** for server-side rendering.
+The new system uses **Express.js (v5)**, **Sequelize**, and **EJS** for server-side rendering.
 Crucially, it must support **Content Negotiation** to serve both the browser (HTML) and the existing Mobile App (JSON) from the same controllers.
+
 
 ## 2. Directory Structure (Target)
 All new code goes into the `src/` directory (or root where appropriate). **DO NOT modify `api/` or `web/`.**

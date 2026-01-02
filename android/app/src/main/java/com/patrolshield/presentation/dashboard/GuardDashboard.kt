@@ -33,7 +33,8 @@ import com.patrolshield.common.DateUtils
 fun GuardDashboard(
     viewModel: DashboardViewModel = hiltViewModel(),
     onStartPatrol: () -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToVisitors: () -> Unit
 ) {
     val state = viewModel.state.value
     
@@ -149,6 +150,25 @@ fun GuardDashboard(
                         Button(onClick = onStartPatrol) {
                             Text("RESUME")
                         }
+                    }
+                }
+            }
+
+            // Visitor Management Quick Access
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                onClick = onNavigateToVisitors,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text("Visitor Management", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                        Text("Check in/out guests", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
                 }
             }

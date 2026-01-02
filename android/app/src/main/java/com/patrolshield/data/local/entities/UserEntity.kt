@@ -10,5 +10,6 @@ data class UserEntity(
     val name: String,
     val email: String,
     val role: String, // Denormalized: "guard" or "supervisor"
-    val token: String? = null // Auth token
+    val token: String? = null, // Auth token
+    val activeShiftId: Int? = null // Persist active shift state
 )

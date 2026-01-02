@@ -12,6 +12,16 @@ import com.patrolshield.data.repository.SupervisorRepositoryImpl
 import com.patrolshield.domain.repository.SupervisorRepository
 import com.patrolshield.data.repository.ManagerRepositoryImpl
 import com.patrolshield.domain.repository.ManagerRepository
+import com.patrolshield.data.repository.VisitorRepositoryImpl
+import com.patrolshield.domain.repository.VisitorRepository
+import com.patrolshield.data.repository.ShiftRepositoryImpl
+import com.patrolshield.domain.repository.ShiftRepository
+import com.patrolshield.data.repository.AdminRepositoryImpl
+import com.patrolshield.domain.repository.AdminRepository
+import com.patrolshield.data.repository.UserRepositoryImpl
+import com.patrolshield.domain.repository.UserRepository
+import com.patrolshield.data.repository.SiteRepositoryImpl
+import com.patrolshield.domain.repository.SiteRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -57,4 +67,34 @@ abstract class RepositoryModule {
     abstract fun bindManagerRepository(
         managerRepositoryImpl: ManagerRepositoryImpl
     ): ManagerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVisitorRepository(
+        visitorRepositoryImpl: VisitorRepositoryImpl
+    ): VisitorRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindShiftRepository(
+        shiftRepositoryImpl: ShiftRepositoryImpl
+    ): ShiftRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdminRepository(
+        adminRepositoryImpl: AdminRepositoryImpl
+    ): AdminRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(
+        userRepositoryImpl: UserRepositoryImpl
+    ): UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSiteRepository(
+        siteRepositoryImpl: SiteRepositoryImpl
+    ): SiteRepository
 }
