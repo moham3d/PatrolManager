@@ -4,14 +4,6 @@ module.exports = {
     // Check if user is authenticated (Web Session)
     isAuthenticated: (req, res, next) => {
         if (req.isAuthenticated()) {
-            const roleName = req.user.Role ? req.user.Role.name.toLowerCase() : '';
-            if (['guard', 'supervisor'].includes(roleName)) {
-                return req.logout((err) => {
-                    if (err) return next(err);
-                    if (req.flash) req.flash('error', 'Access Denied: Field roles restricted to Mobile App.');
-                    res.redirect('/login');
-                });
-            }
             return next();
         }
         res.redirect('/login');
@@ -22,17 +14,6 @@ module.exports = {
     ensureAuth: (req, res, next) => {
         // 1. Check Session
         if (req.isAuthenticated()) {
-            const roleName = req.user.Role ? req.user.Role.name.toLowerCase() : '';
-            if (['guard', 'supervisor'].includes(roleName)) {
-                return req.logout((err) => {
-                    if (err) return next(err);
-                    if (req.accepts('html') && !req.is('json') && !req.path.startsWith('/api')) {
-                        if (req.flash) req.flash('error', 'Access Denied: Field roles restricted to Mobile App.');
-                        return res.redirect('/login');
-                    }
-                    return res.status(403).json({ error: true, message: 'Access Denied: Field roles restricted to Mobile App' });
-                });
-            }
             return next();
         }
 

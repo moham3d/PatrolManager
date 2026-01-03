@@ -13,10 +13,13 @@ exports.login = (req, res, next) => {
             return res.render('login', { title: 'Login', error: info.message });
         }
 
-        req.logIn(user, (err) => {
+        // Regenerate session BEFORE logging in to prevent session fixation
+        // but preserve the session if needed. For Passport, we just need to ensure
+        // req.logIn happens on the NEW session.
+        req.session.regenerate((err) => {
             if (err) return next(err);
 
-            req.session.regenerate((err) => {
+            req.logIn(user, (err) => {
                 if (err) return next(err);
 
                 if (req.xhr || req.headers.accept?.includes('json')) {

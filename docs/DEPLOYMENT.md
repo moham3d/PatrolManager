@@ -9,8 +9,8 @@
 1. Clone the repository
 2. Install dependencies: `npm install`
 3. Configure environment variables (see `.env.example`)
-4. Run migrations: `npx sequelize-cli db:migrate`
-5. Start the server: `npm start`
+4. Run migrations: `npx sequelize-cli db:migrate` OR `npm run db:init`
+5. Start the server: `npm start` OR `npm rn dev`
 
 ## Environment Variables
 - `PORT`: Server port (default 3000)

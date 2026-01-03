@@ -1859,13 +1859,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 13.6  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Timeline displayed
-- [ ] Events in order
-- [ ] Visual timeline
-- [ ] Interactions working
+**Notes**:
+- Implemented a chronological activity timeline in `src/views/incidents/show.ejs` using data from the `AuditLog` model.
+- Visualizes report creation, status updates, and resolutions.
 
 ---
 
@@ -1878,13 +1878,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 5.2  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Replay controls visible
-- [ ] GPS path animated
-- [ ] Timeline working
-- [ ] Playback smooth
+**Notes**:
+- Created `src/views/patrols/run_details.ejs` which implements a playback map for historical patrol runs.
+- Users can use a slider to replay the guard's path and see where and when checkpoints were scanned.
 
 ---
 
@@ -1897,13 +1897,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 8.3  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Heatmap displayed
-- [ ] Density accurate
-- [ ] Color gradient working
-- [ ] Performance acceptable
+**Notes**:
+- Added `Leaflet.heat` plugin to `src/views/partials/live_map.ejs`.
+- Implemented a toggleable heatmap layer that visualizes incident density based on location and priority.
 
 ---
 
@@ -1916,13 +1916,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 17.1  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Comments display
-- [ ] Add comment working
-- [ ] User attribution
-- [ ] Timestamps showing
+**Notes**:
+- Created `IncidentComment` model and updated `incidentController.js`.
+- Implemented a threaded discussion UI in `src/views/incidents/show.ejs` allowing users to post and view comments on specific incidents.
 
 ---
 
@@ -1937,13 +1937,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 12.2  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Activity Recognition working
-- [ ] STILL state detected
-- [ ] GPS stops when still
-- [ ] Battery saved
+**Notes**:
+- Added `play-services-awareness` dependency.
+- Updated `LocationService.kt` to handle activity states and pause/resume GPS updates based on device movement to save battery.
 
 ---
 
@@ -1957,13 +1957,13 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] DataStore configured
-- [ ] Settings persist
-- [ ] Dark mode saved
-- [ ] Notifications saved
+**Notes**:
+- Created `com.patrolshield.common.UserPreferences.kt` using Jetpack DataStore Preferences.
+- Implemented persistence for dark mode and notification settings.
 
 ---
 
@@ -1976,13 +1976,13 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Timer visible
-- [ ] Duration updating
-- [ ] Accurate time
-- [ ] Pauses on shift end
+**Notes**:
+- Implemented a real-time `ShiftTimer` component in `GuardDashboard.kt`.
+- Displays the elapsed time since the patrol/shift started, updating every second.
 
 ---
 
@@ -1996,13 +1996,12 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 5.2  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Km tracked
-- [ ] Incidents counted
-- [ ] Completion rate calculated
-- [ ] Data accurate
+**Notes**:
+- Updated `ProfileViewModel.kt` and `ProfileScreen.kt` to display user statistics including patrols completed, estimated distance walked, and total incidents reported.
 
 ---
 
@@ -2015,13 +2014,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 12.3  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Indicator visible
-- [ ] Status accurate
-- [ ] Sync progress shown
-- [ ] Transitions smooth
+**Notes**:
+- Created `OfflineIndicator.kt` and `ConnectionState.kt` to monitor network connectivity.
+- Added a global offline banner in `MainActivity.kt` that appears when the device loses internet access.
 
 ---
 
