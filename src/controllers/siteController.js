@@ -1,4 +1,5 @@
 const { Site, Zone, Checkpoint, User, Role } = require('../models');
+const { validationResult } = require('express-validator');
 
 // Helpers for formatted responses
 const renderOrJson = (res, view, data) => {
@@ -173,6 +174,11 @@ exports.create = async (req, res) => {
 };
 
 exports.store = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { name, address, details, lat, lng } = req.body;
         const site = await Site.create({ name, address, details, lat, lng });
@@ -202,6 +208,11 @@ exports.edit = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { name, address, details, lat, lng } = req.body;
 
@@ -226,6 +237,11 @@ exports.update = async (req, res) => {
 // --- Associations ---
 
 exports.addZone = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { name, description } = req.body;
         const siteId = req.params.id;
@@ -246,6 +262,11 @@ exports.addZone = async (req, res) => {
 };
 
 exports.addCheckpoint = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { name, type, uid, zoneId, lat, lng } = req.body;
         const siteId = req.params.id;

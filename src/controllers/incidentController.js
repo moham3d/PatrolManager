@@ -1,4 +1,5 @@
 const { Incident, PanicAlert, Site, User } = require('../models');
+const { validationResult } = require('express-validator');
 
 // Helpers
 const renderOrJson = (res, view, data) => {
@@ -33,6 +34,11 @@ exports.create = async (req, res) => {
 };
 
 exports.store = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         // Handle file upload here if Multer was set up (not yet in this scope, skipping for now)
         const { type, priority, description, siteId, zoneId, location, imageBase64 } = req.body;

@@ -1,5 +1,6 @@
 const { Visitor, Site } = require('../models');
 const { Op } = require('sequelize');
+const { validationResult } = require('express-validator');
 
 exports.index = async (req, res) => {
     try {
@@ -28,6 +29,11 @@ exports.index = async (req, res) => {
 };
 
 exports.preRegister = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { name, siteId, hostName, purpose, expectedArrivalTime } = req.body;
 

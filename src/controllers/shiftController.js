@@ -1,4 +1,5 @@
 const { Shift, User, Site, Role } = require('../models');
+const { validationResult } = require('express-validator');
 
 // Helper to handle HTML/JSON responses
 const renderOrJson = (res, view, data) => {
@@ -50,6 +51,11 @@ exports.index = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { userId, siteId, date, startTime, endTime, repeatFrequency, repeatUntil } = req.body;
 
@@ -127,6 +133,11 @@ exports.destroy = async (req, res) => {
 };
 
 exports.clockIn = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { siteId, latitude, longitude } = req.body;
 
@@ -229,6 +240,11 @@ exports.clockIn = async (req, res) => {
 };
 
 exports.clockOut = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { latitude, longitude } = req.body;
 

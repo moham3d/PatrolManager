@@ -558,13 +558,19 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 3.1  
 **Estimated Time**: 12 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented comprehensive input validation using `express-validator` across all major controllers: `shiftController`, `patrolController`, `incidentController`, `siteController`, `userController`, and `visitorController`.
+- Updated corresponding route files to include validation rules and the `validateRequest` middleware.
 
 **Verification**:
-- [ ] All inputs validated
-- [ ] Invalid data rejected
-- [ ] Appropriate error messages
-- [ ] Type checking works
+- [x] All inputs validated
+- [x] Invalid data rejected
+- [x] Appropriate error messages
+- [x] Type checking works
 
 ---
 

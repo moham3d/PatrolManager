@@ -1,4 +1,5 @@
 const { User, Role } = require('../models');
+const { validationResult } = require('express-validator');
 
 // Helpers for formatted responses
 const renderOrJson = (res, view, data) => {
@@ -38,14 +39,30 @@ exports.create = async (req, res) => {
 };
 
 exports.store = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const roles = await Role.findAll();
+        const managers = await User.findAll({
+            include: [{
+                model: Role,
+                where: { name: ['admin', 'manager'] }
+            }]
+        });
+        return res.format({
+            'text/html': () => res.render('users/form', {
+                title: 'Create User',
+                user: req.body,
+                roles,
+                managers,
+                errors: errors.array()
+            }),
+            'application/json': () => res.status(400).json({ errors: errors.array() })
+        });
+    }
+
     try {
 
         const { name, email, password, roleId, managerId } = req.body;
-
-        // Basic validation
-        if (!name || !email || !password || !roleId) {
-            throw new Error('All fields are required');
-        }
 
         const user = await User.create({ name, email, password, roleId, managerId: managerId || null });
 
@@ -90,6 +107,27 @@ exports.edit = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const roles = await Role.findAll();
+        const managers = await User.findAll({
+            include: [{
+                model: Role,
+                where: { name: ['admin', 'manager'] }
+            }]
+        });
+        return res.format({
+            'text/html': () => res.render('users/form', {
+                title: 'Edit User',
+                user: { ...req.body, id: req.params.id },
+                roles,
+                managers,
+                errors: errors.array()
+            }),
+            'application/json': () => res.status(400).json({ errors: errors.array() })
+        });
+    }
+
     try {
         const { name, email, password, roleId, managerId } = req.body;
         const user = await User.findByPk(req.params.id);
@@ -97,7 +135,6 @@ exports.update = async (req, res) => {
         if (!user) return res.status(404).send('User not found');
 
         user.name = name;
-        user.email = email;
         user.email = email;
         user.roleId = roleId;
         user.managerId = managerId || null;

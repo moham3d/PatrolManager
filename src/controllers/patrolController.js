@@ -1,4 +1,5 @@
 const { PatrolTemplate, PatrolRun, CheckpointVisit, Site, Checkpoint, User, Shift } = require('../models');
+const { validationResult } = require('express-validator');
 
 // Helpers
 const renderOrJson = (res, view, data) => {
@@ -61,6 +62,11 @@ exports.create = async (req, res) => {
 };
 
 exports.store = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         // checkpointsList is expected to be an array of IDs from the form
         // e.g. [1, 2, 3]
@@ -117,6 +123,11 @@ exports.edit = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { name, description, siteId, type, duration, checkpoints } = req.body;
         const template = await PatrolTemplate.findByPk(req.params.id);
@@ -194,6 +205,11 @@ exports.myPatrols = async (req, res) => {
 
 // POST /patrols/start
 exports.startPatrol = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { templateId } = req.body;
         const guardId = req.user.id;
@@ -237,6 +253,11 @@ exports.startPatrol = async (req, res) => {
 
 // POST /patrols/checkpoint-visit
 exports.scanCheckpoint = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { runId, checkpointId, location } = req.body; // location expected as { lat, lng }
 
@@ -337,6 +358,11 @@ exports.scanCheckpoint = async (req, res) => {
 
 // POST /patrols/end
 exports.endPatrol = async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
     try {
         const { runId } = req.body;
         const run = await PatrolRun.findByPk(runId);
