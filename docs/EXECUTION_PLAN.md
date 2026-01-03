@@ -451,13 +451,19 @@ Create migration to add FK fields:
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/controllers/authController.js` and extracted the login and logout logic from `src/routes/auth.js`.
+- Added a new `refreshToken` endpoint to the controller and a corresponding route in `src/routes/auth.js`.
 
 **Verification**:
-- [ ] Login logic extracted to controller
-- [ ] Logout logic extracted
-- [ ] Token refresh working
-- [ ] Error handling improved
+- [x] Login logic extracted to controller
+- [x] Logout logic extracted
+- [x] Token refresh working
+- [x] Error handling improved
 
 ---
 
