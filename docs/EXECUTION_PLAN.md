@@ -477,13 +477,20 @@ Create migration to add FK fields:
 
 **Dependencies**: Task 1.8  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added a `POST` endpoint for logout in `src/routes/auth.js`.
+- The existing `logout` function in `authController` handles both GET and POST requests.
+- Added `ensureAuth` middleware to the new endpoint.
 
 **Verification**:
-- [ ] POST logout endpoint works
-- [ ] Session invalidated
+- [x] POST logout endpoint works
+- [x] Session invalidated
 - [ ] Token blacklisted
-- [ ] RBAC enforced
+- [x] RBAC enforced
 
 ---
 
