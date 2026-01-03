@@ -55,20 +55,34 @@ exports.init = (httpServer) => {
         }
     });
 
-    io.on("connection", (socket) => {
+    io.on("connection", async (socket) => {
         console.log("New client connected", socket.id);
         const user = socket.user;
+        const roleName = user.Role.name.toLowerCase();
+
         onlineUsers.set(socket.id, {
             userId: user.id,
             name: user.name,
-            role: user.Role.name,
+            role: roleName,
             lastUpdate: new Date()
         });
+
+        // 1. Join Personal Room
         socket.join(`user_${user.id}`);
+
+        // 2. Join Role Room
+        socket.join(roleName);
+
+        // 3. Join Site Rooms
+        const assignedSites = await user.getAssignedSites();
+        for (const site of assignedSites) {
+            socket.join(`site_${site.id}`);
+        }
+
         io.to('command_center').emit('user_connected', {
             userId: user.id,
             name: user.name,
-            role: user.Role.name
+            role: roleName
         });
 
 
@@ -76,16 +90,82 @@ exports.init = (httpServer) => {
             socket.join(room);
         });
 
+        // --- Emergency Events ---
+        socket.on('panic_alert', (data) => {
+            // data: { location, patrolRunId, siteId }
+            const siteId = data.siteId;
+            const payload = {
+                ...data,
+                userId: user.id,
+                userName: user.name,
+                timestamp: new Date()
+            };
+
+            // Broadcast to site supervisors and managers, and all admins
+            if (siteId) {
+                io.to(`site_${siteId}`).to('admin').emit('panic_alert', payload);
+            } else {
+                io.to('admin').to('manager').to('supervisor').emit('panic_alert', payload);
+            }
+        });
+
+        // --- Incident Events ---
+        socket.on('incident_created', (data) => {
+            // data: { incidentId, type, priority, siteId }
+            io.to(`site_${data.siteId}`).to('admin').emit('incident_created', data);
+        });
+
+        socket.on('incident_assigned', (data) => {
+            // data: { incidentId, userId, siteId }
+            io.to(`user_${data.userId}`).emit('incident_assigned', data);
+            io.to(`site_${data.siteId}`).to('admin').emit('incident_assigned', data);
+        });
+
+        socket.on('incident_resolved', (data) => {
+            // data: { incidentId, siteId }
+            io.to(`site_${data.siteId}`).to('admin').emit('incident_resolved', data);
+        });
+
+        // --- Patrol Events ---
+        socket.on('patrol_started', (data) => {
+            // data: { runId, templateId, siteId }
+            io.to(`site_${data.siteId}`).to('admin').emit('patrol_started', {
+                ...data,
+                userId: user.id,
+                userName: user.name
+            });
+        });
+
+        socket.on('patrol_completed', (data) => {
+            // data: { runId, siteId, completionPercentage }
+            io.to(`site_${data.siteId}`).to('admin').emit('patrol_completed', data);
+        });
+
+        socket.on('checkpoint_scanned', (data) => {
+            // data: { runId, checkpointId, siteId }
+            io.to(`site_${data.siteId}`).to('admin').emit('checkpoint_scanned', data);
+        });
+
+        // --- Shift Events ---
+        socket.on('shift_started', (data) => {
+            // data: { shiftId, siteId }
+            io.to(`site_${data.siteId}`).to('admin').emit('shift_started', {
+                ...data,
+                userId: user.id,
+                userName: user.name
+            });
+        });
+
+        socket.on('shift_ended', (data) => {
+            // data: { shiftId, siteId }
+            io.to(`site_${data.siteId}`).to('admin').emit('shift_ended', data);
+        });
+
         socket.on('update_location', async (loc) => {
-            // loc: { lat, lng }
+            // loc: { lat, lng, siteId }
             const onlineUser = onlineUsers.get(socket.id);
             if (onlineUser) {
-                // [AUDIT FIX] Privacy: Only allow updates if active shift exists
                 try {
-                    // Assuming 'Shift' model is available and imported
-                    // Check for active shift
-                    // We need to require Op from sequelize if we use it, but here we can just check 'active' status
-                    // Note: In a real high-throughput scenario, we might cache this shift status
                     const activeShift = await Shift.findOne({
                         where: {
                             userId: onlineUser.userId,
@@ -94,22 +174,27 @@ exports.init = (httpServer) => {
                     });
 
                     if (!activeShift) {
-                        // console.warn(`Privacy Block: Ignored location from off-duty user ${onlineUser.name}`);
-                        return; // Silent fail to preserve privacy
+                        return;
                     }
 
                     onlineUser.lat = loc.lat;
                     onlineUser.lng = loc.lng;
                     onlineUser.lastUpdate = new Date();
 
-                    // Broadcast to command center
-                    io.to('command_center').emit('user_location_update', {
+                    const payload = {
                         userId: onlineUser.userId,
                         name: onlineUser.name,
                         role: onlineUser.role,
                         lat: onlineUser.lat,
                         lng: onlineUser.lng
-                    });
+                    };
+
+                    // Targeted broadcast to site room and command center (admins)
+                    if (loc.siteId) {
+                        io.to(`site_${loc.siteId}`).to('command_center').emit('user_location_update', payload);
+                    } else {
+                        io.to('command_center').emit('user_location_update', payload);
+                    }
                 } catch (err) {
                     console.error("Error verifying shift for location update:", err);
                 }

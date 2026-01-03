@@ -825,13 +825,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 1.9  
 **Estimated Time**: 8 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented several missing socket events: `panic_alert`, `incident_created`, `incident_assigned`, `incident_resolved`, `patrol_started`, `patrol_completed`, `checkpoint_scanned`, `shift_started`, and `shift_ended`.
+- Integrated targeted broadcasting using site and role-based rooms.
+- Users now automatically join rooms for their role and assigned sites upon connection.
 
 **Verification**:
-- [ ] All events implemented
-- [ ] Events broadcast correctly
-- [ ] Clients receive events
-- [ ] Event payloads valid
+- [x] All events implemented
+- [x] Events broadcast correctly
+- [x] Clients receive events
+- [x] Event payloads valid
 
 ---
 
