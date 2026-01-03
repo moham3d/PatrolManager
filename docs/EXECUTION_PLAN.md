@@ -1346,13 +1346,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 11.2  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented the `resolveIncident` multipart API call in `ApiService.kt`.
+- Added corresponding implementation in `SupervisorRepositoryImpl.kt` and `SupervisorViewModel.kt`.
+- Integrated notes and image evidence upload into the resolution process.
 
 **Verification**:
-- [ ] API call successful
-- [ ] Notes included
-- [ ] Evidence uploaded
-- [ ] Response handled
+- [x] API call successful
+- [x] Notes included
+- [x] Evidence uploaded
+- [x] Response handled
 
 ---
 
