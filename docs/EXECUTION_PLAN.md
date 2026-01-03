@@ -687,10 +687,16 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.3  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/models/AuditLog.js` to track all system changes and events.
+- Added association with the `User` model.
 
 **Verification**:
-- [ ] Model created
+- [x] Model created
 - [ ] Audit logging middleware working
 - [ ] All changes logged
 - [ ] Audit trail queryable
