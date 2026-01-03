@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
-const { Shift, Op } = require('../models');
+const { Shift, User, Role, Permission } = require('../models');
+const jwt = require('jsonwebtoken');
 
 let io;
 const onlineUsers = new Map(); // Store { socketId: { userId, name, role, lat, lng, lastUpdate } }
@@ -28,25 +29,57 @@ exports.init = (httpServer) => {
         }
     });
 
+    io.use(async (socket, next) => {
+        try {
+            const token = socket.handshake.auth.token;
+            if (!token) {
+                return next(new Error('Authentication error: No token provided'));
+            }
+
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await User.findByPk(decoded.id, {
+                include: [{
+                    model: Role,
+                    include: [Permission]
+                }]
+            });
+
+            if (!user) {
+                return next(new Error('Authentication error: User not found'));
+            }
+
+            socket.user = user;
+            next();
+        } catch (error) {
+            next(new Error(`Authentication error: ${error.message}`));
+        }
+    });
+
     io.on("connection", (socket) => {
         console.log("New client connected", socket.id);
+        const user = socket.user;
+        onlineUsers.set(socket.id, {
+            userId: user.id,
+            name: user.name,
+            role: user.Role.name,
+            lastUpdate: new Date()
+        });
+        socket.join(`user_${user.id}`);
+        io.to('command_center').emit('user_connected', {
+            userId: user.id,
+            name: user.name,
+            role: user.Role.name
+        });
+
 
         socket.on("join_room", (room) => {
             socket.join(room);
         });
 
-        // User Identity & Tracking
-        socket.on('register_user', (userData) => {
-            console.log(`📡 Register User: ${userData.name} (${userData.role}) [${socket.id}]`);
-            // userData: { userId, name, role }
-            onlineUsers.set(socket.id, { ...userData, lastUpdate: new Date() });
-            io.to('command_center').emit('user_connected', userData);
-        });
-
         socket.on('update_location', async (loc) => {
             // loc: { lat, lng }
-            const user = onlineUsers.get(socket.id);
-            if (user) {
+            const onlineUser = onlineUsers.get(socket.id);
+            if (onlineUser) {
                 // [AUDIT FIX] Privacy: Only allow updates if active shift exists
                 try {
                     // Assuming 'Shift' model is available and imported
@@ -55,27 +88,27 @@ exports.init = (httpServer) => {
                     // Note: In a real high-throughput scenario, we might cache this shift status
                     const activeShift = await Shift.findOne({
                         where: {
-                            userId: user.userId,
+                            userId: onlineUser.userId,
                             status: 'active'
                         }
                     });
 
                     if (!activeShift) {
-                        // console.warn(`Privacy Block: Ignored location from off-duty user ${user.name}`);
+                        // console.warn(`Privacy Block: Ignored location from off-duty user ${onlineUser.name}`);
                         return; // Silent fail to preserve privacy
                     }
 
-                    user.lat = loc.lat;
-                    user.lng = loc.lng;
-                    user.lastUpdate = new Date();
+                    onlineUser.lat = loc.lat;
+                    onlineUser.lng = loc.lng;
+                    onlineUser.lastUpdate = new Date();
 
                     // Broadcast to command center
                     io.to('command_center').emit('user_location_update', {
-                        userId: user.userId,
-                        name: user.name,
-                        role: user.role,
-                        lat: user.lat,
-                        lng: user.lng
+                        userId: onlineUser.userId,
+                        name: onlineUser.name,
+                        role: onlineUser.role,
+                        lat: onlineUser.lat,
+                        lng: onlineUser.lng
                     });
                 } catch (err) {
                     console.error("Error verifying shift for location update:", err);
@@ -84,9 +117,9 @@ exports.init = (httpServer) => {
         });
 
         socket.on("disconnect", () => {
-            const user = onlineUsers.get(socket.id);
-            if (user) {
-                io.to('command_center').emit('user_disconnected', user.userId);
+            const onlineUser = onlineUsers.get(socket.id);
+            if (onlineUser) {
+                io.to('command_center').emit('user_disconnected', onlineUser.userId);
                 onlineUsers.delete(socket.id);
             }
             console.log("Client disconnected", socket.id);

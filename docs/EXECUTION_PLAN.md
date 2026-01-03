@@ -337,13 +337,20 @@
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented JWT authentication for Socket.IO connections in `src/sockets/socketHandler.js`.
+- The user's information is now attached to the socket object upon successful authentication.
+- Removed the insecure `register_user` event.
 
 **Verification**:
-- [ ] JWT verified on connection
-- [ ] Unauthorized connections rejected
+- [x] JWT verified on connection
+- [x] Unauthorized connections rejected
 - [ ] Token refresh works
-- [ ] User session validated
+- [x] User session validated
 
 ---
 
