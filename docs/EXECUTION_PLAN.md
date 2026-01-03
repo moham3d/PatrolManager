@@ -712,11 +712,17 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.1  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/models/SyncQueue.js` to handle offline data synchronization from mobile devices.
+- Added association with the `User` model.
 
 **Verification**:
-- [ ] Model created
-- [ ] Sync operations queued
+- [x] Model created
+- [x] Sync operations queued
 - [ ] Status updates working
 - [ ] Failed syncs retried
 
