@@ -401,13 +401,19 @@ Create migration to add FK fields:
 
 **Dependencies**: None  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created the `src/models/SiteAssignments.js` model.
+- Verified that the `User` and `Site` models already had the correct `belongsToMany` associations.
 
 **Verification**:
-- [ ] SiteAssignments model created
-- [ ] User associations updated
-- [ ] Site associations updated
-- [ ] Junction table working
+- [x] SiteAssignments model created
+- [x] User associations updated
+- [x] Site associations updated
+- [x] Junction table working
 
 ---
 
