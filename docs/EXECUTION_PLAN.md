@@ -441,6 +441,29 @@ Create migration to add FK fields:
 
 ---
 
+### 🟡 Task 3.1: Implement input validation middleware [HIGH]
+**Agent**: Security Specialist
+**File**: `src/middleware/validator.js`
+**Description**:
+- Install `express-validator`
+- Create centralized input validation middleware
+
+**Dependencies**: None
+**Estimated Time**: 2 hours
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/middleware/validator.js` with validation rules for sites and incidents.
+- This task is a dependency for Task 4.4.
+
+**Verification**:
+- [x] `express-validator` installed
+- [x] `validator.js` created with validation rules
+
+---
+
 ### 🟡 Task 4.1: Create Auth Controller [HIGH]
 **Agent**: Backend Engineer  
 **File**: `src/controllers/authController.js`  
