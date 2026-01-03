@@ -1319,13 +1319,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 11.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented 30-second polling for active incidents and live patrols in `SupervisorViewModel.kt`.
+- Updated `ApiService.kt` with the necessary endpoints.
+- UI updates automatically as the ViewModel state changes upon each successful poll.
 
 **Verification**:
-- [ ] Endpoint called
-- [ ] Polling interval correct
-- [ ] UI updates real-time
-- [ ] No UI blocking
+- [x] Endpoint called
+- [x] Polling interval correct
+- [x] UI updates real-time
+- [x] No UI blocking
 
 ---
 
