@@ -2,9 +2,15 @@
 
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-semibold text-gray-800">Incidents</h1>
-        <a href="/incidents/create" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 shadow">
-            Report Incident
-        </a>
+        <div class="flex gap-2">
+            <div class="bg-gray-200 rounded-lg p-1 flex">
+                <button onclick="setView('grid')" id="grid-view-btn" class="px-3 py-1 rounded-md text-sm font-bold transition bg-white shadow-sm">Grid</button>
+                <button onclick="setView('kanban')" id="kanban-view-btn" class="px-3 py-1 rounded-md text-sm font-bold transition text-gray-600 hover:text-gray-800">Kanban</button>
+            </div>
+            <a href="/incidents/create" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 shadow">
+                Report Incident
+            </a>
+        </div>
     </div>
 
     <!-- Filters & Search -->
@@ -34,104 +40,144 @@
     </div>
 
     <!-- Incident Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="incidentGrid">
-        <% incidents.forEach(function(incident) { %>
-            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300 incident-card"
-                data-status="<%= incident.status %>" data-priority="<%= incident.priority %>"
-                data-search="<%= incident.type.toLowerCase() %> <%= incident.description ? incident.description.toLowerCase() : '' %> <%= incident.Site ? incident.Site.name.toLowerCase() : '' %>">
+    <div id="grid-view" class="block">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="incidentGrid">
+            <% incidents.forEach(function(incident) { %>
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition duration-300 incident-card"
+                    data-status="<%= incident.status %>" data-priority="<%= incident.priority %>"
+                    data-search="<%= incident.type.toLowerCase() %> <%= incident.description ? incident.description.toLowerCase() : '' %> <%= incident.Site ? incident.Site.name.toLowerCase() : '' %>">
 
-                <!-- Card Header -->
-                <div class="p-5 border-b border-gray-100 flex justify-between items-start">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <% let pColor='gray' ; if(incident.priority==='high' ) pColor='orange' ;
-                                if(incident.priority==='critical' ) pColor='red' ; if(incident.priority==='medium' )
-                                pColor='yellow' ; if(incident.priority==='low' ) pColor='green' ; %>
-                                <span
-                                    class="px-2 py-0.5 rounded text-xs font-bold uppercase bg-<%= pColor %>-100 text-<%= pColor %>-800">
-                                    <%= incident.priority %>
-                                </span>
-                                <span class="text-xs text-gray-400">
-                                    <%= new Date(incident.createdAt).toLocaleDateString() %>
-                                </span>
+                    <!-- Card Header -->
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <% let pColor='gray' ; if(incident.priority==='high' ) pColor='orange' ;
+                                    if(incident.priority==='critical' ) pColor='red' ; if(incident.priority==='medium' )
+                                    pColor='yellow' ; if(incident.priority==='low' ) pColor='green' ; %>
+                                    <span
+                                        class="px-2 py-0.5 rounded text-xs font-bold uppercase bg-<%= pColor %>-100 text-<%= pColor %>-800">
+                                        <%= incident.priority %>
+                                    </span>
+                                    <span class="text-xs text-gray-400">
+                                        <%= new Date(incident.createdAt).toLocaleDateString() %>
+                                    </span>
+                            </div>
+                            <h3 class="font-bold text-gray-800 text-lg hover:text-blue-600 transition">
+                                <a href="/incidents/<%= incident.id %>">
+                                    <%= incident.type %>
+                                </a>
+                            </h3>
                         </div>
-                        <h3 class="font-bold text-gray-800 text-lg hover:text-blue-600 transition">
-                            <a href="/incidents/<%= incident.id %>">
-                                <%= incident.type %>
-                            </a>
-                        </h3>
-                    </div>
-                    <% let sColor='blue' ; if(incident.status==='new' ) sColor='purple' ;
-                        if(incident.status==='resolved' ) sColor='green' ; %>
-                        <span
-                            class="px-3 py-1 rounded-full text-xs font-bold bg-<%= sColor %>-100 text-<%= sColor %>-800">
-                            <%= incident.status %>
-                        </span>
-                </div>
-
-                <!-- Card Body -->
-                <div class="p-5 space-y-3">
-                    <p class="text-gray-600 text-sm line-clamp-2">
-                        <%= incident.description || 'No description provided.' %>
-                    </p>
-
-                    <div class="flex items-center text-sm text-gray-500">
-                        <i class="fas fa-map-marker-alt w-5 text-center mr-2"></i>
-                        <%= incident.Site ? incident.Site.name : 'Unknown Site' %>
-                    </div>
-
-                    <div class="flex items-center text-sm text-gray-500">
-                        <i class="fas fa-user w-5 text-center mr-2"></i>
-                        <% if (incident.assignee) { %>
-                            <span class="font-semibold text-gray-700">
-                                <%= incident.assignee.name %>
+                        <% let sColor='blue' ; if(incident.status==='new' ) sColor='purple' ;
+                            if(incident.status==='resolved' ) sColor='green' ; %>
+                            <span
+                                class="px-3 py-1 rounded-full text-xs font-bold bg-<%= sColor %>-100 text-<%= sColor %>-800">
+                                <%= incident.status %>
                             </span>
-                            <% } else { %>
-                                <span class="italic text-gray-400">Unassigned</span>
-                                <% } %>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-5 space-y-3">
+                        <p class="text-gray-600 text-sm line-clamp-2">
+                            <%= incident.description || 'No description provided.' %>
+                        </p>
+
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-map-marker-alt w-5 text-center mr-2"></i>
+                            <%= incident.Site ? incident.Site.name : 'Unknown Site' %>
+                        </div>
+
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-user w-5 text-center mr-2"></i>
+                            <% if (incident.assignee) { %>
+                                <span class="font-semibold text-gray-700">
+                                    <%= incident.assignee.name %>
+                                </span>
+                                <% } else { %>
+                                    <span class="italic text-gray-400">Unassigned</span>
+                                    <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer (Actions) -->
+                    <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
+                        <!-- Manager Assign Action -->
+                        <% if (['manager', 'supervisor' ].includes(user.Role.name)) { %>
+                            <button onclick="openAssignModal('<%= incident.id %>', '<%= incident.type %>')"
+                                class="text-gray-600 hover:text-blue-600 font-bold text-sm px-3 py-1">
+                                <i class="<%= incident.assignee ? 'fas fa-exchange-alt' : 'fas fa-user-plus' %> mr-1"></i>
+                                <%= incident.assignee ? 'Re-assign' : 'Assign' %>
+                            </button>
+                            <% } %>
+
+                                <!-- Guard Claim Action -->
+                                <% if (!incident.assignee && ['guard'].includes(user.Role.name)) { %>
+                                    <form action="/incidents/<%= incident.id %>/claim" method="POST" class="inline">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit"
+                                            class="bg-blue-600 text-white hover:bg-blue-700 font-bold text-sm px-4 py-2 rounded shadow transition">
+                                            Im on it (Claim)
+                                        </button>
+                                    </form>
+                                    <% } %>
+
+                                        <!-- Resolve Action -->
+                                        <% if (incident.status !=='resolved' ) { %>
+                                            <% if (incident.assignedTo===user.id || ['manager', 'admin'
+                                                ].includes(user.Role.name)) { %>
+                                                <button onclick="openResolveModal('<%= incident.id %>')"
+                                                    class="bg-green-600 text-white hover:bg-green-700 font-bold text-sm px-4 py-2 rounded shadow transition">
+                                                    Resolve
+                                                </button>
+                                                <% } %>
+                                                    <% } else { %>
+                                                        <span
+                                                            class="text-green-600 font-bold text-sm flex items-center px-3">
+                                                            <i class="fas fa-check-circle mr-1"></i> Done
+                                                        </span>
+                                                        <% } %>
                     </div>
                 </div>
-
-                <!-- Card Footer (Actions) -->
-                <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
-                    <!-- Manager Assign Action -->
-                    <% if (['manager', 'supervisor' ].includes(user.Role.name)) { %>
-                        <button onclick="openAssignModal('<%= incident.id %>', '<%= incident.type %>')"
-                            class="text-gray-600 hover:text-blue-600 font-bold text-sm px-3 py-1">
-                            <i class="<%= incident.assignee ? 'fas fa-exchange-alt' : 'fas fa-user-plus' %> mr-1"></i>
-                            <%= incident.assignee ? 'Re-assign' : 'Assign' %>
-                        </button>
-                        <% } %>
-
-                            <!-- Guard Claim Action -->
-                            <% if (!incident.assignee && ['guard'].includes(user.Role.name)) { %>
-                                <form action="/incidents/<%= incident.id %>/claim" method="POST" class="inline">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button type="submit"
-                                        class="bg-blue-600 text-white hover:bg-blue-700 font-bold text-sm px-4 py-2 rounded shadow transition">
-                                        Im on it (Claim)
-                                    </button>
-                                </form>
-                                <% } %>
-
-                                    <!-- Resolve Action -->
-                                    <% if (incident.status !=='resolved' ) { %>
-                                        <% if (incident.assignedTo===user.id || ['manager', 'admin'
-                                            ].includes(user.Role.name)) { %>
-                                            <button onclick="openResolveModal('<%= incident.id %>')"
-                                                class="bg-green-600 text-white hover:bg-green-700 font-bold text-sm px-4 py-2 rounded shadow transition">
-                                                Resolve
-                                            </button>
-                                            <% } %>
-                                                <% } else { %>
-                                                    <span
-                                                        class="text-green-600 font-bold text-sm flex items-center px-3">
-                                                        <i class="fas fa-check-circle mr-1"></i> Done
-                                                    </span>
-                                                    <% } %>
-                </div>
-            </div>
             <% }) %>
+        </div>
+    </div>
+
+    <!-- Kanban View -->
+    <div id="kanban-view" class="hidden">
+        <div class="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4">
+            <% ['new', 'investigating', 'resolved', 'closed'].forEach(status => { %>
+                <div class="flex-shrink-0 w-full md:w-80 bg-gray-100 rounded-xl p-4 min-h-[500px]" 
+                     ondrop="drop(event, '<%= status %>')" ondragover="allowDrop(event)">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-700 uppercase text-sm"><%= status %></h3>
+                        <span class="bg-gray-300 text-gray-700 px-2 py-0.5 rounded-full text-xs font-bold">
+                            <%= incidents.filter(i => i.status === status).length %>
+                        </span>
+                    </div>
+                    <div class="space-y-4">
+                        <% incidents.filter(i => i.status === status).forEach(incident => { %>
+                            <div class="bg-white p-4 rounded-lg shadow-sm cursor-move hover:shadow-md transition kanban-card" 
+                                 draggable="true" ondragstart="drag(event)" id="kanban-<%= incident.id %>" 
+                                 data-id="<%= incident.id %>"
+                                 data-priority="<%= incident.priority %>"
+                                 data-search="<%= incident.type.toLowerCase() %> <%= incident.description ? incident.description.toLowerCase() : '' %> <%= incident.Site ? incident.Site.name.toLowerCase() : '' %>">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                        <%= incident.priority %>
+                                    </span>
+                                </div>
+                                <h4 class="font-bold text-gray-800 text-sm mb-1"><%= incident.type %></h4>
+                                <p class="text-xs text-gray-500 line-clamp-2"><%= incident.description %></p>
+                                <div class="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center">
+                                    <span class="text-[10px] text-gray-400">@ <%= incident.Site ? incident.Site.name : 'Unknown' %></span>
+                                    <a href="/incidents/<%= incident.id %>" class="text-blue-600 hover:text-blue-800"><i class="fas fa-external-link-alt text-[10px]"></i></a>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
     </div>
 
     <% if (incidents.length===0) { %>
@@ -140,21 +186,106 @@
             <h3 class="text-xl font-bold text-gray-700">No Incidents Found</h3>
             <p class="text-gray-500">Everything looks clear!</p>
         </div>
-        <% } %>
+    <% } %>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+        <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-lg shadow">
+            <p class="text-sm text-gray-600">
+                Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, totalIncidents) %> of <%= totalIncidents %> incidents
+            </p>
+            <div class="flex gap-2">
+                <% if (currentPage > 1) { %>
+                    <a href="/incidents?page=<%= currentPage - 1 %>&limit=<%= limit %>" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition font-bold text-sm">Previous</a>
+                <% } %>
+                
+                <% for(let i = 1; i <= totalPages; i++) { %>
+                    <a href="/incidents?page=<%= i %>&limit=<%= limit %>" 
+                       class="px-4 py-2 rounded-lg font-bold text-sm transition <%= currentPage === i ? 'bg-red-600 text-white' : 'bg-gray-200 hover:bg-gray-300' %>">
+                        <%= i %>
+                    </a>
+                <% } %>
+
+                <% if (currentPage < totalPages) { %>
+                    <a href="/incidents?page=<%= currentPage + 1 %>&limit=<%= limit %>" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition font-bold text-sm">Next</a>
+                <% } %>
+            </div>
+        </div>
+    <% } %>
 
             <script>
+                function setView(view) {
+                    const grid = document.getElementById('grid-view');
+                    const kanban = document.getElementById('kanban-view');
+                    const gridBtn = document.getElementById('grid-view-btn');
+                    const kanbanBtn = document.getElementById('kanban-view-btn');
+
+                    if (view === 'kanban') {
+                        grid.classList.add('hidden');
+                        kanban.classList.remove('hidden');
+                        kanbanBtn.classList.add('bg-white', 'shadow-sm');
+                        kanbanBtn.classList.remove('text-gray-600');
+                        gridBtn.classList.remove('bg-white', 'shadow-sm');
+                        gridBtn.classList.add('text-gray-600');
+                    } else {
+                        kanban.classList.add('hidden');
+                        grid.classList.remove('hidden');
+                        gridBtn.classList.add('bg-white', 'shadow-sm');
+                        gridBtn.classList.remove('text-gray-600');
+                        kanbanBtn.classList.remove('bg-white', 'shadow-sm');
+                        kanbanBtn.classList.add('text-gray-600');
+                    }
+                }
+
+                function allowDrop(ev) {
+                    ev.preventDefault();
+                }
+
+                function drag(ev) {
+                    ev.dataTransfer.setData("text", ev.target.dataset.id);
+                }
+
+                function drop(ev, newStatus) {
+                    ev.preventDefault();
+                    const id = ev.dataTransfer.getData("text");
+                    
+                    fetch(`/incidents/${id}/status`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'CSRF-Token': '<%= csrfToken %>'
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload(); 
+                        } else {
+                            alert('Error updating status: ' + data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Network Error');
+                    });
+                }
+
                 // Simple Client-Side Filtering
                 const searchInput = document.getElementById('searchInput');
                 const statusFilter = document.getElementById('statusFilter');
                 const priorityFilter = document.getElementById('priorityFilter');
-                const cards = document.querySelectorAll('.incident-card');
+                const gridCards = document.querySelectorAll('.incident-card');
+                const kanbanCards = document.querySelectorAll('.kanban-card');
 
                 function filterIncidents() {
                     const query = searchInput.value.toLowerCase();
                     const status = statusFilter.value;
                     const priority = priorityFilter.value;
 
-                    cards.forEach(card => {
+                    // Filter Grid View
+                    gridCards.forEach(card => {
                         const cardStatus = card.dataset.status;
                         const cardPriority = card.dataset.priority;
                         const cardSearch = card.dataset.search;
@@ -163,11 +294,17 @@
                         const matchStatus = status === 'all' || cardStatus === status;
                         const matchPriority = priority === 'all' || cardPriority === priority;
 
-                        if (matchQuery && matchStatus && matchPriority) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
+                        card.style.display = (matchQuery && matchStatus && matchPriority) ? 'block' : 'none';
+                    });
+
+                    // Filter Kanban View
+                    kanbanCards.forEach(card => {
+                        const cardSearch = card.dataset.search;
+                        const cardPriority = card.dataset.priority;
+                        const matchQuery = cardSearch.includes(query);
+                        const matchPriority = priority === 'all' || cardPriority === priority;
+                        
+                        card.style.display = (matchQuery && matchPriority) ? '' : 'none';
                     });
                 }
 

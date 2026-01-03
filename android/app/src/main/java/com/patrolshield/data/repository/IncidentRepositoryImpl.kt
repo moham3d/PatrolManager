@@ -21,9 +21,14 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
+import com.patrolshield.data.local.dao.LogDao
+import com.patrolshield.data.local.entities.LogEntity
+import com.google.gson.Gson
+
 class IncidentRepositoryImpl @Inject constructor(
     private val api: ApiService,
     private val dao: IncidentDao,
+    private val logDao: LogDao,
     @ApplicationContext private val context: Context
 ) : IncidentRepository {
 
@@ -83,9 +88,24 @@ class IncidentRepositoryImpl @Inject constructor(
             } else {
                 emit(Resource.Error("Server error: ${response.code()}"))
             }
-        } catch (e: HttpException) {
-            emit(Resource.Error(e.localizedMessage ?: "An unexpected error occurred"))
-        } catch (e: IOException) {
+        } catch (e: Exception) {
+            // Offline: Queue for sync
+            val request = IncidentRequest(
+                type = type,
+                priority = priority,
+                description = description,
+                runId = null,
+                siteId = siteId,
+                lat = lat,
+                lng = lng,
+                imageBase64 = compressedFiles.firstOrNull()?.absolutePath // Use this field to store path in logs
+            )
+            logDao.insertLog(LogEntity(
+                type = "REPORT_INCIDENT",
+                payload = Gson().toJson(request),
+                priority = 3,
+                synced = false
+            ))
             emit(Resource.Error("Couldn't reach server. Incident saved locally."))
         }
     }

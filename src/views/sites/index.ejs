@@ -7,17 +7,28 @@
         </a>
     </div>
 
+    <!-- Filters & Search -->
+    <div class="mb-6 bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div class="w-full md:w-1/3">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                <input type="text" id="searchInput" placeholder="Search sites..."
+                    class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+    </div>
+
     <div class="bg-white rounded-lg shadow overflow-x-auto">
-        <table class="min-w-full leading-normal">
+        <table class="min-w-full leading-normal" id="sitesTable">
             <thead>
                 <tr>
-                    <th
-                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Name
+                    <th onclick="sortTable(0)"
+                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
+                        Name <i class="fas fa-sort ml-1"></i>
                     </th>
-                    <th
-                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Address
+                    <th onclick="sortTable(1)"
+                        class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
+                        Address <i class="fas fa-sort ml-1"></i>
                     </th>
                     <th
                         class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -29,9 +40,9 @@
                     </th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="sitesTableBody">
                 <% sites.forEach(function(site) { %>
-                    <tr>
+                    <tr class="site-row" data-search="<%= site.name.toLowerCase() %> <%= (site.address || '').toLowerCase() %>">
                         <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                             <p class="text-gray-900 whitespace-no-wrap font-bold">
                                 <%= site.name %>
@@ -68,5 +79,56 @@
             </tbody>
         </table>
     </div>
+
+    <script>
+        function sortTable(n) {
+            const table = document.getElementById("sitesTable");
+            const tbody = document.getElementById("sitesTableBody");
+            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            switching = true;
+            dir = "asc";
+            while (switching) {
+                switching = false;
+                rows = tbody.rows;
+                for (i = 0; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (dir == "asc") {
+                        if (x.innerText.toLowerCase() > y.innerText.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerText.toLowerCase() < y.innerText.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        const rows = document.querySelectorAll('.site-row');
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            rows.forEach(row => {
+                const searchData = row.dataset.search;
+                row.style.display = searchData.includes(query) ? '' : 'none';
+            });
+        });
+    </script>
 
     <%- include('../partials/footer') %>

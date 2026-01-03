@@ -82,6 +82,7 @@ class PatrolRepositoryImpl @Inject constructor(
                 val log = LogEntity(
                     type = "START_PATROL",
                     payload = Gson().toJson(StartPatrolRequest(templateId)),
+                    priority = 2,
                     synced = false
                 )
                 logDao.insertLog(log)
@@ -92,6 +93,7 @@ class PatrolRepositoryImpl @Inject constructor(
              val log = LogEntity(
                 type = "START_PATROL",
                 payload = Gson().toJson(StartPatrolRequest(templateId)),
+                priority = 2,
                 synced = false
             )
             logDao.insertLog(log)
@@ -109,8 +111,6 @@ class PatrolRepositoryImpl @Inject constructor(
     override suspend fun scanCheckpoint(runId: Int, checkpointId: Int, lat: Double, lng: Double): Flow<Resource<String>> = flow {
         emit(Resource.Loading())
         
-        // Local Validation Logic would go here (Distance check etc)
-        
         try {
              val request = ScanRequest(runId, checkpointId, LocationDto(lat, lng))
              val response = api.scanCheckpoint(request)
@@ -125,6 +125,7 @@ class PatrolRepositoryImpl @Inject constructor(
              val log = LogEntity(
                 type = "SCAN_CHECKPOINT",
                 payload = Gson().toJson(ScanRequest(runId, checkpointId, LocationDto(lat, lng))),
+                priority = 2,
                 synced = false
             )
             logDao.insertLog(log)
@@ -149,23 +150,16 @@ class PatrolRepositoryImpl @Inject constructor(
                     logDao.insertLog(LogEntity(
                         type = "END_PATROL",
                         payload = Gson().toJson(com.patrolshield.data.remote.dto.EndPatrolRequest(activePatrol.remoteId)),
+                        priority = 2,
                         synced = false
                     ))
-                    
-                    // Trigger Worker Immediately
-                    // Note: In a real app we'd inject WorkManager, but here we can rely on Periodic
-                    // or just let it pick up next time. 
-                    // To make it fast, we rely on the fact that UI navigation is instant.
                 }
                 
                 emit(Resource.Success(Unit))
             } else {
-                // If no active patrol, consider it already ended and succeed.
                 emit(Resource.Success(Unit))
             }
         } catch (e: Exception) {
-            // Even on error, we might want to force exit? 
-            // Better to show error but for now let's just log.
             emit(Resource.Error("Error: " + e.message))
         }
     }
@@ -175,17 +169,30 @@ class PatrolRepositoryImpl @Inject constructor(
     }
 
     override suspend fun sendPanic(lat: Double?, lng: Double?, runId: Int?): Resource<Unit> {
+        val location = if (lat != null && lng != null) LocationDto(lat, lng) else null
+        val request = com.patrolshield.data.remote.dto.PanicRequest(location, runId)
+        
         return try {
-            val location = if (lat != null && lng != null) LocationDto(lat, lng) else null
-            api.triggerPanic(com.patrolshield.data.remote.dto.PanicRequest(location, runId))
-            Resource.Success(Unit)
+            val response = api.triggerPanic(request)
+            if (response.isSuccessful) {
+                Resource.Success(Unit)
+            } else {
+                // Queue anyway on server error? 
+                Resource.Error("Server error")
+            }
         } catch (e: Exception) {
-            Resource.Error(e.message ?: "Failed to send SOS")
+            // Offline: Queue with Critical Priority
+            logDao.insertLog(LogEntity(
+                type = "PANIC_ALERT",
+                payload = Gson().toJson(request),
+                priority = 1,
+                synced = false
+            ))
+            Resource.Success(Unit) // Consider success locally
         }
     }
 
     override suspend fun getCompletedPatrols(): List<PatrolEntity> {
-        // Simple "start of day" calculation
         val calendar = java.util.Calendar.getInstance()
         calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
         calendar.set(java.util.Calendar.MINUTE, 0)
@@ -195,16 +202,17 @@ class PatrolRepositoryImpl @Inject constructor(
     }
 
     override suspend fun sendHeartbeat(lat: Double, lng: Double, activeRunId: Int?) {
+        val request = com.patrolshield.data.remote.dto.HeartbeatRequest(lat, lng, activeRunId)
         try {
-            api.sendHeartbeat(com.patrolshield.data.remote.dto.HeartbeatRequest(lat, lng, activeRunId))
+            api.sendHeartbeat(request)
         } catch (e: Exception) {
-            // Offline: Cache Heartbeat
-            val log = LogEntity(
+            // Offline: Cache Heartbeat with Low Priority
+            logDao.insertLog(LogEntity(
                 type = "HEARTBEAT",
-                payload = Gson().toJson(com.patrolshield.data.remote.dto.HeartbeatRequest(lat, lng, activeRunId)),
+                payload = Gson().toJson(request),
+                priority = 4,
                 synced = false
-            )
-            logDao.insertLog(log)
+            ))
         }
     }
 }

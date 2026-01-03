@@ -1,18 +1,163 @@
-const { PatrolRun, PatrolTemplate, CheckpointVisit, Incident, User, Site, Shift } = require('../models');
+const { PatrolRun, PatrolTemplate, CheckpointVisit, Incident, User, Site, Shift, ReportSchedule } = require('../models');
 const { Op } = require('sequelize');
+const { Parser } = require('json2csv');
+const XLSX = require('xlsx');
+
+// Helpers
+const renderOrJson = (res, view, data) => {
+    res.format({
+        'text/html': () => res.render(view, data),
+        'application/json': () => res.json(data)
+    });
+};
 
 exports.index = async (req, res) => {
-    res.format({
-        'text/html': () => res.render('reports/index', { title: 'Analytics Dashboard' }),
-        'application/json': () => res.json({ message: 'Analytics API' })
-    });
+    try {
+        const schedules = await ReportSchedule.findAll({
+            where: { userId: req.user.id }
+        });
+        res.render('reports/index', { title: 'Analytics Dashboard', schedules });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.createSchedule = async (req, res) => {
+    try {
+        const { reportType, frequency, email } = req.body;
+        await ReportSchedule.create({
+            userId: req.user.id,
+            reportType,
+            frequency,
+            email,
+            createdBy: req.user.id
+        });
+        req.flash('success', 'Report scheduled successfully');
+        res.redirect('/reports');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Error scheduling report');
+        res.redirect('/reports');
+    }
+};
+
+exports.deleteSchedule = async (req, res) => {
+    try {
+        const schedule = await ReportSchedule.findByPk(req.params.id);
+        if (schedule && (schedule.userId === req.user.id || req.user.Role.name === 'admin')) {
+            await schedule.destroy();
+            req.flash('success', 'Schedule deleted');
+        }
+        res.redirect('/reports');
+    } catch (err) {
+        console.error(err);
+        res.redirect('/reports');
+    }
+};
+
+exports.exportIncidents = async (req, res) => {
+    try {
+        const { format, startDate, endDate } = req.query;
+        let where = {};
+        if (startDate && endDate) {
+            where.createdAt = { [Op.between]: [new Date(startDate), new Date(endDate)] };
+        }
+
+        const incidents = await Incident.findAll({
+            where,
+            include: [{ model: User, as: 'reporter' }, { model: Site }],
+            order: [['createdAt', 'DESC']]
+        });
+
+        const data = incidents.map(inc => ({
+            ID: inc.id,
+            Type: inc.type,
+            Priority: inc.priority,
+            Status: inc.status,
+            Site: inc.Site ? inc.Site.name : 'Unknown',
+            Reporter: inc.reporter ? inc.reporter.name : 'Unknown',
+            Date: inc.createdAt.toISOString(),
+            Description: inc.description
+        }));
+
+        if (format === 'csv') {
+            const json2csvParser = new Parser();
+            const csv = json2csvParser.parse(data);
+            res.header('Content-Type', 'text/csv');
+            res.attachment('incidents_report.csv');
+            return res.send(csv);
+        } else if (format === 'xlsx') {
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Incidents');
+            const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+            res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.attachment('incidents_report.xlsx');
+            return res.send(buf);
+        }
+
+        res.status(400).json({ error: 'Invalid format' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: true, message: err.message });
+    }
+};
+
+exports.getPatrolAnalytics = async (req, res) => {
+    try {
+        const runs = await PatrolRun.findAll({
+            where: { status: ['completed', 'incomplete'] },
+            attributes: ['completionPercentage', 'siteId', 'createdAt'],
+            include: [{ model: Site }]
+        });
+
+        const siteStats = {};
+        runs.forEach(run => {
+            const siteName = run.Site ? run.Site.name : 'Unknown';
+            if (!siteStats[siteName]) {
+                siteStats[siteName] = { total: 0, sum: 0 };
+            }
+            siteStats[siteName].total++;
+            siteStats[siteName].sum += (run.completionPercentage || 0);
+        });
+
+        const completionBySite = {};
+        Object.keys(siteStats).forEach(site => {
+            completionBySite[site] = Math.round(siteStats[site].sum / siteStats[site].total);
+        });
+
+        res.json({ completionBySite });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: true, message: err.message });
+    }
+};
+
+exports.getIncidentTrends = async (req, res) => {
+    try {
+        const incidents = await Incident.findAll({
+            attributes: ['createdAt']
+        });
+
+        const hourlyTrends = Array(24).fill(0);
+        incidents.forEach(inc => {
+            const hour = new Date(inc.createdAt).getHours();
+            hourlyTrends[hour]++;
+        });
+
+        res.json({ hourlyTrends });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: true, message: err.message });
+    }
 };
 
 exports.getMissedCheckpoints = async (req, res) => {
     try {
         const runs = await PatrolRun.findAll({
             where: {
-                status: ['completed', 'incomplete'] // Only finished runs
+                status: ['completed', 'incomplete']
             },
             include: [
                 { model: PatrolTemplate, as: 'template' },
@@ -27,9 +172,8 @@ exports.getMissedCheckpoints = async (req, res) => {
             const expectedIds = (run.template && run.template.checkpointsList) ? run.template.checkpointsList : [];
             const visitedIds = run.visits.map(v => v.checkpointId);
 
-            // Find counts
             const totalExpected = expectedIds.length;
-            const totalVisited = new Set(visitedIds).size; // Unique visits
+            const totalVisited = new Set(visitedIds).size;
 
             const completionPercent = totalExpected > 0 ? Math.round((totalVisited / totalExpected) * 100) : 0;
 
@@ -43,7 +187,7 @@ exports.getMissedCheckpoints = async (req, res) => {
                 completionPercent,
                 status: run.status
             };
-        }).filter(r => r.completionPercent < 100); // Only return imperfect runs
+        }).filter(r => r.completionPercent < 100);
 
         res.json(data);
     } catch (err) {
@@ -62,9 +206,7 @@ exports.getIncidentSummary = async (req, res) => {
         const byPriority = {};
 
         incidents.forEach(inc => {
-            // Count Type
             byType[inc.type] = (byType[inc.type] || 0) + 1;
-            // Count Priority
             byPriority[inc.priority] = (byPriority[inc.priority] || 0) + 1;
         });
 
@@ -99,14 +241,12 @@ exports.getShiftAnalytics = async (req, res) => {
         const guardPerformance = {};
 
         shifts.forEach(shift => {
-            // Metric 1: Hours by Site
             if (shift.site) {
                 const durationMs = new Date(shift.endTime) - new Date(shift.startTime);
                 const durationHours = durationMs / (1000 * 60 * 60);
                 siteHours[shift.site.name] = (siteHours[shift.site.name] || 0) + durationHours;
             }
 
-            // Metric 2: Guard Performance
             const guardName = shift.user ? shift.user.name : 'Unknown';
             if (!guardPerformance[guardName]) {
                 guardPerformance[guardName] = { shifts: 0, patrols: 0 };
@@ -115,7 +255,6 @@ exports.getShiftAnalytics = async (req, res) => {
             guardPerformance[guardName].patrols += shift.patrolRuns.length;
         });
 
-        // Round hours
         Object.keys(siteHours).forEach(site => {
             siteHours[site] = Math.round(siteHours[site] * 10) / 10;
         });

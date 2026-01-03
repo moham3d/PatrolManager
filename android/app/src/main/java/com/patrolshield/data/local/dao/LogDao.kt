@@ -11,8 +11,11 @@ interface LogDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(log: LogEntity)
 
-    @Query("SELECT * FROM logs WHERE synced = 0 ORDER BY timestamp ASC")
+    @Query("SELECT * FROM logs WHERE synced = 0 ORDER BY priority ASC, timestamp ASC")
     suspend fun getUnsyncedLogs(): List<LogEntity>
+
+    @Query("SELECT * FROM logs WHERE synced = 0 AND priority = :priority ORDER BY timestamp ASC")
+    suspend fun getPendingLogsByPriority(priority: Int): List<LogEntity>
 
     @Query("DELETE FROM logs WHERE id = :id")
     suspend fun deleteLog(id: Int)

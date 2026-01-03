@@ -13,10 +13,27 @@ const renderOrJson = (res, view, data) => {
 
 exports.index = async (req, res) => {
     try {
-        const templates = await PatrolTemplate.findAll({
-            include: [{ model: Site }]
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 9;
+        const offset = (page - 1) * limit;
+
+        const { count, rows: templates } = await PatrolTemplate.findAndCountAll({
+            include: [{ model: Site }],
+            limit,
+            offset,
+            order: [['createdAt', 'DESC']]
         });
-        renderOrJson(res, 'patrols/index', { title: 'Patrol Templates', templates });
+
+        const totalPages = Math.ceil(count / limit);
+
+        renderOrJson(res, 'patrols/index', { 
+            title: 'Patrol Templates', 
+            templates,
+            currentPage: page,
+            totalPages,
+            totalPatrols: count,
+            limit
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');

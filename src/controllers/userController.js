@@ -11,14 +11,27 @@ const renderOrJson = (res, view, data) => {
 
 exports.index = async (req, res) => {
     try {
-        const users = await User.findAll({
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = (page - 1) * limit;
+
+        const { count, rows: users } = await User.findAndCountAll({
             include: [{ model: Role }],
-            attributes: { exclude: ['password'] } // Don't send passwords in JSON
+            attributes: { exclude: ['password'] }, // Don't send passwords in JSON
+            limit,
+            offset,
+            order: [['name', 'ASC']]
         });
+
+        const totalPages = Math.ceil(count / limit);
 
         renderOrJson(res, 'users/index', {
             title: 'User Management',
-            users
+            users,
+            currentPage: page,
+            totalPages,
+            totalUsers: count,
+            limit
         });
     } catch (err) {
         console.error(err);

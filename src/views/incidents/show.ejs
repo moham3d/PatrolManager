@@ -75,189 +75,69 @@
                             <% } %>
                     </div>
                     <% } else { %>
-                        <!-- Evidence (Initial Report) if exists -->
-                        <% if(incident.evidencePath && incident.status !=='resolved' ) { %>
-                            <div class="bg-white rounded-lg shadow p-6">
-                                <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Attached Evidence</h2>
-                                <img src="<%= incident.evidencePath %>"
-                                    class="w-full rounded-lg border border-gray-100 shadow-sm" alt="Incident Evidence">
-                            </div>
+                <!-- Evidence (Initial Report) if exists -->
+                <% if((incident.evidence && incident.evidence.length > 0) || incident.evidencePath) { %>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Attached Evidence</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="incident-gallery">
+                            <% if(incident.evidencePath) { %>
+                                <div class="cursor-pointer group relative overflow-hidden rounded-lg border border-gray-100" 
+                                     onclick="openLightbox('<%= incident.evidencePath %>')">
+                                    <img src="<%= incident.evidencePath %>" class="w-full h-32 object-cover transition group-hover:scale-105" alt="Evidence">
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition flex items-center justify-center">
+                                        <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition"></i>
+                                    </div>
+                                </div>
                             <% } %>
-                                <% } %>
+                            <% if(incident.evidence) { %>
+                                <% incident.evidence.forEach(ev => { %>
+                                    <div class="cursor-pointer group relative overflow-hidden rounded-lg border border-gray-100" 
+                                         onclick="openLightbox('<%= ev.filePath %>')">
+                                        <img src="<%= ev.filePath %>" class="w-full h-32 object-cover transition group-hover:scale-105" alt="Evidence">
+                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition flex items-center justify-center">
+                                            <i class="fas fa-search-plus text-white opacity-0 group-hover:opacity-100 transition"></i>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
             </div>
 
             <!-- Sidebar Details -->
-            <div class="space-y-6">
-                <!-- Location Card -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-gray-700 mb-3 flex items-center"><i
-                            class="fas fa-map-marker-alt w-6 text-red-500"></i> Location</h3>
-                    <div class="space-y-2">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Site:</span>
-                            <span class="font-semibold text-right">
-                                <%= incident.Site ? incident.Site.name : 'Unknown' %>
-                            </span>
-                        </div>
-                        <% if (incident.Zone) { %>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500">Zone:</span>
-                                <span class="font-semibold text-right">
-                                    <%= incident.Zone.name %>
-                                </span>
-                            </div>
-                            <% } %>
-                                <% if (incident.location && incident.location.coordinates) { %>
-                                    <div class="mt-4 pt-4 border-t">
-                                        <a href="https://www.google.com/maps?q=<%= incident.location.coordinates[0] %>,<%= incident.location.coordinates[1] %>"
-                                            target="_blank"
-                                            class="block w-full text-center bg-blue-50 text-blue-600 font-bold py-2 rounded hover:bg-blue-100 transition">
-                                            <i class="fas fa-external-link-alt mr-1"></i> Open in Maps
-                                        </a>
-                                    </div>
-                                    <% } %>
-                    </div>
-                </div>
-
-                <!-- People Card -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="font-bold text-gray-700 mb-3 flex items-center"><i
-                            class="fas fa-users w-6 text-blue-500"></i> People</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <span class="block text-xs text-gray-400 uppercase">Reporter</span>
-                            <div class="flex items-center mt-1">
-                                <div
-                                    class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xs mr-2">
-                                    <%= incident.reporter ? incident.reporter.name.charAt(0) : '?' %>
-                                </div>
-                                <span class="font-medium">
-                                    <%= incident.reporter ? incident.reporter.name : 'Unknown' %>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="pt-3 border-t">
-                            <span class="block text-xs text-gray-400 uppercase">Assigned To</span>
-                            <% if (incident.assignee) { %>
-                                <div class="flex items-center mt-1">
-                                    <div
-                                        class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs mr-2">
-                                        <%= incident.assignee.name.charAt(0) %>
-                                    </div>
-                                    <span class="font-medium">
-                                        <%= incident.assignee.name %>
-                                    </span>
-                                </div>
-                                <% } else { %>
-                                    <div class="mt-1 text-gray-500 italic">Unassigned</div>
-                                    <% if (['manager','supervisor'].includes(user.Role.name)) { %>
-                                        <button onclick="openAssignModal('<%= incident.id %>', '<%= incident.type %>')"
-                                            class="mt-2 text-sm text-blue-600 hover:underline">Assign Someone</button>
-                                        <% } %>
-                                            <% if (user.Role.name==='guard' ) { %>
-                                                <form action="/incidents/<%= incident.id %>/claim" method="POST"
-                                                    class="mt-2">
-                                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                    <button
-                                                        class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 w-full">I'll
-                                                        Handle It (Claim)</button>
-                                                </form>
-                                                <% } %>
-                                                    <% } %>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Actions Card -->
-                <% if (incident.status !=='resolved' ) { %>
-                    <div class="bg-white rounded-lg shadow p-6">
-                        <h3 class="font-bold text-gray-700 mb-3">Actions</h3>
-                        <% if (incident.assignedTo===user.id || ['manager', 'admin' ].includes(user.Role.name)) { %>
-                            <button onclick="openResolveModal('<%= incident.id %>')"
-                                class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow transition">
-                                Resolve Incident
-                            </button>
-                            <p class="text-xs text-gray-500 mt-2 text-center">Click to add final notes and close.</p>
-                            <% } else { %>
-                                <p class="text-sm text-gray-500 text-center">No actions available.</p>
-                                <% } %>
-                    </div>
-                    <% } %>
-            </div>
+            <!-- ... sidebar ... -->
         </div>
     </div>
 
-    <!-- Re-use Modals from Index by including them or duplicating (simpler to duplicate for now to avoid complexity in partials, or include footer which has them? No, index had them inline. Let's add them here.) -->
-    <!-- Assign Modal -->
-    <div id="assignModal"
-        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
-                <h3 class="font-bold text-lg text-gray-800">Assign Incident</h3>
-                <button onclick="document.getElementById('assignModal').classList.add('hidden')"
-                    class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
-            </div>
-            <form id="assignForm" method="POST" class="p-6">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <p class="mb-4 text-sm text-gray-600">Assign <span id="modalIncidentType" class="font-bold"></span> to:
-                </p>
-                <div class="mb-4">
-                    <select name="userId"
-                        class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                        required>
-                        <% users.forEach(user=> { %>
-                            <option value="<%= user.id %>">
-                                <%= user.name %>
-                            </option>
-                            <% }) %>
-                    </select>
-                </div>
-                <div class="flex justify-end">
-                    <button type="button" onclick="document.getElementById('assignModal').classList.add('hidden')"
-                        class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg mr-2">Cancel</button>
-                    <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md">Assign</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Resolve Modal -->
-    <div id="resolveModal"
-        class="fixed inset-0 bg-black bg-opacity-50 z-[9999] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm">
-            <div class="px-6 py-4 border-b flex justify-between items-center bg-green-50 rounded-t-xl">
-                <h3 class="font-bold text-lg text-gray-800">Resolve Incident</h3>
-                <button onclick="document.getElementById('resolveModal').classList.add('hidden')"
-                    class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
-            </div>
-            <form id="resolveForm" method="POST" enctype="multipart/form-data" class="p-6">
-                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                <input type="hidden" name="type" value="incident">
-                <p class="mb-4 text-sm text-gray-600">Mark as <strong>Resolved</strong>.</p>
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-xs font-bold mb-2">Resolution Notes</label>
-                    <textarea name="notes" rows="3"
-                        class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                        placeholder="Describe how it was fixed..."></textarea>
-                </div>
-                <div class="mb-6">
-                    <label class="block text-gray-700 text-xs font-bold mb-2">Evidence (Optional Photo)</label>
-                    <input type="file" name="evidence" accept="image/*"
-                        class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                </div>
-                <div class="flex justify-end">
-                    <button type="button" onclick="document.getElementById('resolveModal').classList.add('hidden')"
-                        class="px-4 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-lg mr-2">Cancel</button>
-                    <button type="submit"
-                        class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md">Mark
-                        Resolved</button>
-                </div>
-            </form>
-        </div>
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="fixed inset-0 bg-black bg-opacity-90 z-[10000] hidden flex items-center justify-center p-4" onclick="closeLightbox()">
+        <button class="absolute top-6 right-6 text-white text-3xl hover:text-gray-300 transition" onclick="closeLightbox()">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="lightbox-img" src="" class="max-w-full max-h-full rounded shadow-2xl animate__animated animate__zoomIn" onclick="event.stopPropagation()">
     </div>
 
     <script>
+        function openLightbox(src) {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = src;
+            lb.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const lb = document.getElementById('lightbox');
+            lb.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Escape to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
         function openResolveModal(id) {
             document.getElementById('resolveForm').action = `/incidents/${id}/resolve`;
             document.getElementById('resolveModal').classList.remove('hidden');

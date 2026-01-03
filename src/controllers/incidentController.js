@@ -11,16 +11,33 @@ const renderOrJson = (res, view, data) => {
 
 exports.index = async (req, res) => {
     try {
-        const incidents = await Incident.findAll({
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const offset = (page - 1) * limit;
+
+        const { count, rows: incidents } = await Incident.findAndCountAll({
             include: [
                 { model: User, as: 'reporter' },
                 { model: User, as: 'assignee' },
                 { model: Site }
             ],
+            limit,
+            offset,
             order: [['createdAt', 'DESC']]
         });
+
         const users = await User.findAll({ order: [['name', 'ASC']] });
-        renderOrJson(res, 'incidents/index', { title: 'Incidents', incidents, users });
+        const totalPages = Math.ceil(count / limit);
+
+        renderOrJson(res, 'incidents/index', { 
+            title: 'Incidents', 
+            incidents, 
+            users,
+            currentPage: page,
+            totalPages,
+            totalIncidents: count,
+            limit
+        });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -106,7 +123,8 @@ exports.show = async (req, res) => {
                 { model: User, as: 'reporter' },
                 { model: User, as: 'assignee' },
                 { model: Site },
-                { model: require('../models').Zone }
+                { model: require('../models').Zone },
+                { model: require('../models').IncidentEvidence, as: 'evidence' }
             ]
         });
 
@@ -302,6 +320,27 @@ exports.assign = async (req, res) => {
         req.io.emit('incident_assigned', { id: incident.id, userId });
 
         res.json({ message: 'Incident assigned', incident });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: true, message: err.message });
+    }
+};
+
+exports.updateStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const incident = await Incident.findByPk(req.params.id);
+
+        if (!incident) return res.status(404).json({ error: true, message: 'Incident not found' });
+
+        await incident.update({ status });
+
+        // Notify via socket
+        if (status === 'resolved') {
+            req.io.emit('incident_resolved', { incidentId: incident.id, siteId: incident.siteId });
+        }
+
+        res.json({ success: true, message: 'Status updated', incident });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: true, message: err.message });

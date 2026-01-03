@@ -30,6 +30,10 @@ router.post('/:id/claim', ensureAuth, ensureRole(['guard', 'manager', 'superviso
     param('id').isInt()
 ], validateRequest, incidentController.claim);
 router.post('/:id/assign', ensureAuth, ensureRole(['manager', 'supervisor']), incidentController.assign);
+router.patch('/:id/status', ensureAuth, ensureRole(['manager', 'supervisor', 'admin']), [
+    param('id').isInt(),
+    body('status').isIn(['new', 'investigating', 'resolved', 'closed'])
+], validateRequest, incidentController.updateStatus);
 router.post('/api/:id/resolve', ensureAuth, upload.single('evidence'), incidentController.resolveApi);
 router.post('/:id/resolve', ensureAuth, upload.single('evidence'), incidentController.resolve);
 
