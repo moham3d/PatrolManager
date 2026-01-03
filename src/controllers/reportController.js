@@ -1,7 +1,7 @@
 const { PatrolRun, PatrolTemplate, CheckpointVisit, Incident, User, Site, Shift, ReportSchedule } = require('../models');
 const { Op } = require('sequelize');
 const { Parser } = require('json2csv');
-const XLSX = require('xlsx');
+const ExcelJS = require('exceljs');
 
 // Helpers
 const renderOrJson = (res, view, data) => {
@@ -88,13 +88,26 @@ exports.exportIncidents = async (req, res) => {
             res.attachment('incidents_report.csv');
             return res.send(csv);
         } else if (format === 'xlsx') {
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Incidents');
-            const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Incidents');
+            
+            worksheet.columns = [
+                { header: 'ID', key: 'ID', width: 10 },
+                { header: 'Type', key: 'Type', width: 15 },
+                { header: 'Priority', key: 'Priority', width: 10 },
+                { header: 'Status', key: 'Status', width: 15 },
+                { header: 'Site', key: 'Site', width: 20 },
+                { header: 'Reporter', key: 'Reporter', width: 20 },
+                { header: 'Date', key: 'Date', width: 25 },
+                { header: 'Description', key: 'Description', width: 40 }
+            ];
+
+            worksheet.addRows(data);
+
             res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
             res.attachment('incidents_report.xlsx');
-            return res.send(buf);
+            await workbook.xlsx.write(res);
+            return res.end();
         }
 
         res.status(400).json({ error: 'Invalid format' });
