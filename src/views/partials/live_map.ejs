@@ -26,12 +26,20 @@
         const markers = {}; // Store markers by ID "type_id"
 
         // --- Icons ---
-        const incidentIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: "<div style='background-color: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
-            iconSize: [14, 14],
-            iconAnchor: [7, 7]
-        });
+        const getIncidentIcon = (priority) => {
+            let color = '#ef4444'; // default red
+            if (priority === 'critical') color = '#7f1d1d';
+            if (priority === 'high') color = '#ef4444';
+            if (priority === 'medium') color = '#f59e0b';
+            if (priority === 'low') color = '#10b981';
+
+            return L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style='background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+        };
 
         const panicIcon = L.divIcon({
             className: 'custom-div-icon',
@@ -58,12 +66,12 @@
         });
 
         // --- Marker Logic ---
-        function addMarker(id, type, lat, lng, popupContent, isPanic = false) {
+        function addMarker(id, type, lat, lng, popupContent, priority = 'medium', isPanic = false) {
             if (!lat || !lng) return;
             const key = `${type}_${id}`;
             if (markers[key]) return;
 
-            const icon = isPanic ? panicIcon : incidentIcon;
+            const icon = isPanic ? panicIcon : getIncidentIcon(priority);
             const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(popupContent);
             markers[key] = marker;
 
@@ -97,7 +105,7 @@
                     if (inc.location) {
                         const lat = inc.location.coordinates[0];
                         const lng = inc.location.coordinates[1];
-                        addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b><br>${inc.description}<br><a href="/incidents/${inc.id}">View</a>`);
+                        addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}<br><a href="/incidents/${inc.id}">View</a>`, inc.priority);
                         bounds.push([lat, lng]);
                     }
                 });
@@ -106,7 +114,7 @@
                     if (panic.location) {
                         const lat = panic.location.coordinates[0];
                         const lng = panic.location.coordinates[1];
-                        addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>Guard ID: ${panic.guardId}`, true);
+                        addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>Guard ID: ${panic.guardId}`, 'critical', true);
                         bounds.push([lat, lng]);
                     }
                 });
@@ -162,7 +170,7 @@
             if (inc.location) {
                 const lat = inc.location.coordinates[0];
                 const lng = inc.location.coordinates[1];
-                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b><br>${inc.description}`);
+                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority);
             }
         });
 

@@ -1011,13 +1011,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `src/views/partials/live_map.ejs` to display active incidents with priority-based colors: Critical (Dark Red), High (Red), Medium (Orange), Low (Green).
+- Enhanced incident marker popups to show the type, priority, description, and a link to view details.
+- Integrated real-time incident updates via Socket.IO.
 
 **Verification**:
-- [ ] Incident markers displayed
-- [ ] Color-coded by priority
-- [ ] Popups show details
-- [ ] Markers update in real-time
+- [x] Incident markers displayed
+- [x] Color-coded by priority
+- [x] Popups show details
+- [x] Markers update in real-time
 
 ---
 
