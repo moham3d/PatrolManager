@@ -790,13 +790,19 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented Sequelize transactions in `shiftController.create` to ensure atomic creation of multiple shifts.
+- Implemented Sequelize transactions in `patrolController.scanCheckpoint` to ensure data consistency during checkpoint scans.
 
 **Verification**:
-- [ ] Transactions used
-- [ ] Rollback on error
-- [ ] Data consistency maintained
-- [ ] No orphaned records
+- [x] Transactions used
+- [x] Rollback on error
+- [x] Data consistency maintained
+- [x] No orphaned records
 
 ---
 

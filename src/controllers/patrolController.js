@@ -258,15 +258,19 @@ exports.scanCheckpoint = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
+    const t = await require('../models').sequelize.transaction();
+
     try {
         const { runId, checkpointId, location } = req.body; // location expected as { lat, lng }
 
         // 1. Verify Run
         const run = await PatrolRun.findByPk(runId, {
-            include: [{ model: PatrolTemplate }]
+            include: [{ model: PatrolTemplate }],
+            transaction: t
         });
 
         if (!run || run.status !== 'started') {
+            await t.rollback();
             return res.status(400).json({ error: true, message: 'Invalid or completed patrol run' });
         }
 
@@ -275,11 +279,15 @@ exports.scanCheckpoint = async (req, res) => {
         // 2. Verify Checkpoint Exists & Belongs to Template
         // Note: For basic robustness, we should check if checkpointId is IN the template list.
         if (template.checkpointsList && !template.checkpointsList.includes(parseInt(checkpointId))) {
+            await t.rollback();
             return res.status(400).json({ error: true, message: 'Checkpoint not part of this patrol route' });
         }
 
-        const checkpoint = await Checkpoint.findByPk(checkpointId);
-        if (!checkpoint) return res.status(404).json({ error: true, message: 'Checkpoint not found' });
+        const checkpoint = await Checkpoint.findByPk(checkpointId, { transaction: t });
+        if (!checkpoint) {
+            await t.rollback();
+            return res.status(404).json({ error: true, message: 'Checkpoint not found' });
+        }
 
         // 3. GPS Validation (Anti-Cheat)
         // Helper to calculate Haversine distance
@@ -302,6 +310,7 @@ exports.scanCheckpoint = async (req, res) => {
             const TOLERANCE_METERS = 500; // Liberal tolerance for demo, production should be 50m
 
             if (dist > TOLERANCE_METERS) {
+                await t.rollback();
                 return res.status(400).json({
                     error: true,
                     message: `GPS Mismatch. You are ${Math.round(dist)}m away from the checkpoint (Max ${TOLERANCE_METERS}m).`
@@ -314,7 +323,8 @@ exports.scanCheckpoint = async (req, res) => {
             // Find last scan for this run
             const lastVisit = await CheckpointVisit.findOne({
                 where: { patrolRunId: runId },
-                order: [['createdAt', 'DESC']]
+                order: [['createdAt', 'DESC']],
+                transaction: t
             });
 
             const expectedIndex = lastVisit ?
@@ -324,6 +334,7 @@ exports.scanCheckpoint = async (req, res) => {
             const scannedIndex = template.checkpointsList.indexOf(parseInt(checkpointId));
 
             if (scannedIndex !== expectedIndex) {
+                await t.rollback();
                 return res.status(400).json({
                     error: true,
                     message: `Out of order. Expected checkpoint #${expectedIndex + 1}, but scanned #${scannedIndex + 1}.`
@@ -343,7 +354,9 @@ exports.scanCheckpoint = async (req, res) => {
             scannedAt: new Date(),
             location: geom,
             status: 'valid'
-        });
+        }, { transaction: t });
+
+        await t.commit();
 
         res.json({
             message: 'Checkpoint scanned',
@@ -351,6 +364,7 @@ exports.scanCheckpoint = async (req, res) => {
         });
 
     } catch (err) {
+        await t.rollback();
         console.error(err);
         res.status(500).json({ error: true, message: err.message });
     }

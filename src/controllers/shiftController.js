@@ -56,6 +56,8 @@ exports.create = async (req, res) => {
         return res.status(400).json({ errors: errors.array() });
     }
 
+    const t = await require('../models').sequelize.transaction();
+
     try {
         const { userId, siteId, date, startTime, endTime, repeatFrequency, repeatUntil } = req.body;
 
@@ -92,7 +94,9 @@ exports.create = async (req, res) => {
             }
         }
 
-        const createdShifts = await Shift.bulkCreate(shiftsToCreate);
+        const createdShifts = await Shift.bulkCreate(shiftsToCreate, { transaction: t });
+
+        await t.commit();
 
         res.format({
             'text/html': () => {
@@ -103,6 +107,7 @@ exports.create = async (req, res) => {
         });
 
     } catch (err) {
+        await t.rollback();
         console.error(err);
         req.flash('error', 'Error creating shift(s): ' + err.message);
         res.redirect(`/sites/${req.body.siteId}?tab=schedule`);
