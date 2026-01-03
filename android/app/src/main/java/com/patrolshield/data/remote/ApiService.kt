@@ -29,6 +29,18 @@ interface ApiService {
     @POST("incidents")
     suspend fun reportIncident(@Body request: IncidentRequest): Response<Unit>
 
+    @retrofit2.http.Multipart
+    @POST("incidents")
+    suspend fun reportIncidentMultipart(
+        @retrofit2.http.Part("type") type: okhttp3.RequestBody,
+        @retrofit2.http.Part("priority") priority: okhttp3.RequestBody,
+        @retrofit2.http.Part("description") description: okhttp3.RequestBody,
+        @retrofit2.http.Part("siteId") siteId: okhttp3.RequestBody,
+        @retrofit2.http.Part("lat") lat: okhttp3.RequestBody?,
+        @retrofit2.http.Part("lng") lng: okhttp3.RequestBody?,
+        @retrofit2.http.Part evidence: okhttp3.MultipartBody.Part?
+    ): Response<Unit>
+
     @GET("supervisor/live-patrols")
     suspend fun getLivePatrols(): Response<List<LivePatrolDto>>
 

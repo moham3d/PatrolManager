@@ -14,6 +14,13 @@ import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+
 class IncidentRepositoryImpl @Inject constructor(
     private val api: ApiService,
     private val dao: IncidentDao,
@@ -47,19 +54,30 @@ class IncidentRepositoryImpl @Inject constructor(
         dao.insertIncident(entity)
 
         try {
-            // Attempt to upload
-            val request = IncidentRequest(
-                type = type,
-                priority = priority,
-                description = description,
-                runId = null,
-                siteId = siteId,
-                lat = lat,
-                lng = lng,
-                imageBase64 = null // Will use multipart in next task
+            // Attempt to upload using Multipart
+            val typeBody = type.toRequestBody("text/plain".toMediaTypeOrNull())
+            val priorityBody = priority.toRequestBody("text/plain".toMediaTypeOrNull())
+            val descriptionBody = description.toRequestBody("text/plain".toMediaTypeOrNull())
+            val siteIdBody = siteId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+            val latBody = lat?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val lngBody = lng?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+
+            // For now, handle only the first image if multiple are provided (as per current backend)
+            val evidencePart = compressedFiles.firstOrNull()?.let { file ->
+                val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                MultipartBody.Part.createFormData("evidence", file.name, requestFile)
+            }
+
+            val response = api.reportIncidentMultipart(
+                typeBody,
+                priorityBody,
+                descriptionBody,
+                siteIdBody,
+                latBody,
+                lngBody,
+                evidencePart
             )
-            
-            val response = api.reportIncident(request)
+
             if (response.isSuccessful) {
                 emit(Resource.Success(Unit))
             } else {

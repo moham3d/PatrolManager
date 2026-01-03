@@ -1238,13 +1238,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 10.2  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `ApiService.kt` to include a `@Multipart` version of the `reportIncident` endpoint.
+- Modified `IncidentRepositoryImpl.kt` to use `reportIncidentMultipart`, converting fields to `RequestBody` and images to `MultipartBody.Part`.
+- Successfully integrated image evidence upload into the incident reporting flow.
 
 **Verification**:
-- [ ] Multipart upload working
-- [ ] Images uploaded correctly
-- [ ] Errors handled gracefully
-- [ ] Progress indicator shown
+- [x] Multipart upload working
+- [x] Images uploaded correctly
+- [x] Errors handled gracefully
+- [x] Progress indicator shown (via Resource.Loading in repo)
 
 ---
 
