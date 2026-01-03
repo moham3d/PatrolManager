@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 let io;
 const onlineUsers = new Map(); // Store { socketId: { userId, name, role, lat, lng, lastUpdate } }
+const locationBuffer = new Map(); // Store { siteId: [locationUpdate] }
 
 // Helper: Haversine Distance (Meters)
 const getDistance = (lat1, lon1, lat2, lon2) => {
@@ -20,6 +21,19 @@ const getDistance = (lat1, lon1, lat2, lon2) => {
 
     return R * c;
 };
+
+// Batch Location Updates Every 5 Seconds
+setInterval(() => {
+    if (!io) return;
+
+    for (const [siteId, updates] of locationBuffer.entries()) {
+        if (updates.length > 0) {
+            const room = siteId === 'global' ? 'command_center' : `site_${siteId}`;
+            io.to(room).to('admin').emit('location_batch', updates);
+            updates.length = 0; // Clear the buffer
+        }
+    }
+}, 5000);
 
 exports.init = (httpServer) => {
     io = new Server(httpServer, {
@@ -255,15 +269,17 @@ exports.init = (httpServer) => {
                         name: onlineUser.name,
                         role: onlineUser.role,
                         lat: onlineUser.lat,
-                        lng: onlineUser.lng
+                        lng: onlineUser.lng,
+                        timestamp: onlineUser.lastUpdate
                     };
 
-                    // Targeted broadcast to site room and command center (admins)
-                    if (loc.siteId) {
-                        io.to(`site_${loc.siteId}`).to('command_center').emit('user_location_update', payload);
-                    } else {
-                        io.to('command_center').emit('user_location_update', payload);
+                    // Add to buffer
+                    const siteId = loc.siteId || 'global';
+                    if (!locationBuffer.has(siteId)) {
+                        locationBuffer.set(siteId, []);
                     }
+                    locationBuffer.get(siteId).push(payload);
+
                     if (callback) callback({ success: true, message: 'Location updated' });
                 } catch (err) {
                     console.error("Error verifying shift for location update:", err);
