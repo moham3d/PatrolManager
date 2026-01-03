@@ -26,6 +26,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        boundaries: {
+            type: DataTypes.TEXT, // Store as JSON string or use JSONB if on Postgres
+            allowNull: true
+        },
         createdBy: {
             type: DataTypes.INTEGER,
             allowNull: true

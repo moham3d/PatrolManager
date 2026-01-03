@@ -976,7 +976,7 @@ Add validation to all controller methods:
 
 ### 🟠 Task 8.2: Add Geofence Visualization [HIGH]
 **Agent**: Frontend Developer  
-**Files**: `src/views/sites/form.ejs`, `src/views/partials/live_map.ejs`  
+**Files**: `src/views/sites/form.ejs`, `src/views/partials/live_map.ejs`, `src/models/Site.js`  
 **Description**:
 - Display site boundaries on maps
 - Add polygon drawing for site creation
@@ -984,13 +984,20 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 8 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added the `boundaries` field to the `Site` model.
+- Implemented a geofence polygon editor in `src/views/sites/form.ejs` using the Leaflet Draw plugin.
+- Updated `src/views/partials/live_map.ejs` to fetch and display site geofence polygons.
 
 **Verification**:
-- [ ] Geofences visible on map
-- [ ] Polygon drawing works
+- [x] Geofences visible on map
+- [x] Polygon drawing works
 - [ ] Geofence breaches indicated
-- [ ] Boundaries saved correctly
+- [x] Boundaries saved correctly
 
 ---
 

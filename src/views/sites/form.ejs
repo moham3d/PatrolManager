@@ -1,7 +1,9 @@
 <%- include('../partials/header') %>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
     <div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow">
         <div class="flex justify-between items-center mb-6">
@@ -57,14 +59,14 @@
                             <!-- GPS Storage -->
                             <input type="hidden" id="latitude" name="lat" value="">
                             <input type="hidden" id="longitude" name="lng" value="">
+                            <input type="hidden" id="boundaries" name="boundaries" value="">
                         </div>
 
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-2">
-                                Site Location <span class="text-xs font-normal text-gray-500">(Click on map to set
-                                    position)</span>
+                                Site Location & Geofence <span class="text-xs font-normal text-gray-500">(Draw polygon for boundaries)</span>
                             </label>
-                            <div id="map" class="h-64 rounded-lg border border-gray-300 shadow-inner"></div>
+                            <div id="map" class="h-80 rounded-lg border border-gray-300 shadow-inner"></div>
                             <div id="coords-display" class="mt-2 text-xs text-gray-600 italic">No coordinates set.</div>
                         </div>
                     </div>
@@ -90,44 +92,86 @@
                 attribution: '&copy; OpenStreetMap contributors'
             }).addTo(map);
 
+            const drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            const drawControl = new L.Control.Draw({
+                draw: {
+                    polygon: true,
+                    polyline: false,
+                    rectangle: false,
+                    circle: false,
+                    circlemarker: false,
+                    marker: true
+                },
+                edit: {
+                    featureGroup: drawnItems
+                }
+            });
+            map.addControl(drawControl);
+
             let marker;
+            let polygon;
 
             const latInput = document.getElementById('latitude');
             const lngInput = document.getElementById('longitude');
+            const boundariesInput = document.getElementById('boundaries');
             const coordsDisplay = document.getElementById('coords-display');
 
-            function updateMarker(lat, lng) {
-                if (marker) {
-                    marker.setLatLng([lat, lng]);
-                } else {
-                    marker = L.marker([lat, lng]).addTo(map);
-                }
-                latInput.value = lat.toFixed(6);
-                lngInput.value = lng.toFixed(6);
-                coordsDisplay.textContent = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            }
+            map.on(L.Draw.Event.CREATED, function (event) {
+                const layer = event.layer;
+                drawnItems.clearLayers();
+                drawnItems.addLayer(layer);
 
-            map.on('click', function (e) {
-                updateMarker(e.latlng.lat, e.latlng.lng);
+                if (event.layerType === 'marker') {
+                    const latlng = layer.getLatLng();
+                    latInput.value = latlng.lat.toFixed(6);
+                    lngInput.value = latlng.lng.toFixed(6);
+                    coordsDisplay.textContent = `Center: ${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}`;
+                } else if (event.layerType === 'polygon') {
+                    const latlngs = layer.getLatLngs()[0];
+                    boundariesInput.value = JSON.stringify(latlngs);
+                    
+                    // Auto-set center from polygon centroid if marker not set
+                    if (!latInput.value) {
+                        const center = layer.getBounds().getCenter();
+                        latInput.value = center.lat.toFixed(6);
+                        lngInput.value = center.lng.toFixed(6);
+                    }
+                }
+            });
+
+            map.on(L.Draw.Event.EDITED, function (event) {
+                event.layers.eachLayer(function (layer) {
+                    if (layer instanceof L.Marker) {
+                        const latlng = layer.getLatLng();
+                        latInput.value = latlng.lat.toFixed(6);
+                        lngInput.value = latlng.lng.toFixed(6);
+                    } else if (layer instanceof L.Polygon) {
+                        const latlngs = layer.getLatLngs()[0];
+                        boundariesInput.value = JSON.stringify(latlngs);
+                    }
+                });
             });
 
             // Try to get user location
             map.locate({ setView: true, maxZoom: 16 });
 
-            map.on('locationfound', function (e) {
-                // Only update marker if it hasn't been set manually or via edit
-                if (!marker) {
-                    // We don't necessarily want to set the marker automatically on location found
-                    // unless it's a new site and user hasn't clicked yet.
-                }
-            });
-
         // If editing, handle initial data
         <% if (site && site.lat && site.lng) { %>
             const savedLat = <%= site.lat %>;
-                const savedLng = <%= site.lng %>;
-                map.setView([savedLat, savedLng], 15);
-                updateMarker(savedLat, savedLng);
+            const savedLng = <%= site.lng %>;
+            latInput.value = savedLat;
+            lngInput.value = savedLng;
+            marker = L.marker([savedLat, savedLng]).addTo(drawnItems);
+            map.setView([savedLat, savedLng], 15);
+        <% } %>
+
+        <% if (site && site.boundaries) { %>
+            const savedBoundaries = <%- site.boundaries %>;
+            boundariesInput.value = JSON.stringify(savedBoundaries);
+            polygon = L.polygon(savedBoundaries).addTo(drawnItems);
+            map.fitBounds(polygon.getBounds());
         <% } %>
     });
     </script>

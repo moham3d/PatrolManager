@@ -176,6 +176,26 @@
             }
         });
 
+        // --- Site Logic ---
+        const sitePolygons = {};
+
+        fetch('/sites')
+            .then(res => res.json())
+            .then(data => {
+                data.sites.forEach(site => {
+                    if (site.boundaries) {
+                        try {
+                            const latlngs = JSON.parse(site.boundaries);
+                            const polygon = L.polygon(latlngs, { color: '#3b82f6', weight: 2, opacity: 0.5, fillOpacity: 0.1 }).addTo(map);
+                            polygon.bindPopup(`<b>Site: ${site.name}</b><br>Geofence Active`);
+                            sitePolygons[site.id] = polygon;
+                        } catch (e) {
+                            console.error(`Error parsing boundaries for site ${site.id}:`, e);
+                        }
+                    }
+                });
+            });
+
         // --- Patrol Logic ---
         const patrols = {}; // Store patrol data by runId: { polylines: [], markers: [], checkpoints: [] }
 
