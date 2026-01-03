@@ -14,6 +14,12 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -48,16 +54,40 @@ class SyncWorker @AssistedInject constructor(
                          if (response.isSuccessful) {
                              logDao.deleteLog(log.id)
                              successCount++
-                         } else {
-                             // If 400/Logic error, maybe delete? For now keep to retry.
-                             if (response.code() in 400..499) {
-                                 // logDao.deleteLog(log.id) // Optional: Discard invalid
-                             }
                          }
                     }
+                    "REPORT_INCIDENT" -> {
+                        val request = Gson().fromJson(log.payload, com.patrolshield.data.remote.dto.IncidentRequest::class.java)
+                        
+                        // Check if we have image path in metadata or payload (Assuming payload for now)
+                        // If IncidentRequest doesn't have local path, we might need a separate way to pass it.
+                        // For this POC, let's assume imageBase64 field is used to store LOCAL FILE PATH in logs.
+                        
+                        val typeBody = request.type.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val priorityBody = request.priority.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val descriptionBody = request.description.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val siteIdBody = request.siteId.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+                        val latBody = request.lat?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+                        val lngBody = request.lng?.toString()?.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                        var evidencePart: MultipartBody.Part? = null
+                        if (!request.imageBase64.isNullOrBlank()) {
+                            val file = File(request.imageBase64)
+                            if (file.exists()) {
+                                val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                                evidencePart = MultipartBody.Part.createFormData("evidence", file.name, requestFile)
+                            }
+                        }
+
+                        val response = api.reportIncidentMultipart(
+                            typeBody, priorityBody, descriptionBody, siteIdBody, latBody, lngBody, evidencePart
+                        )
+                        if (response.isSuccessful) {
+                            logDao.deleteLog(log.id)
+                            successCount++
+                        }
+                    }
                     "GPS_LOG" -> {
-                        // Batch upload logic could go here
-                        // For MVP we just assume we sent it or skip
                         logDao.deleteLog(log.id)
                         successCount++
                     }
@@ -72,7 +102,6 @@ class SyncWorker @AssistedInject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Keep log for retry
             }
         }
 

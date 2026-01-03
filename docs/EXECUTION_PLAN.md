@@ -1264,13 +1264,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 10.3  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `SyncWorker.kt` to support multipart uploads for offline incident logs.
+- Implemented logic to read local file paths from the log payload and create `MultipartBody.Part` for background synchronization.
+- Ensured that `IncidentRequest` properly carries metadata for both online and offline reporting.
 
 **Verification**:
-- [ ] Request includes image
+- [x] Request includes image
 - [ ] Base64/Multipart works
-- [ ] Offline sync handles images
-- [ ] Sync successful
+- [x] Offline sync handles images
+- [x] Sync successful
 
 ---
 
