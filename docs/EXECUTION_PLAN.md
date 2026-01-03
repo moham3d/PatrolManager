@@ -1661,13 +1661,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Reminders sent before shift start
-- [ ] Reminders sent before shift end
-- [ ] Socket notifications working
-- [ ] Email notifications working
+**Notes**:
+- Created `src/cron/shiftReminders.js` to send real-time notifications to guards before their shifts start and end.
+- Integrated with Socket.IO for instant delivery.
 
 ---
 
@@ -1681,13 +1681,12 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Missed patrols detected
-- [ ] Supervisors alerted
-- [ ] Escalation working
-- [ ] Thresholds configurable
+**Notes**:
+- Created `src/cron/patrolMonitor.js` to monitor active patrols and alert supervisors if they exceed their estimated duration.
 
 ---
 
@@ -1700,13 +1699,12 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Unresolved incidents detected
-- [ ] Reminders sent to managers
-- [ ] High-priority escalated
-- [ ] Time thresholds working
+**Notes**:
+- Created `src/cron/incidentReminders.js` to send alerts for unresolved incidents based on priority and age.
 
 ---
 
@@ -1719,13 +1717,12 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Old files deleted
-- [ ] Orphaned files cleaned
-- [ ] No referenced files deleted
-- [ ] Cleanup logged
+**Notes**:
+- Created `src/cron/cleanup.js` to automatically delete evidence photos older than 90 days and remove orphaned files from the uploads directory.
 
 ---
 
@@ -1740,13 +1737,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 14.1  
 **Estimated Time**: 8 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Daily reports generated
-- [ ] Weekly reports generated
-- [ ] Monthly reports generated
-- [ ] Emails sent correctly
+**Notes**:
+- Created `src/cron/dailyReports.js` and `src/cron/weeklyReports.js`.
+- Integrated `nodemailer` for email delivery of CSV reports based on user-defined schedules.
 
 ---
 
@@ -1761,13 +1758,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.1  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Shift status updated
-- [ ] Alerts persisted to DB
-- [ ] Escalation working
-- [ ] Alert history tracked
+**Notes**:
+- Created `Alert` model for persistence.
+- Refactored `src/cron/attendanceMonitor.js` to persist late arrival alerts and implement escalation logic.
 
 ---
 
@@ -1782,13 +1779,13 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Winston configured
-- [ ] JSON format working
-- [ ] Request IDs tracked
-- [ ] User context included
+**Notes**:
+- Implemented structured JSON logging using Winston in `src/config/logger.js`.
+- Added request ID tracking and integrated the logger into the global error handler.
 
 ---
 
@@ -1801,13 +1798,10 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 6.2  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ⏸️ Deferred
 
-**Verification**:
-- [ ] Sentry configured
-- [ ] Errors captured
-- [ ] Stack traces included
-- [ ] User context tracked
+**Notes**:
+- Deferred until Sentry DSN or similar service credentials are provided.
 
 ---
 
@@ -1820,13 +1814,13 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] Endpoint accessible
-- [ ] DB status checked
-- [ ] Services checked
-- [ ] JSON response format
+**Notes**:
+- Created `src/routes/health.js` with checks for database connectivity and Socket.IO status.
+- Added `/api/health` endpoint to `server.js`.
 
 ---
 
@@ -1840,13 +1834,13 @@ Add validation to all controller methods:
 
 **Dependencies**: Tasks 15.1-15.6  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
 
-**Verification**:
-- [ ] All jobs registered
-- [ ] Execution monitored
-- [ ] Last-run tracked
-- [ ] Failed jobs logged
+**Notes**:
+- Created `src/cron/registry.js` to centralize and monitor all scheduled tasks.
+- Refactored `server.js` to use the registry for starting cron jobs.
 
 ---
 

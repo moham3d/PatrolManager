@@ -14,12 +14,17 @@ require('dotenv').config();
 // Configs
 const db = require('./src/config/database');
 const socketHandler = require('./src/sockets/socketHandler');
-
-const { generalRateLimit, authRateLimit, apiRateLimit, panicRateLimit } = require('./src/middleware/rateLimiter');
+const { requestLoggerMiddleware } = require('./src/config/logger');
 
 // Initialize Server
 const server = http.createServer(app);
 const io = socketHandler.init(server);
+
+// Request Logger
+app.use(requestLoggerMiddleware);
+
+// Health Check
+app.use('/api/health', require('./src/routes/health'));
 
 // Apply general rate limiting to all requests
 app.use(generalRateLimit);
@@ -96,9 +101,17 @@ app.use('/schedules', require('./src/routes/schedules'));
 
 const { ValidationError, NotFoundError, AuthorizationError, BusinessLogicError } = require('./src/utils/errors');
 
+const { logger } = require('./src/config/logger');
+
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    logger.error(err.message, {
+        requestId: req.requestId,
+        userId: req.user?.id,
+        stack: err.stack,
+        url: req.url,
+        method: req.method
+    });
 
     // Handle known error types
     if (err instanceof ValidationError) {
@@ -172,7 +185,16 @@ io.on('connection', (socket) => {
 });
 
 // Start Cron Jobs
-require('./src/cron/attendanceMonitor')(io);
+const cronRegistry = require('./src/cron/registry');
+cronRegistry.register('attendance-monitor', require('./src/cron/attendanceMonitor'));
+cronRegistry.register('shift-reminders', require('./src/cron/shiftReminders'));
+cronRegistry.register('patrol-monitor', require('./src/cron/patrolMonitor'));
+cronRegistry.register('incident-reminders', require('./src/cron/incidentReminders'));
+cronRegistry.register('cleanup', (io) => require('./src/cron/cleanup')());
+cronRegistry.register('daily-reports', (io) => require('./src/cron/dailyReports')());
+cronRegistry.register('weekly-reports', (io) => require('./src/cron/weeklyReports')());
+
+cronRegistry.startAll(io);
 
 // Start Server
 const PORT = process.env.PORT || 3000;
