@@ -10,6 +10,7 @@ router.use(apiRateLimit);
 
 router.get('/', ensureAuth, incidentController.index);
 router.get('/create', ensureAuth, ensureRole(['manager', 'supervisor', 'guard']), incidentController.create); // Guards can report
+router.get('/:id', ensureAuth, incidentController.show);
 router.post('/', ensureAuth, upload.single('evidence'), incidentController.store);
 
 // Panic Button

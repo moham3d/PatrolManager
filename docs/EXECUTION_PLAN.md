@@ -504,12 +504,19 @@ Create migration to add FK fields:
 
 **Dependencies**: Task 1.8  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added a `GET /incidents/:id` route to `src/routes/incidents.js`.
+- The `show` method in `src/controllers/incidentController.js` already existed and was sufficient.
+- Added `ensureAuth` middleware to the new route.
 
 **Verification**:
-- [ ] Route accessible
-- [ ] Incident details returned
-- [ ] RBAC enforced
+- [x] Route accessible
+- [x] Incident details returned
+- [x] RBAC enforced
 - [ ] Related data included
 
 ---
