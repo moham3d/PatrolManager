@@ -636,10 +636,16 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/models/DeviceRegistration.js` to track authorized mobile devices.
+- Added association with the `User` model.
 
 **Verification**:
-- [ ] Model created
+- [x] Model created
 - [ ] Device verification working
 - [ ] Device binding enforced
 - [ ] Unauthorized devices rejected
