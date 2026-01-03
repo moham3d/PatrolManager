@@ -584,12 +584,18 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.1  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/models/IncidentEvidence.js` to support multiple evidence files per incident.
+- Updated `src/models/Incident.js` to include a `hasMany` association with `IncidentEvidence`.
 
 **Verification**:
-- [ ] Model created
-- [ ] Associations working
-- [ ] Multiple evidence supported
+- [x] Model created
+- [x] Associations working
+- [x] Multiple evidence supported
 - [ ] Cascade delete configured
 
 ---
