@@ -610,12 +610,18 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.1  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/models/GPSLog.js` to store continuous location tracking data for users.
+- Added association with the `User` model.
 
 **Verification**:
-- [ ] Model created
-- [ ] Associations working
-- [ ] GPS data stored
+- [x] Model created
+- [x] Associations working
+- [x] GPS data stored
 - [ ] Query performance acceptable
 
 ---
