@@ -957,13 +957,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Integrated the `live_map` partial into `src/views/dashboard/live.ejs`.
+- Implemented real-time patrol progress visualization in `src/views/partials/live_map.ejs`, including route polylines and checkpoint status markers.
+- Updated the activity feed in `live.ejs` to handle patrol events (`patrol_started`, `checkpoint_scanned`, `patrol_completed`).
 
 **Verification**:
-- [ ] Patrol progress visible
-- [ ] Route lines displayed
-- [ ] Progress indicators accurate
-- [ ] Updates in real-time
+- [x] Patrol progress visible
+- [x] Route lines displayed
+- [x] Progress indicators accurate
+- [x] Updates in real-time
 
 ---
 

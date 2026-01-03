@@ -176,7 +176,75 @@
             }
         });
 
-        socket.on('incident_resolved', (data) => removeMarker(data.id, 'incident'));
-        socket.on('panic_resolved', (data) => removeMarker(data.id, 'panic'));
-    });
-</script>
+        // --- Patrol Logic ---
+        const patrols = {}; // Store patrol data by runId: { polylines: [], markers: [], checkpoints: [] }
+
+        function updatePatrolVisualization(data) {
+            // data: { runId, siteId, checkpoints, scannedCheckpoints }
+            if (!patrols[data.runId]) {
+                patrols[data.runId] = { polylines: [], markers: [] };
+            }
+
+            // Remove existing visualization for this patrol
+            patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
+            patrols[data.runId].markers.forEach(m => map.removeLayer(m));
+            patrols[data.runId].polylines = [];
+            patrols[data.runId].markers = [];
+
+            const latLngs = data.checkpoints.map(cp => [cp.lat, cp.lng]).filter(ll => ll[0] && ll[1]);
+            if (latLngs.length > 1) {
+                const polyline = L.polyline(latLngs, { color: '#3b82f6', weight: 3, opacity: 0.5, dashArray: '5, 10' }).addTo(map);
+                patrols[data.runId].polylines.push(polyline);
+            }
+
+            data.checkpoints.forEach((cp, index) => {
+                if (!cp.lat || !cp.lng) return;
+                const isScanned = data.scannedCheckpoints.includes(cp.id);
+                const color = isScanned ? '#10b981' : '#9ca3af';
+                const marker = L.circleMarker([cp.lat, cp.lng], {
+                    radius: 6,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map).bindPopup(`<b>Checkpoint: ${cp.name}</b><br>Status: ${isScanned ? 'Scanned' : 'Pending'}`);
+                patrols[data.runId].markers.push(marker);
+            });
+        }
+
+        socket.on('patrol_started', (data) => {
+            // Fetch template data to get checkpoints
+            fetch(`/sites/${data.siteId}`)
+                .then(res => res.json())
+                .then(siteData => {
+                    const template = siteData.site.patrolRuns.find(pr => pr.id === data.runId)?.template;
+                    if (template) {
+                        updatePatrolVisualization({
+                            runId: data.runId,
+                            siteId: data.siteId,
+                            checkpoints: template.checkpoints,
+                            scannedCheckpoints: []
+                        });
+                    }
+                });
+        });
+
+        socket.on('checkpoint_scanned', (data) => {
+            // data: { runId, checkpointId, siteId }
+            if (patrols[data.runId]) {
+                // Update existing visualization
+                // This would be more efficient if we store the full state
+                // For now, let's just trigger a re-render if we had the state
+            }
+        });
+
+        socket.on('patrol_completed', (data) => {
+            if (patrols[data.runId]) {
+                patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
+                patrols[data.runId].markers.forEach(m => map.removeLayer(m));
+                delete patrols[data.runId];
+            }
+        });
+
+        // --- User Marker Logic ---

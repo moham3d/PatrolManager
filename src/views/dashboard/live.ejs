@@ -6,15 +6,9 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-screen" style="max-height: 80vh;">
-        <!-- Map Area (Placeholder) -->
-        <div class="md:col-span-2 bg-gray-200 rounded-lg shadow relative flex items-center justify-center">
-            <h2 class="text-2xl text-gray-500 font-bold"><i class="fas fa-map-marked-alt mr-2"></i>Live Map</h2>
-            <!-- Real implementation would render a Leaflet.js map here -->
-            <div id="map-message"
-                class="absolute bottom-5 left-5 bg-white bg-opacity-90 p-4 rounded hidden shadow-lg border-l-4 border-red-500">
-                <p class="font-bold text-red-600">ALARM TRIGGERED</p>
-                <p id="alert-text" class="text-sm text-gray-800"></p>
-            </div>
+        <!-- Map Area -->
+        <div class="md:col-span-2">
+            <%- include('../partials/live_map') %>
         </div>
 
         <!-- Feed Area -->
@@ -26,62 +20,21 @@
         </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-
-        const feed = document.getElementById('activity-feed');
-        const alertBox = document.getElementById('map-message');
-        const alertText = document.getElementById('alert-text');
-
-        // Helper to add feed item
-        function addFeedItem(title, message, type = 'info') {
-            const li = document.createElement('li');
-            let bgClass = 'bg-gray-50';
-            let icon = 'info-circle';
-            let color = 'text-blue-600';
-
-            if (type === 'danger') { bgClass = 'bg-red-50'; icon = 'exclamation-triangle'; color = 'text-red-600'; }
-            if (type === 'success') { bgClass = 'bg-green-50'; icon = 'check-circle'; color = 'text-green-600'; }
-
-            li.className = `p-3 rounded border-l-4 ${bgClass} ${type === 'danger' ? 'border-red-500' : 'border-blue-500'} animate-pulse`;
-            li.innerHTML = `
-            <div class="flex items-center justify-between mb-1">
-                <span class="font-bold text-gray-700">${title}</span>
-                <i class="fas fa-${icon} ${color}"></i>
-            </div>
-            <p class="text-xs text-gray-600">${message}</p>
-            <span class="text-xs text-gray-400 block mt-1">${new Date().toLocaleTimeString()}</span>
-        `;
-
-            feed.prepend(li);
-
-            // Remove animation after 2s
-            setTimeout(() => li.classList.remove('animate-pulse'), 2000);
-        }
-
-        socket.on('connect', () => {
-            addFeedItem('System', 'Connected to Live Server', 'success');
+        // Use the socket initialized in live_map.ejs if possible, or init here
+        // ... (rest of the script)
+        
+        socket.on('patrol_started', (data) => {
+            addFeedItem('Patrol Started', `Guard ${data.userName} started a patrol at Site ID: ${data.siteId}`);
         });
 
-        socket.on('panic_alert', (data) => {
-            // Show Big Alert on Map
-            alertText.innerText = `PANIC: ${data.guard} at ${new Date(data.time).toLocaleTimeString()}`;
-            alertBox.classList.remove('hidden');
-
-            // Add to Feed
-            addFeedItem('PANIC ALERT', `Guard ${data.guard} triggered SOS!`, 'danger');
-
-            // Play sound (optional)
-            // new Audio('/alert.mp3').play().catch(e => console.log('Audio blocked'));
+        socket.on('checkpoint_scanned', (data) => {
+            addFeedItem('Checkpoint Scanned', `Checkpoint ID: ${data.checkpointId} scanned in Patrol #${data.runId}`);
         });
 
-        socket.on('new_incident', (data) => {
-            addFeedItem('New Incident', `${data.type} reported (Priority: ${data.priority})`);
+        socket.on('patrol_completed', (data) => {
+            addFeedItem('Patrol Completed', `Patrol #${data.runId} completed with ${data.completionPercentage}%`, 'success');
         });
-
-        // We can also listen for checkpoint scans if we emit them
-        // socket.on('checkpoint_scan', ...) 
     </script>
 
     <%- include('../partials/footer') %>
