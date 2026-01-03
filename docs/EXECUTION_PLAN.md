@@ -1156,13 +1156,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 9.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `PatrolScreen.kt` to integrate the `CheckpointScannerScreen`.
+- Replaced the manual "CHECK IN" button with a "SCAN TAG" button and a scanner FAB.
+- Implemented conditional rendering to switch between the map view and the scanner.
 
 **Verification**:
-- [ ] Scanner launches from FAB
-- [ ] Manual check-in replaced
+- [x] Scanner launches from FAB
+- [x] Manual check-in replaced
 - [ ] GPS validation works
-- [ ] Scan updates patrol state
+- [x] Scan updates patrol state
 
 ---
 

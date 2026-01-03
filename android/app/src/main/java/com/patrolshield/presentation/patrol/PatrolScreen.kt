@@ -2,9 +2,10 @@ package com.patrolshield.presentation.patrol
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -12,8 +13,6 @@ import com.patrolshield.common.DateUtils
 import com.patrolshield.presentation.dashboard.DashboardViewModel
 
 fun getLocation(context: android.content.Context): android.location.Location? {
-    // Note: This is a synchronous check for last known location. 
-    // Ideally we should use a proper Location callback flow, but for this POC it works.
     val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
     return try {
         locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
@@ -31,6 +30,15 @@ fun PatrolScreen(
 ) {
     val state = viewModel.state.value
     val context = androidx.compose.ui.platform.LocalContext.current
+    var isScannerVisible by remember { mutableStateOf(false) }
+
+    if (isScannerVisible && state.activePatrol?.remoteId != null) {
+        CheckpointScannerScreen(
+            runId = state.activePatrol.remoteId,
+            onNavigateBack = { isScannerVisible = false }
+        )
+        return
+    }
     
     Scaffold(
         topBar = {
@@ -43,64 +51,47 @@ fun PatrolScreen(
             )
         },
         floatingActionButton = {
-             ExtendedFloatingActionButton(
-                onClick = { 
-                    val loc = getLocation(context)
-                    if (loc != null) {
-                        viewModel.sendPanic(loc.latitude, loc.longitude)
-                        android.widget.Toast.makeText(context, "SOS Sent with Location!", android.widget.Toast.LENGTH_LONG).show()
-                    } else {
-                        viewModel.sendPanic() // Send without location
-                        android.widget.Toast.makeText(context, "SOS Sent (No Location Available)", android.widget.Toast.LENGTH_LONG).show()
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.onError
-            ) {
-                Icon(Icons.Default.Warning, contentDescription = "SOS")
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("SOS")
+            Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
+                SmallFloatingActionButton(
+                    onClick = { isScannerVisible = true },
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    Icon(Icons.Default.QrCodeScanner, contentDescription = "Scan")
+                }
+
+                ExtendedFloatingActionButton(
+                    onClick = { 
+                        val loc = getLocation(context)
+                        if (loc != null) {
+                            viewModel.sendPanic(loc.latitude, loc.longitude)
+                            android.widget.Toast.makeText(context, "SOS Sent with Location!", android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            viewModel.sendPanic() // Send without location
+                            android.widget.Toast.makeText(context, "SOS Sent (No Location Available)", android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
+                ) {
+                    Icon(Icons.Default.Warning, contentDescription = "SOS")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("SOS")
+                }
             }
         },
         bottomBar = {
             BottomAppBar {
                 Row(modifier = Modifier.padding(8.dp)) {
                     Button(
-                        onClick = {
-                           try {
-                               val loc = getLocation(context)
-
-                               if (loc != null && state.activePatrol?.remoteId != null) {
-                                   val nearest = state.checkpoints.minByOrNull { 
-                                       val res = FloatArray(1)
-                                       android.location.Location.distanceBetween(loc.latitude, loc.longitude, it.lat, it.lng, res)
-                                       res[0]
-                                   }
-
-                                   if (nearest != null) {
-                                       val res = FloatArray(1)
-                                       android.location.Location.distanceBetween(loc.latitude, loc.longitude, nearest.lat, nearest.lng, res)
-                                       val dist = res[0]
-                                       
-                                       // 100 meters threshold
-                                       if (dist <= 100) {
-                                            viewModel.scanCheckpoint(state.activePatrol.remoteId, nearest.id, loc.latitude, loc.longitude)
-                                            android.widget.Toast.makeText(context, "Scanned: " + nearest.name, android.widget.Toast.LENGTH_SHORT).show()
-                                       } else {
-                                           android.widget.Toast.makeText(context, "Too far from " + nearest.name + " (" + dist.toInt() + "m)", android.widget.Toast.LENGTH_SHORT).show()
-                                       }
-                                   }
-                               } else {
-                                   android.widget.Toast.makeText(context, "Searching for GPS...", android.widget.Toast.LENGTH_SHORT).show()
-                               }
-                           } catch (e: Exception) {
-                               android.widget.Toast.makeText(context, "Error: " + e.message, android.widget.Toast.LENGTH_SHORT).show()
-                           }
-                        },
+                        onClick = { isScannerVisible = true },
                         modifier = Modifier.weight(1f).padding(end = 8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("CHECK IN")
+                        Icon(Icons.Default.QrCodeScanner, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("SCAN TAG")
                     }
                     Button(
                         onClick = { 
@@ -166,7 +157,6 @@ fun PatrolScreen(
                             marker.position = org.osmdroid.util.GeoPoint(cp.lat, cp.lng)
                             marker.title = cp.name
                             marker.setAnchor(org.osmdroid.views.overlay.Marker.ANCHOR_CENTER, org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM)
-                            // TODO: Change icon based on cp.isScanned (if we had it)
                             mapView.overlays.add(marker)
                         }
                         mapView.invalidate()
