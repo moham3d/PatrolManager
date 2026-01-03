@@ -1063,13 +1063,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 8.3  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented marker clustering in `src/views/partials/live_map.ejs` using the `Leaflet.markercluster` plugin.
+- Grouped incident and user markers to improve map performance and readability in high-density areas.
+- Ensured panic alerts stay outside of clusters for immediate visibility.
 
 **Verification**:
-- [ ] Markers clustered properly
-- [ ] Clusters expand on zoom
-- [ ] Performance improved
-- [ ] All markers accessible
+- [x] Markers clustered properly
+- [x] Clusters expand on zoom
+- [x] Performance improved
+- [x] All markers accessible
 
 ---
 

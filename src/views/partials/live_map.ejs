@@ -1,4 +1,8 @@
 <!-- Live Map Widget -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
 <div class="bg-white rounded-lg shadow overflow-hidden relative" style="height: 500px;">
     <div id="command-map" class="h-full w-full z-0"></div>
 
@@ -16,18 +20,27 @@
 <!-- Audio for alerts -->
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script src="/socket.io/socket.io.js"></script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // --- Map Setup ---
-        const map = L.map('command-map').setView([30.0444, 31.2357], 12); // Default to Cairo or generic
+        const map = L.map('command-map').setView([30.0444, 31.2357], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+        const clusterGroup = L.markerClusterGroup();
+        map.addLayer(clusterGroup);
+
         const markers = {}; // Store markers by ID "type_id"
+        const userMarkers = {}; // Store markers by userId
+        const sitePolygons = {};
+        const patrols = {}; // Store patrol data by runId
 
         // --- Icons ---
         const getIncidentIcon = (priority) => {
-            let color = '#ef4444'; // default red
+            let color = '#ef4444';
             if (priority === 'critical') color = '#7f1d1d';
             if (priority === 'high') color = '#ef4444';
             if (priority === 'medium') color = '#f59e0b';
@@ -48,20 +61,26 @@
             iconAnchor: [10, 10]
         });
 
+        const guardIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
+            iconSize: [12, 12],
+            iconAnchor: [6, 6]
+        });
+
         // --- Socket Setup ---
-        // Reuse global socket from socketClient if available
         const socket = window.socket || io();
         const statusDot = document.getElementById('status-dot');
         const pingDot = document.getElementById('ping-dot');
         const alertSound = document.getElementById('alert-sound');
 
         socket.on('connect', () => {
-            statusDot.classList.replace('bg-red-500', 'bg-green-500');
+            statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-green-500';
             pingDot.classList.remove('hidden');
         });
 
         socket.on('disconnect', () => {
-            statusDot.classList.replace('bg-green-500', 'bg-red-500');
+            statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-red-500';
             pingDot.classList.add('hidden');
         });
 
@@ -72,35 +91,45 @@
             if (markers[key]) return;
 
             const icon = isPanic ? panicIcon : getIncidentIcon(priority);
-            const marker = L.marker([lat, lng], { icon }).addTo(map).bindPopup(popupContent);
-            markers[key] = marker;
-
+            const marker = L.marker([lat, lng], { icon }).bindPopup(popupContent);
+            
             if (isPanic) {
+                marker.addTo(map);
                 map.setView([lat, lng], 16);
                 alertSound.play().catch(e => console.log("Audio blocked", e));
+            } else {
+                clusterGroup.addLayer(marker);
             }
+            
+            markers[key] = marker;
         }
 
         function removeMarker(id, type) {
             const key = `${type}_${id}`;
             if (markers[key]) {
+                clusterGroup.removeLayer(markers[key]);
                 map.removeLayer(markers[key]);
                 delete markers[key];
             }
         }
 
-        // --- Initialize from Data passed to View ---
-        // Expecting 'initialMapData' global variable or similar, but simpler to fetch if API exists.
-        // Or we can use the data passed to the template if we serialize it to JS.
-        // Let's use the fetch approach for reliability on page load, 
-        // OR render it into a script tag if passed from controller.
-        // The controller changes are next. Let's assume we fetch '/incidents/active' just like monitor.ejs
+        function updateUserMarker(data) {
+            if (userMarkers[data.userId]) {
+                userMarkers[data.userId].setLatLng([data.lat, data.lng]);
+                userMarkers[data.userId].setPopupContent(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span>`);
+            } else {
+                const marker = L.marker([data.lat, data.lng], { icon: guardIcon })
+                    .bindPopup(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span>`);
+                clusterGroup.addLayer(marker);
+                userMarkers[data.userId] = marker;
+            }
+        }
 
+        // --- Initialize State ---
         fetch('/incidents/active')
             .then(res => res.json())
             .then(data => {
                 const bounds = [];
-
                 data.incidents.forEach(inc => {
                     if (inc.location) {
                         const lat = inc.location.coordinates[0];
@@ -109,7 +138,6 @@
                         bounds.push([lat, lng]);
                     }
                 });
-
                 data.panics.forEach(panic => {
                     if (panic.location) {
                         const lat = panic.location.coordinates[0];
@@ -118,74 +146,8 @@
                         bounds.push([lat, lng]);
                     }
                 });
-
-                if (bounds.length > 0) {
-                    map.fitBounds(bounds, { padding: [50, 50] });
-                }
+                if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
             });
-
-        // --- User Marker Logic ---
-        const userMarkers = {}; // Store markers by userId
-
-        const guardIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: "<div style='background-color: #3b82f6; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
-            iconSize: [12, 12],
-            iconAnchor: [6, 6]
-        });
-
-        function updateUserMarker(data) {
-            // data: { userId, name, role, lat, lng }
-            if (userMarkers[data.userId]) {
-                userMarkers[data.userId].setLatLng([data.lat, data.lng]);
-                userMarkers[data.userId].setPopupContent(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span>`);
-            } else {
-                const marker = L.marker([data.lat, data.lng], { icon: guardIcon }).addTo(map)
-                    .bindPopup(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span>`);
-                userMarkers[data.userId] = marker;
-            }
-        }
-
-        socket.on('active_users_list', (users) => {
-            users.forEach(u => updateUserMarker(u));
-        });
-
-        socket.on('user_location_update', (data) => {
-            updateUserMarker(data);
-        });
-
-        socket.on('user_disconnected', (userId) => {
-            if (userMarkers[userId]) {
-                map.removeLayer(userMarkers[userId]);
-                delete userMarkers[userId];
-            }
-        });
-
-        // Request initial list
-        socket.emit('request_active_users');
-        socket.emit('join_room', 'command_center');
-
-        // --- Real-time Listeners (Incidents) ---
-        socket.on('new_incident', (inc) => {
-            if (inc.location) {
-                const lat = inc.location.coordinates[0];
-                const lng = inc.location.coordinates[1];
-                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority);
-            }
-        });
-
-        socket.on('panic_alert', (panic) => {
-            // Adjust property access based on event payload
-            // Backend sends: { id, guard, location, time }
-            if (panic.location) {
-                const lat = panic.location.lat;
-                const lng = panic.location.lng;
-                addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>${panic.guard}`, true);
-            }
-        });
-
-        // --- Site Logic ---
-        const sitePolygons = {};
 
         fetch('/sites')
             .then(res => res.json())
@@ -197,52 +159,40 @@
                             const polygon = L.polygon(latlngs, { color: '#3b82f6', weight: 2, opacity: 0.5, fillOpacity: 0.1 }).addTo(map);
                             polygon.bindPopup(`<b>Site: ${site.name}</b><br>Geofence Active`);
                             sitePolygons[site.id] = polygon;
-                        } catch (e) {
-                            console.error(`Error parsing boundaries for site ${site.id}:`, e);
-                        }
+                        } catch (e) { console.error(e); }
                     }
                 });
             });
 
-        // --- Patrol Logic ---
-        const patrols = {}; // Store patrol data by runId: { polylines: [], markers: [], checkpoints: [] }
-
-        function updatePatrolVisualization(data) {
-            // data: { runId, siteId, checkpoints, scannedCheckpoints }
-            if (!patrols[data.runId]) {
-                patrols[data.runId] = { polylines: [], markers: [] };
+        // --- Socket Listeners ---
+        socket.on('active_users_list', (users) => users.forEach(u => updateUserMarker(u)));
+        socket.on('user_location_update', (data) => updateUserMarker(data));
+        socket.on('location_batch', (updates) => updates.forEach(u => updateUserMarker(u)));
+        socket.on('user_disconnected', (userId) => {
+            if (userMarkers[userId]) {
+                clusterGroup.removeLayer(userMarkers[userId]);
+                delete userMarkers[userId];
             }
+        });
 
-            // Remove existing visualization for this patrol
-            patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
-            patrols[data.runId].markers.forEach(m => map.removeLayer(m));
-            patrols[data.runId].polylines = [];
-            patrols[data.runId].markers = [];
-
-            const latLngs = data.checkpoints.map(cp => [cp.lat, cp.lng]).filter(ll => ll[0] && ll[1]);
-            if (latLngs.length > 1) {
-                const polyline = L.polyline(latLngs, { color: '#3b82f6', weight: 3, opacity: 0.5, dashArray: '5, 10' }).addTo(map);
-                patrols[data.runId].polylines.push(polyline);
+        socket.on('new_incident', (inc) => {
+            if (inc.location) {
+                const lat = inc.location.coordinates[0];
+                const lng = inc.location.coordinates[1];
+                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority);
             }
+        });
 
-            data.checkpoints.forEach((cp, index) => {
-                if (!cp.lat || !cp.lng) return;
-                const isScanned = data.scannedCheckpoints.includes(cp.id);
-                const color = isScanned ? '#10b981' : '#9ca3af';
-                const marker = L.circleMarker([cp.lat, cp.lng], {
-                    radius: 6,
-                    fillColor: color,
-                    color: '#fff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map).bindPopup(`<b>Checkpoint: ${cp.name}</b><br>Status: ${isScanned ? 'Scanned' : 'Pending'}`);
-                patrols[data.runId].markers.push(marker);
-            });
-        }
+        socket.on('panic_alert', (panic) => {
+            if (panic.location) {
+                addMarker(panic.id, 'panic', panic.location.lat, panic.location.lng, `<b>PANIC ALERT</b><br>${panic.guard}`, 'critical', true);
+            }
+        });
+
+        socket.on('incident_resolved', (data) => removeMarker(data.incidentId, 'incident'));
+        socket.on('panic_resolved', (data) => removeMarker(data.id, 'panic'));
 
         socket.on('patrol_started', (data) => {
-            // Fetch template data to get checkpoints
             fetch(`/sites/${data.siteId}`)
                 .then(res => res.json())
                 .then(siteData => {
@@ -258,15 +208,6 @@
                 });
         });
 
-        socket.on('checkpoint_scanned', (data) => {
-            // data: { runId, checkpointId, siteId }
-            if (patrols[data.runId]) {
-                // Update existing visualization
-                // This would be more efficient if we store the full state
-                // For now, let's just trigger a re-render if we had the state
-            }
-        });
-
         socket.on('patrol_completed', (data) => {
             if (patrols[data.runId]) {
                 patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
@@ -275,4 +216,31 @@
             }
         });
 
-        // --- User Marker Logic ---
+        function updatePatrolVisualization(data) {
+            if (!patrols[data.runId]) patrols[data.runId] = { polylines: [], markers: [] };
+            patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
+            patrols[data.runId].markers.forEach(m => map.removeLayer(m));
+            patrols[data.runId].polylines = [];
+            patrols[data.runId].markers = [];
+
+            const latLngs = data.checkpoints.map(cp => [cp.lat, cp.lng]).filter(ll => ll[0] && ll[1]);
+            if (latLngs.length > 1) {
+                const polyline = L.polyline(latLngs, { color: '#3b82f6', weight: 3, opacity: 0.5, dashArray: '5, 10' }).addTo(map);
+                patrols[data.runId].polylines.push(polyline);
+            }
+
+            data.checkpoints.forEach((cp) => {
+                if (!cp.lat || !cp.lng) return;
+                const isScanned = data.scannedCheckpoints.includes(cp.id);
+                const color = isScanned ? '#10b981' : '#9ca3af';
+                const marker = L.circleMarker([cp.lat, cp.lng], {
+                    radius: 6, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
+                }).addTo(map).bindPopup(`<b>Checkpoint: ${cp.name}</b><br>Status: ${isScanned ? 'Scanned' : 'Pending'}`);
+                patrols[data.runId].markers.push(marker);
+            });
+        }
+
+        socket.emit('request_active_users');
+        socket.emit('join_room', 'command_center');
+    });
+</script>
