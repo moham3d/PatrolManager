@@ -92,6 +92,9 @@ exports.init = (httpServer) => {
 
         // --- Emergency Events ---
         socket.on('panic_alert', (data) => {
+            if (!data || !data.location) {
+                return socket.emit('error', { event: 'panic_alert', message: 'Missing location' });
+            }
             // data: { location, patrolRunId, siteId }
             const siteId = data.siteId;
             const payload = {
@@ -111,23 +114,35 @@ exports.init = (httpServer) => {
 
         // --- Incident Events ---
         socket.on('incident_created', (data) => {
+            if (!data || !data.incidentId || !data.siteId) {
+                return socket.emit('error', { event: 'incident_created', message: 'Missing required fields' });
+            }
             // data: { incidentId, type, priority, siteId }
             io.to(`site_${data.siteId}`).to('admin').emit('incident_created', data);
         });
 
         socket.on('incident_assigned', (data) => {
+            if (!data || !data.incidentId || !data.userId || !data.siteId) {
+                return socket.emit('error', { event: 'incident_assigned', message: 'Missing required fields' });
+            }
             // data: { incidentId, userId, siteId }
             io.to(`user_${data.userId}`).emit('incident_assigned', data);
             io.to(`site_${data.siteId}`).to('admin').emit('incident_assigned', data);
         });
 
         socket.on('incident_resolved', (data) => {
+            if (!data || !data.incidentId || !data.siteId) {
+                return socket.emit('error', { event: 'incident_resolved', message: 'Missing required fields' });
+            }
             // data: { incidentId, siteId }
             io.to(`site_${data.siteId}`).to('admin').emit('incident_resolved', data);
         });
 
         // --- Patrol Events ---
         socket.on('patrol_started', (data) => {
+            if (!data || !data.runId || !data.siteId) {
+                return socket.emit('error', { event: 'patrol_started', message: 'Missing required fields' });
+            }
             // data: { runId, templateId, siteId }
             io.to(`site_${data.siteId}`).to('admin').emit('patrol_started', {
                 ...data,
@@ -137,17 +152,26 @@ exports.init = (httpServer) => {
         });
 
         socket.on('patrol_completed', (data) => {
+            if (!data || !data.runId || !data.siteId) {
+                return socket.emit('error', { event: 'patrol_completed', message: 'Missing required fields' });
+            }
             // data: { runId, siteId, completionPercentage }
             io.to(`site_${data.siteId}`).to('admin').emit('patrol_completed', data);
         });
 
         socket.on('checkpoint_scanned', (data) => {
+            if (!data || !data.runId || !data.checkpointId || !data.siteId) {
+                return socket.emit('error', { event: 'checkpoint_scanned', message: 'Missing required fields' });
+            }
             // data: { runId, checkpointId, siteId }
             io.to(`site_${data.siteId}`).to('admin').emit('checkpoint_scanned', data);
         });
 
         // --- Shift Events ---
         socket.on('shift_started', (data) => {
+            if (!data || !data.shiftId || !data.siteId) {
+                return socket.emit('error', { event: 'shift_started', message: 'Missing required fields' });
+            }
             // data: { shiftId, siteId }
             io.to(`site_${data.siteId}`).to('admin').emit('shift_started', {
                 ...data,
@@ -157,14 +181,17 @@ exports.init = (httpServer) => {
         });
 
         socket.on('shift_ended', (data) => {
+            if (!data || !data.shiftId || !data.siteId) {
+                return socket.emit('error', { event: 'shift_ended', message: 'Missing required fields' });
+            }
             // data: { shiftId, siteId }
             io.to(`site_${data.siteId}`).to('admin').emit('shift_ended', data);
         });
 
         socket.on('update_location', async (loc) => {
-            // loc: { lat, lng, siteId }
-            const onlineUser = onlineUsers.get(socket.id);
-            if (onlineUser) {
+            if (!loc || !loc.lat || !loc.lng) {
+                return socket.emit('error', { event: 'update_location', message: 'Invalid location data' });
+            }
                 try {
                     const activeShift = await Shift.findOne({
                         where: {

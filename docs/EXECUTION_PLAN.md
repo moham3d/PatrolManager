@@ -879,13 +879,19 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented basic payload validation for all major incoming socket events in `src/sockets/socketHandler.js`.
+- Malformed or incomplete payloads now trigger an `error` event sent back to the client.
 
 **Verification**:
-- [ ] All events validated
-- [ ] Invalid payloads rejected
+- [x] All events validated
+- [x] Invalid payloads rejected
 - [ ] Type checking works
-- [ ] Clear error messages
+- [x] Clear error messages
 
 ---
 
