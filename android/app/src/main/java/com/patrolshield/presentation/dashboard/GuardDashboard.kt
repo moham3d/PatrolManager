@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,6 +24,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.patrolshield.common.DateUtils
@@ -61,7 +63,24 @@ fun GuardDashboard(
     onNavigateToProfile: () -> Unit,
     onNavigateToVisitors: () -> Unit
 ) {
-    // ... rest of the code ...
+    val context = LocalContext.current
+    val state by viewModel.state
+    val pullToRefreshState = rememberPullToRefreshState()
+    
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.loadSchedule()
+        }
+    }
+    
+    LaunchedEffect(pullToRefreshState.isRefreshing) {
+        if (pullToRefreshState.isRefreshing) {
+            viewModel.loadSchedule(isRefresh = true)
+            pullToRefreshState.endRefresh()
+        }
+    }
     
     Scaffold(
         // ... topBar ...
@@ -73,7 +92,7 @@ fun GuardDashboard(
             // we'll assume a dummy or update DashboardState soon.
             // For now, let's use the activePatrol.startTime as a proxy or just show the UI.
             
-            if (state.activePatrol != null) {
+            state.activePatrol?.let { activePatrol ->
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -83,10 +102,11 @@ fun GuardDashboard(
                         horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
                     ) {
                         Text("SHIFT DURATION", style = MaterialTheme.typography.labelLarge)
-                        ShiftTimer(startTime = state.activePatrol.startTime)
+                        ShiftTimer(startTime = activePatrol.startTime)
                         Spacer(modifier = Modifier.height(8.dp))
+                        val patrol = state.schedules.find { it.id == activePatrol.templateId }
                         Text(
-                            "Location: ${state.schedules.find { it.id == state.activePatrol.templateId }?.siteName ?: "Unknown"}",
+                            "Location: Site ${patrol?.siteId ?: "Unknown"}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }

@@ -5,8 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -49,7 +48,7 @@ fun IncidentResolutionDialog(
                 Text("Evidence (Optional):", style = MaterialTheme.typography.labelLarge)
                 Row(modifier = Modifier.fillMaxWidth()) {
                     IconButton(onClick = { galleryLauncher.launch("image/*") }) {
-                        Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery")
+                        Icon(Icons.Default.Image, contentDescription = "Gallery")
                     }
                 }
 

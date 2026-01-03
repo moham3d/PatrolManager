@@ -80,10 +80,11 @@ class PatrolRepositoryImpl @Inject constructor(
             } else {
                 // Queue for Sync (Fallback)
                 val log = LogEntity(
-                    type = "START_PATROL",
+                    action = "START_PATROL",
                     payload = Gson().toJson(StartPatrolRequest(templateId)),
                     priority = 2,
-                    synced = false
+                    synced = false,
+                    timestamp = System.currentTimeMillis()
                 )
                 logDao.insertLog(log)
                 emit(Resource.Success(patrol)) // Proceed locally
@@ -91,10 +92,11 @@ class PatrolRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             // Queue for Sync
              val log = LogEntity(
-                type = "START_PATROL",
+                action = "START_PATROL",
                 payload = Gson().toJson(StartPatrolRequest(templateId)),
                 priority = 2,
-                synced = false
+                synced = false,
+                timestamp = System.currentTimeMillis()
             )
             logDao.insertLog(log)
             emit(Resource.Success(
@@ -123,10 +125,11 @@ class PatrolRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
              // Offline: Queue
              val log = LogEntity(
-                type = "SCAN_CHECKPOINT",
+                action = "SCAN_CHECKPOINT",
                 payload = Gson().toJson(ScanRequest(runId, checkpointId, LocationDto(lat, lng))),
                 priority = 2,
-                synced = false
+                synced = false,
+                timestamp = System.currentTimeMillis()
             )
             logDao.insertLog(log)
             emit(Resource.Success("Scanned (Offline)"))
@@ -148,10 +151,11 @@ class PatrolRepositoryImpl @Inject constructor(
                 // 2. Queue for Background Sync
                 if (activePatrol.remoteId != null) {
                     logDao.insertLog(LogEntity(
-                        type = "END_PATROL",
+                        action = "END_PATROL",
                         payload = Gson().toJson(com.patrolshield.data.remote.dto.EndPatrolRequest(activePatrol.remoteId)),
                         priority = 2,
-                        synced = false
+                        synced = false,
+                        timestamp = System.currentTimeMillis()
                     ))
                 }
                 
@@ -183,10 +187,11 @@ class PatrolRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             // Offline: Queue with Critical Priority
             logDao.insertLog(LogEntity(
-                type = "PANIC_ALERT",
+                action = "PANIC_ALERT",
                 payload = Gson().toJson(request),
                 priority = 1,
-                synced = false
+                synced = false,
+                timestamp = System.currentTimeMillis()
             ))
             Resource.Success(Unit) // Consider success locally
         }
@@ -208,10 +213,11 @@ class PatrolRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             // Offline: Cache Heartbeat with Low Priority
             logDao.insertLog(LogEntity(
-                type = "HEARTBEAT",
+                action = "HEARTBEAT",
                 payload = Gson().toJson(request),
                 priority = 4,
-                synced = false
+                synced = false,
+                timestamp = System.currentTimeMillis()
             ))
         }
     }

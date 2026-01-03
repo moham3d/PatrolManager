@@ -1,11 +1,11 @@
 package com.patrolshield.data.remote.dto
 
 data class ActiveIncidentsDto(
-    val incidents: List<IncidentDto>,
+    val incidents: List<ActiveIncidentDto>,
     val panics: List<PanicDto>
 )
 
-data class IncidentDto(
+data class ActiveIncidentDto(
     val id: Int,
     val type: String,
     val priority: String,

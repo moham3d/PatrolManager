@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
 import com.patrolshield.data.local.dao.LogDao
+import com.patrolshield.data.local.entities.LogEntity
 import com.patrolshield.data.remote.ApiService
 import com.patrolshield.data.remote.dto.StartPatrolRequest
 import com.patrolshield.data.remote.dto.ScanRequest
@@ -47,7 +48,7 @@ class SyncWorker @AssistedInject constructor(
     private suspend fun syncLogs(logs: List<LogEntity>) {
         for (log in logs) {
             try {
-                when (log.type) {
+                when (log.action) {
                     "PANIC_ALERT" -> {
                         val request = Gson().fromJson(log.payload, com.patrolshield.data.remote.dto.PanicRequest::class.java)
                         val response = api.triggerPanic(request)
@@ -123,7 +124,6 @@ class SyncWorker @AssistedInject constructor(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                logDao.incrementRetryCount(log.id)
             }
         }
     }

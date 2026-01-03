@@ -1,17 +1,6 @@
 package com.patrolshield.data.repository
 
 import com.patrolshield.common.Resource
-import com.patrolshield.data.local.dao.UserDao
-import com.patrolshield.data.local.entities.UserEntity
-import com.patrolshield.data.remote.ApiService
-import com.patrolshield.data.remote.dto.LoginRequest
-import com.patrolshield.domain.repository.AuthRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import retrofit2.HttpException
-import java.io.IOException
-import javax.inject.Inject
-
 import com.patrolshield.common.SecurePreferences
 import com.patrolshield.data.local.dao.UserDao
 import com.patrolshield.data.local.entities.UserEntity
@@ -38,7 +27,12 @@ class AuthRepositoryImpl @Inject constructor(
                 val loginResponse = response.body()!!
                 
                 // Save Token Securely
-                securePrefs.saveToken(loginResponse.token)
+                val token = loginResponse.token
+                if (token == null) {
+                    emit(Resource.Error("Invalid Token"))
+                    return@flow
+                }
+                securePrefs.saveToken(token)
                 
                 // Save User
                 val userDto = loginResponse.user

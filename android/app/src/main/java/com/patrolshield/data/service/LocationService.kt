@@ -65,10 +65,11 @@ class LocationService : Service() {
                         )
                         logDao.insertLog(
                             LogEntity(
-                                type = "GPS_LOG",
+                                action = "GPS_LOG",
                                 payload = Gson().toJson(payload),
                                 priority = 4,
-                                synced = false
+                                synced = false,
+                                timestamp = System.currentTimeMillis()
                             )
                         )
                     }

@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+app.set('trust proxy', 1);
 const path = require('path');
 const morgan = require('morgan');
 const passport = require('passport');
@@ -77,7 +78,8 @@ require('./src/config/passport')(passport);
 
 const csrfProtection = require('./src/middleware/csrf');
 app.use((req, res, next) => {
-    if (req.path.startsWith('/api')) {
+    // Skip CSRF for API routes or JSON requests (e.g. from mobile app)
+    if (req.path.startsWith('/api') || req.xhr || req.headers.accept?.includes('json')) {
         return next();
     }
     csrfProtection(req, res, next);

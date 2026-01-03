@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -87,10 +87,10 @@ fun IncidentDialog(
                 Text("Evidence:", style = MaterialTheme.typography.labelLarge)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
                     IconButton(onClick = { galleryLauncher.launch("image/*") }) {
-                        Icon(Icons.Default.PhotoLibrary, contentDescription = "Gallery")
+                        Icon(Icons.Default.Image, contentDescription = "Gallery")
                     }
                     IconButton(onClick = { /* cameraLauncher.launch(null) */ }) {
-                        Icon(Icons.Default.AddAPhoto, contentDescription = "Camera")
+                        Icon(Icons.Default.PhotoCamera, contentDescription = "Camera")
                     }
                 }
 

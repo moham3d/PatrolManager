@@ -14,12 +14,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-import com.patrolshield.data.remote.dto.IncidentDto
+import com.patrolshield.data.remote.dto.ActiveIncidentDto
+import com.patrolshield.data.remote.dto.ActiveIncidentsDto
 import com.patrolshield.data.remote.dto.PanicDto
 
 data class SupervisorState(
     val livePatrols: List<LivePatrolDto> = emptyList(),
-    val incidents: List<IncidentDto> = emptyList(),
+    val incidents: List<ActiveIncidentDto> = emptyList(),
     val panics: List<PanicDto> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -48,26 +49,26 @@ class SupervisorViewModel @Inject constructor(
     }
 
     private suspend fun fetchLivePatrols() {
-        supervisorRepository.getLivePatrols().onEach { result ->
+        supervisorRepository.getLivePatrols().onEach { result: Resource<List<LivePatrolDto>> ->
             when (result) {
-                is Resource.Success -> {
+                is Resource.Success<List<LivePatrolDto>> -> {
                     _state.value = _state.value.copy(
                         livePatrols = result.data ?: emptyList(),
                         error = null
                     )
                 }
-                is Resource.Error -> {
+                is Resource.Error<List<LivePatrolDto>> -> {
                     _state.value = _state.value.copy(error = result.message)
                 }
-                is Resource.Loading -> {}
+                is Resource.Loading<List<LivePatrolDto>> -> {}
             }
         }.launchIn(viewModelScope)
     }
 
     private suspend fun fetchActiveIncidents() {
-        supervisorRepository.getActiveIncidents().onEach { result ->
+        supervisorRepository.getActiveIncidents().onEach { result: Resource<ActiveIncidentsDto> ->
             when (result) {
-                is Resource.Success -> {
+                is Resource.Success<ActiveIncidentsDto> -> {
                     _state.value = _state.value.copy(
                         incidents = result.data?.incidents ?: emptyList(),
                         panics = result.data?.panics ?: emptyList(),
@@ -75,10 +76,10 @@ class SupervisorViewModel @Inject constructor(
                         error = null
                     )
                 }
-                is Resource.Error -> {
+                is Resource.Error<ActiveIncidentsDto> -> {
                     _state.value = _state.value.copy(error = result.message, isLoading = false)
                 }
-                is Resource.Loading -> {
+                is Resource.Loading<ActiveIncidentsDto> -> {
                     if (_state.value.incidents.isEmpty()) {
                         _state.value = _state.value.copy(isLoading = true)
                     }
@@ -89,16 +90,16 @@ class SupervisorViewModel @Inject constructor(
 
     fun resolveIncident(id: Int, notes: String, evidenceUri: android.net.Uri?, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            supervisorRepository.resolveIncident(id, notes, evidenceUri).onEach { result ->
+            supervisorRepository.resolveIncident(id, notes, evidenceUri).onEach { result: Resource<Unit> ->
                 when (result) {
-                    is Resource.Success -> {
+                    is Resource.Success<Unit> -> {
                         fetchActiveIncidents()
                         onSuccess()
                     }
-                    is Resource.Error -> {
+                    is Resource.Error<Unit> -> {
                         _state.value = _state.value.copy(error = result.message)
                     }
-                    is Resource.Loading -> {}
+                    is Resource.Loading<Unit> -> {}
                 }
             }.launchIn(this)
         }

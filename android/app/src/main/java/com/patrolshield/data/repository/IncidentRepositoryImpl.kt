@@ -1,3 +1,5 @@
+package com.patrolshield.data.repository
+
 import android.content.Context
 import android.net.Uri
 import com.patrolshield.common.ImageUtils
@@ -101,10 +103,11 @@ class IncidentRepositoryImpl @Inject constructor(
                 imageBase64 = compressedFiles.firstOrNull()?.absolutePath // Use this field to store path in logs
             )
             logDao.insertLog(LogEntity(
-                type = "REPORT_INCIDENT",
+                action = "REPORT_INCIDENT",
                 payload = Gson().toJson(request),
                 priority = 3,
-                synced = false
+                synced = false,
+                timestamp = System.currentTimeMillis()
             ))
             emit(Resource.Error("Couldn't reach server. Incident saved locally."))
         }

@@ -4,10 +4,10 @@ data class ManagerStatsDto(
     val patrolsToday: Int,
     val incidentsToday: Int,
     val complianceRate: Int,
-    val recentIncidents: List<IncidentDto>
+    val recentIncidents: List<ManagerIncidentDto>
 )
 
-data class IncidentDto(
+data class ManagerIncidentDto(
     val id: Int,
     val type: String,
     val description: String,

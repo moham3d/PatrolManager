@@ -1,6 +1,6 @@
 package com.patrolshield.di
 
-import com.patrolshield.data.local.dao.UserDao
+import com.patrolshield.common.SecurePreferences
 import com.patrolshield.data.remote.ApiService
 import com.patrolshield.data.remote.AuthInterceptor
 import dagger.Module
@@ -20,8 +20,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(userDao: UserDao): AuthInterceptor {
-        return AuthInterceptor(userDao)
+    fun provideAuthInterceptor(securePrefs: SecurePreferences): AuthInterceptor {
+        return AuthInterceptor(securePrefs)
     }
 
     @Provides

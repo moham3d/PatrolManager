@@ -105,7 +105,7 @@ fun ManagerDashboard(
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.primary
                                         )
-                                        Text(text = incident.description, style = MaterialTheme.typography.bodyMedium)
+                                        Text(text = incident.description ?: "", style = MaterialTheme.typography.bodyMedium)
                                         Text(
                                             text = "Reported by: ${incident.reporter.name}",
                                             style = MaterialTheme.typography.bodySmall,

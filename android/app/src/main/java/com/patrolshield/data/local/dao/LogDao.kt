@@ -19,7 +19,4 @@ interface LogDao {
 
     @Query("DELETE FROM logs WHERE id = :id")
     suspend fun deleteLog(id: Int)
-
-    @Query("UPDATE logs SET retryCount = retryCount + 1 WHERE id = :id")
-    suspend fun incrementRetryCount(id: Int)
 }

@@ -1,8 +1,12 @@
+package com.patrolshield.presentation.dashboard
+
+import android.net.Uri
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,6 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.patrolshield.common.DateUtils
+import com.patrolshield.data.remote.dto.ActiveIncidentsDto
+import com.patrolshield.data.remote.dto.LivePatrolDto
+import com.patrolshield.data.remote.dto.PanicDto
+import com.patrolshield.presentation.dashboard.IncidentResolutionDialog
+import com.patrolshield.presentation.dashboard.SupervisorViewModel
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
@@ -21,8 +30,8 @@ import org.osmdroid.views.overlay.Marker
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SupervisorDashboard(
-    viewModel: SupervisorViewModel = hiltViewModel(),
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    viewModel: SupervisorViewModel = hiltViewModel<SupervisorViewModel>()
 ) {
     val state = viewModel.state.value
     var selectedTabIndex by remember { mutableIntStateOf(0) }
@@ -32,7 +41,7 @@ fun SupervisorDashboard(
         IncidentResolutionDialog(
             incidentId = incidentToResolve!!,
             onDismiss = { incidentToResolve = null },
-            onSubmit = { notes, evidenceUri ->
+            onSubmit = { notes: String, evidenceUri: Uri? ->
                 viewModel.resolveIncident(incidentToResolve!!, notes, evidenceUri) {
                     incidentToResolve = null
                 }
@@ -89,15 +98,15 @@ fun SupervisorDashboard(
                         },
                         update = { mapView ->
                             mapView.overlays.clear()
-                            
-                            state.livePatrols.forEach { patrol ->
+
+                            (state.livePatrols as Iterable<LivePatrolDto>).forEach { patrol: LivePatrolDto ->
                                 val marker = Marker(mapView)
                                 marker.position = GeoPoint(patrol.lat, patrol.lng)
                                 marker.title = "${patrol.guardName} (${patrol.status})"
                                 marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                                 mapView.overlays.add(marker)
                             }
-                            
+
                             mapView.invalidate()
                         }
                     ) 

@@ -12,9 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.patrolshield.presentation.login.LoginScreen
 import com.patrolshield.presentation.login.LoginScreen
 import com.patrolshield.presentation.dashboard.GuardDashboard
+import com.patrolshield.presentation.dashboard.SupervisorDashboard
+import com.patrolshield.presentation.dashboard.SupervisorViewModel
 import com.patrolshield.presentation.visitor.VisitorScreen
 import com.patrolshield.presentation.shift.ClockInScreen
 import dagger.hilt.android.AndroidEntryPoint
@@ -100,7 +103,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("supervisor_dashboard") {
-                            com.patrolshield.presentation.dashboard.SupervisorDashboard(
+                            SupervisorDashboard(
                                 onLogout = {
                                     kotlinx.coroutines.runBlocking { userDao.clearUser() }
                                     navController.navigate("login") {
@@ -177,6 +180,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 }
 
 @Composable
