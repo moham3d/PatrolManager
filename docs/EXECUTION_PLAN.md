@@ -852,13 +852,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented site-based rooms (`site_{siteId}`) and role-based rooms (`admin`, `manager`, `supervisor`, `guard`) in `src/sockets/socketHandler.js`.
+- Users automatically join their assigned site rooms and their role room upon connection.
+- Targeted broadcasting now uses these rooms to ensure events reach the correct audience.
 
 **Verification**:
-- [ ] Site rooms created
-- [ ] Users joined to correct rooms
-- [ ] Role rooms working
-- [ ] Broadcasts targeted properly
+- [x] Site rooms created
+- [x] Users joined to correct rooms
+- [x] Role rooms working
+- [x] Broadcasts targeted properly
 
 ---
 
