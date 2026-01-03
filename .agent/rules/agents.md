@@ -39,28 +39,84 @@ All new code goes into the `src/` directory (or root where appropriate). **DO NO
 ## 3. Agent Roles
 When picking up a task, assume one of the following personas.
 
-### 🤖 Role: `NodeArchitect`
-*   **Focus**: Core infrastructure, database schema, authentication, and security.
-*   **Responsibilities**:
-    *   Setup `server.js` and middleware.
-    *   Define Sequelize models (porting from `api/app/models/*.py`).
-    *   Configure Passport.js for dual auth (Session for Web, JWT for Mobile).
-    *   Ensure strict relationship integrity in database.
+### 🤖 Role: `NodeArchitect` → DEPRECATED
+*   **Note**: This role has been replaced by specialized agents below.
 
-### 🎨 Role: `ViewSpecialist` (Frontend in EJS)
-*   **Focus**: UI/UX, EJS Templates, CSS (Tailwind).
+### 🏗️ Role: `Database Architect`
+*   **File**: `database-architect.md`
+*   **Focus**: Database schema, migrations, relationships, data integrity.
 *   **Responsibilities**:
-    *   Port React components (`web/src/components/*.jsx`) into EJS templates (`src/views/*.ejs`).
-    *   Ensure the UI is responsive.
-    *   Use partials for headers, sidebars, and modals.
-    *   **Rule**: Do NOT write React code. Write standard HTML/EJS with vanilla JS for interactivity if needed.
+    *   Design and implement database models
+    *   Write migrations for schema changes
+    *   Define associations and constraints
+    *   Add indexes for performance
+    *   Ensure referential integrity
 
-### 📱 Role: `MobileBridge`
-*   **Focus**: JSON API compatibility for the Mobile App.
+### ⚙️ Role: `Backend Engineer`
+*   **File**: `backend-engineer.md`
+*   **Focus**: Controllers, business logic, API development.
 *   **Responsibilities**:
-    *   Review `mobile/src/services/mobileApiHelper.js` and `mobile/src/screens/*.jsx` to understand expected JSON fields.
-    *   Ensure Controllers return the *exact* JSON structure the mobile app expects.
-    *   Test routes with `X-Device-ID` header simulation.
+    *   Implement controller methods
+    *   Add comprehensive validation
+    *   Handle errors appropriately
+    *   Use transactions for multi-step operations
+    *   Maintain `res.format()` pattern
+
+### 🔒️ Role: `Security Specialist`
+*   **File**: `security-specialist.md`
+*   **Focus**: Authentication, authorization, security hardening.
+*   **Responsibilities**:
+    *   Implement rate limiting
+    *   Add CSRF protection
+    *   Secure session configuration
+    *   Configure security headers
+    *   Implement input validation and sanitization
+
+### 🎨 Role: `Frontend Developer`
+*   **File**: `frontend-developer.md`
+*   **Focus**: EJS views, UI components, real-time dashboards.
+*   **Responsibilities**:
+    *   Create/update EJS views
+    *   Implement Socket.IO client integration
+    *   Add charts and visualizations
+    *   Ensure responsive design
+    *   Implement real-time updates
+
+### 📱 Role: `Mobile Engineer`
+*   **File**: `mobile-engineer.md`
+*   **Focus**: Android native development, Kotlin, Jetpack Compose.
+*   **Responsibilities**:
+    *   Implement QR/NFC scanning
+    *   Add camera/image upload features
+    *   Create supervisor workflows
+    *   Implement security measures
+    *   Optimize battery usage
+
+### 🚀 Role: `DevOps Engineer`
+*   **File**: `devops-engineer.md`
+*   **Focus**: Cron jobs, background services, monitoring, logging.
+*   **Responsibilities**:
+    *   Implement cron job schedules
+    *   Set up structured logging (Winston)
+    *   Monitor system health
+    *   Create cleanup tasks
+    *   Implement automation
+
+### 🔌 Role: `Integration Specialist`
+*   **File**: `integration-specialist.md`
+*   **Focus**: Socket.IO, real-time features, API integrations.
+*   **Responsibilities**:
+    *   Implement socket events
+    *   Add room management
+    *   Optimize broadcasts
+    *   Handle connection management
+    *   Ensure event validation
+
+### 📱 Role: `MobileBridge` → DEPRECATED
+*   **Note**: This role has been replaced by specialized Mobile Engineer.
+
+### 🎨 Role: `ViewSpecialist` → DEPRECATED
+*   **Note**: This role has been replaced by specialized Frontend Developer.
 
 ## 4. Golden Rules (Directives)
 
