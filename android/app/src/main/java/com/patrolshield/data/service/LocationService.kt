@@ -81,8 +81,35 @@ class LocationService : Service() {
     }
 
     private fun setupActivityRecognition() {
-        // In a real app, we'd register a PendingIntent for transitions.
-        // For this POC, we'll simulate the logic or use a simplified check.
+        val transitions = mutableListOf<ActivityTransition>()
+        
+        transitions.add(ActivityTransition.Builder()
+            .setActivityType(DetectedActivity.STILL)
+            .setActivityTransitionType(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+            .build())
+            
+        transitions.add(ActivityTransition.Builder()
+            .setActivityType(DetectedActivity.WALKING)
+            .setActivityTransitionType(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+            .build())
+
+        transitions.add(ActivityTransition.Builder()
+            .setActivityType(DetectedActivity.RUNNING)
+            .setActivityTransitionType(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+            .build())
+
+        val request = ActivityTransitionRequest(transitions)
+        val intent = Intent(this, ActivityTransitionReceiver::class.java)
+        val pendingIntent = android.app.PendingIntent.getBroadcast(
+            this, 0, intent, android.app.PendingIntent.FLAG_MUTABLE
+        )
+
+        try {
+            ActivityRecognition.getClient(this)
+                .requestActivityTransitionUpdates(request, pendingIntent)
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

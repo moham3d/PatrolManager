@@ -39,6 +39,9 @@ import com.patrolshield.common.Resource
 import kotlinx.coroutines.flow.collectLatest
 import java.util.concurrent.Executors
 
+import com.patrolshield.common.LocationUtils
+import com.patrolshield.common.NfcManager
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckpointScannerScreen(
@@ -62,15 +65,23 @@ fun CheckpointScannerScreen(
             nfcAdapter.enableForegroundDispatch(activity, pendingIntent, null, null)
         }
         onDispose {
+            val activity = context as? ComponentActivity
             if (activity != null && nfcAdapter != null) {
                 nfcAdapter.disableForegroundDispatch(activity)
             }
         }
     }
 
-    // Handle NFC intents in MainActivity would be better, but for simplicity here
-    // we assume the activity passes the intent or we check it periodically.
-    // In a real app, MainActivity would observe NFC tags and update a shared state.
+    LaunchedEffect(Unit) {
+        NfcManager.nfcTag.collectLatest { tagId ->
+            val loc = LocationUtils.getLocation(context)
+            if (loc != null) {
+                viewModel.onNfcTagDetected(tagId, runId, loc.latitude, loc.longitude)
+            } else {
+                Toast.makeText(context, "Location not available for NFC scan", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val scannerOptions = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
@@ -139,7 +150,7 @@ fun CheckpointScannerScreen(
                                             if (now - lastScannedTimestamp > scanCooldown) {
                                                 lastScannedTimestamp = now
                                                 val barcodeValue = barcodes[0].rawValue ?: ""
-                                                val loc = getLocation(ctx)
+                                                val loc = LocationUtils.getLocation(ctx)
                                                 if (loc != null) {
                                                     viewModel.onBarcodeDetected(barcodeValue, runId, loc.latitude, loc.longitude)
                                                 } else {
@@ -197,16 +208,24 @@ fun CheckpointScannerScreen(
     }
 }
 
-private fun bytesToHexString(src: ByteArray?): String {
-    if (src == null || src.isEmpty()) return ""
-    val sb = StringBuilder()
-    for (b in src) {
-        val v = b.toInt() and 0xFF
-        val hv = Integer.toHexString(v)
-        if (hv.length < 2) sb.append(0)
-        sb.append(hv)
+private fun playBeep() {
+    val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
+    toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
+}
+
+private fun vibrate(context: Context) {
+    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
-    return sb.toString().uppercase()
+    
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+    } else {
+        vibrator.vibrate(200)
+    }
 }
 
 private fun playBeep() {

@@ -83,7 +83,48 @@ fun GuardDashboard(
     }
     
     Scaffold(
-        // ... topBar ...
+        topBar = {
+            TopAppBar(
+                title = { Text("PatrolShield") },
+                actions = {
+                    BadgedBox(
+                        badge = {
+                            if (state.unreadCount > 0) {
+                                Badge { Text(state.unreadCount.toString()) }
+                            }
+                        },
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) {
+                        IconButton(onClick = { /* Open Notifications */ }) {
+                            Icon(Icons.Default.Notifications, contentDescription = "Notifications")
+                        }
+                    }
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = { 
+                    val loc = com.patrolshield.common.LocationUtils.getLocation(context)
+                    viewModel.sendPanic(loc?.latitude, loc?.longitude)
+                    android.widget.Toast.makeText(context, "SOS SENT!", android.widget.Toast.LENGTH_LONG).show()
+                },
+                containerColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.onError
+            ) {
+                Icon(Icons.Default.Warning, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("PANIC")
+            }
+        }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             

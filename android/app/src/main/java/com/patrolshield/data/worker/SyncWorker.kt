@@ -21,9 +21,13 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
 
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
+
 @HiltWorker
 class SyncWorker @AssistedInject constructor(
-    @Assisted appContext: Context,
+    @Assisted private val appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val logDao: LogDao,
     private val api: ApiService
@@ -34,15 +38,37 @@ class SyncWorker @AssistedInject constructor(
         val criticalLogs = logDao.getPendingLogsByPriority(1)
         if (criticalLogs.isNotEmpty()) {
             syncLogs(criticalLogs)
+            
+            // If we still have critical logs, schedule immediate retry (10s)
+            val stillHasCritical = logDao.getPendingLogsByPriority(1).isNotEmpty()
+            if (stillHasCritical) {
+                scheduleNextSync(10, TimeUnit.SECONDS)
+            }
         }
 
-        // 2. Check for High/Medium/Low Logs
-        val otherLogs = logDao.getUnsyncedLogs().filter { it.priority > 1 }
+        // 2. Check for High priority (Scans)
+        val highLogs = logDao.getPendingLogsByPriority(2)
+        if (highLogs.isNotEmpty()) {
+            syncLogs(highLogs)
+            if (logDao.getPendingLogsByPriority(2).isNotEmpty()) {
+                scheduleNextSync(1, TimeUnit.MINUTES)
+            }
+        }
+
+        // 3. Check for others
+        val otherLogs = logDao.getUnsyncedLogs().filter { it.priority > 2 }
         if (otherLogs.isNotEmpty()) {
             syncLogs(otherLogs)
         }
 
         Result.success()
+    }
+
+    private fun scheduleNextSync(delay: Long, unit: TimeUnit) {
+        val nextSync = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setInitialDelay(delay, unit)
+            .build()
+        WorkManager.getInstance(appContext).enqueue(nextSync)
     }
 
     private suspend fun syncLogs(logs: List<LogEntity>) {

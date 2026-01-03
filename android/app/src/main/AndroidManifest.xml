@@ -57,6 +57,11 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".data.service.ActivityTransitionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
 
 
     </application>

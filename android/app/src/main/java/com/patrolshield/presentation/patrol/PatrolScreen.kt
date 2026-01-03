@@ -10,17 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.patrolshield.common.DateUtils
+import com.patrolshield.common.LocationUtils
 import com.patrolshield.presentation.dashboard.DashboardViewModel
-
-fun getLocation(context: android.content.Context): android.location.Location? {
-    val locationManager = context.getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
-    return try {
-        locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
-            ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
-    } catch (e: SecurityException) {
-        null
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +54,7 @@ fun PatrolScreen(
 
                 ExtendedFloatingActionButton(
                     onClick = { 
-                        val loc = getLocation(context)
+                        val loc = LocationUtils.getLocation(context)
                         if (loc != null) {
                             viewModel.sendPanic(loc.latitude, loc.longitude)
                             android.widget.Toast.makeText(context, "SOS Sent with Location!", android.widget.Toast.LENGTH_LONG).show()

@@ -1,3 +1,6 @@
+package com.patrolshield.presentation.dashboard
+
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,7 +17,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
-import com.patrolshield.presentation.patrol.getLocation
+import com.patrolshield.common.LocationUtils
+import java.io.File
+import java.io.FileOutputStream
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,8 +44,18 @@ fun IncidentDialog(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
-        // In a real app, save bitmap to file and get Uri. For now, skipping for speed.
-        // bitmap?.let { ... }
+        bitmap?.let {
+            try {
+                val file = File(context.cacheDir, "camera_${System.currentTimeMillis()}.jpg")
+                val out = FileOutputStream(file)
+                it.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                out.flush()
+                out.close()
+                selectedImages = selectedImages + Uri.fromFile(file)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     val types = listOf("Security", "Maintenance", "Safety", "Other")
@@ -89,7 +104,7 @@ fun IncidentDialog(
                     IconButton(onClick = { galleryLauncher.launch("image/*") }) {
                         Icon(Icons.Default.Image, contentDescription = "Gallery")
                     }
-                    IconButton(onClick = { /* cameraLauncher.launch(null) */ }) {
+                    IconButton(onClick = { cameraLauncher.launch(null) }) {
                         Icon(Icons.Default.PhotoCamera, contentDescription = "Camera")
                     }
                 }
@@ -115,7 +130,7 @@ fun IncidentDialog(
             Button(
                 onClick = {
                     isSubmitting = true
-                    val loc = getLocation(context)
+                    val loc = LocationUtils.getLocation(context)
                     onSubmit(type, priority.lowercase(), description, loc?.latitude, loc?.longitude, selectedImages)
                     isSubmitting = false
                 },
@@ -128,6 +143,13 @@ fun IncidentDialog(
                 }
             }
         },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("CANCEL")
+            }
+        }
+    )
+}
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("CANCEL")
