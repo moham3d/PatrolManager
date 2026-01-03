@@ -44,6 +44,18 @@ module.exports = (sequelize, DataTypes) => {
         siteId: {
             type: DataTypes.INTEGER,
             allowNull: false
+        },
+        createdBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        updatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     });
 

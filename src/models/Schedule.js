@@ -17,6 +17,18 @@ module.exports = (sequelize, DataTypes) => {
         status: {
             type: DataTypes.ENUM('scheduled', 'attended', 'missed'),
             defaultValue: 'scheduled'
+        },
+        createdBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        updatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     });
 

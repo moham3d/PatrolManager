@@ -36,6 +36,18 @@ module.exports = (sequelize, DataTypes) => {
         shiftId: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        createdBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        updatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     });
 

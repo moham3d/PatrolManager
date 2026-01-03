@@ -13,6 +13,18 @@ module.exports = (sequelize, DataTypes) => {
         description: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        createdBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        updatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     });
 

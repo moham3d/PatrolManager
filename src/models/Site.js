@@ -25,6 +25,18 @@ module.exports = (sequelize, DataTypes) => {
         details: {
             type: DataTypes.TEXT,
             allowNull: true
+        },
+        createdBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        updatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     });
 

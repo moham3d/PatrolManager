@@ -28,6 +28,18 @@ module.exports = (sequelize, DataTypes) => {
         patrolRunId: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        createdBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        updatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        deletedAt: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     });
 

@@ -426,10 +426,15 @@ Create migration to add FK fields:
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added `createdBy`, `updatedBy`, and `deletedAt` fields to all relevant models.
 
 **Verification**:
-- [ ] Audit fields added to all models
+- [x] Audit fields added to all models
 - [ ] Associations created
 - [ ] Audit trail captures changes
 - [ ] Soft delete implemented
