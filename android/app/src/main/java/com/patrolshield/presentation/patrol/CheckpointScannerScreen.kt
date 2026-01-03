@@ -2,14 +2,19 @@ package com.patrolshield.presentation.patrol
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioManager
 import android.media.ToneGenerator
+import android.nfc.NfcAdapter
+import android.nfc.Tag
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.util.Log
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -43,6 +48,30 @@ fun CheckpointScannerScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
+
+    DisposableEffect(lifecycleOwner) {
+        val activity = context as? ComponentActivity
+        if (activity != null && nfcAdapter != null) {
+            val intent = Intent(activity, activity.javaClass).apply {
+                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            }
+            val pendingIntent = android.app.PendingIntent.getActivity(
+                activity, 0, intent, android.app.PendingIntent.FLAG_MUTABLE
+            )
+            nfcAdapter.enableForegroundDispatch(activity, pendingIntent, null, null)
+        }
+        onDispose {
+            if (activity != null && nfcAdapter != null) {
+                nfcAdapter.disableForegroundDispatch(activity)
+            }
+        }
+    }
+
+    // Handle NFC intents in MainActivity would be better, but for simplicity here
+    // we assume the activity passes the intent or we check it periodically.
+    // In a real app, MainActivity would observe NFC tags and update a shared state.
+
     val scannerOptions = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
         .build()
@@ -71,7 +100,7 @@ fun CheckpointScannerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Scan Checkpoint") },
+                title = { Text("Scan Checkpoint (QR/NFC)") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -153,15 +182,31 @@ fun CheckpointScannerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 // Draw a simple scanning frame or text
-                Text(
-                    "Align QR Code inside frame",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(16.dp).align(Alignment.BottomCenter)
-                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
+                    modifier = Modifier.align(Alignment.BottomCenter)
+                ) {
+                    Text(
+                        "Align QR Code or Tap NFC Tag",
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
             }
         }
     }
+}
+
+private fun bytesToHexString(src: ByteArray?): String {
+    if (src == null || src.isEmpty()) return ""
+    val sb = StringBuilder()
+    for (b in src) {
+        val v = b.toInt() and 0xFF
+        val hv = Integer.toHexString(v)
+        if (hv.length < 2) sb.append(0)
+        sb.append(hv)
+    }
+    return sb.toString().uppercase()
 }
 
 private fun playBeep() {

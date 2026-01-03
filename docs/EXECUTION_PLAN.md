@@ -1129,11 +1129,18 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 9.1  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added NFC permission and intent filter to `android/app/src/main/AndroidManifest.xml`.
+- Integrated NFC foreground dispatch in `CheckpointScannerScreen.kt`.
+- Updated `CheckpointScannerViewModel.kt` to handle NFC tag detection and processing.
 
 **Verification**:
-- [ ] NFC permission granted
-- [ ] Tags read successfully
+- [x] NFC permission granted
+- [x] Tags read successfully
 - [ ] UID validation works
 - [ ] Invalid tags rejected
 

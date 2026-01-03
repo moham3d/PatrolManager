@@ -41,4 +41,23 @@ class CheckpointScannerViewModel @Inject constructor(
             }
         }
     }
+
+    fun onNfcTagDetected(tagId: String, runId: Int, lat: Double, lng: Double) {
+        viewModelScope.launch {
+            // NFC Tags are usually raw UIDs. In our system, we might need to map UID to CheckpointId
+            // For now, let's assume the UID *is* the checkpoint reference or we search by it.
+            // Assuming scanCheckpoint can take a UID string in the future, 
+            // but for now let's try to parse it as Int if it's stored that way.
+            
+            val checkpointId = tagId.toIntOrNull() // Simplified for now
+            if (checkpointId != null) {
+                repository.scanCheckpoint(runId, checkpointId, lat, lng).onEach { result ->
+                    _scanResult.emit(result)
+                }.launchIn(this)
+            } else {
+                // Search by UID logic should be in repository
+                _scanResult.emit(Resource.Error("Unknown NFC Tag: $tagId"))
+            }
+        }
+    }
 }
