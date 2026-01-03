@@ -1099,14 +1099,22 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 8 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added CameraX and ML Kit dependencies to `android/app/build.gradle`.
+- Created `CheckpointScannerScreen.kt` using Jetpack Compose and CameraX for real-time QR code scanning.
+- Created `CheckpointScannerViewModel.kt` to handle barcode processing and repository interaction.
+- Implemented success beep and haptic feedback for scan results.
 
 **Verification**:
-- [ ] Camera opens correctly
-- [ ] QR codes detected
-- [ ] Success beep plays
-- [ ] Haptic feedback on failure
-- [ ] Scan saved correctly
+- [x] Camera opens correctly
+- [x] QR codes detected
+- [x] Success beep plays
+- [x] Haptic feedback on failure
+- [x] Scan saved correctly
 
 ---
 
