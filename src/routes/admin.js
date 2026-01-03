@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { ensureAuth, ensureAdmin } = require('../middleware/auth');
+const { ensureAdmin } = require('../middleware/auth');
 const { apiRateLimit } = require('../middleware/rateLimiter');
 
 router.use(apiRateLimit);
@@ -12,8 +12,8 @@ router.use(apiRateLimit);
 // We should add a check. But for speed, let's assume route mounting in index protects it?
 // No, standard is middleware.
 
-router.get('/stats', ensureAuth, adminController.getStats);
-router.get('/users', ensureAuth, adminController.getUsers);
-router.post('/users', ensureAuth, adminController.createUser);
+router.get('/stats', ensureAdmin(), adminController.getStats);
+router.get('/users', ensureAdmin(), adminController.getUsers);
+router.post('/users', ensureAdmin(), adminController.createUser);
 
 module.exports = router;

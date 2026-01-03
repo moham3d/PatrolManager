@@ -71,5 +71,22 @@ module.exports = {
             }
             res.status(403).json({ error: true, message: 'Access Denied: Insufficient permissions' });
         };
+    },
+
+    ensureAdmin: () => {
+        return (req, res, next) => {
+            if (!req.user) return res.redirect('/login');
+
+            if (req.user.Role && req.user.Role.name.toLowerCase() === 'admin') {
+                return next();
+            }
+
+            // Access Denied
+            if (req.accepts('html') && !req.is('json') && !req.path.startsWith('/api')) {
+                req.flash('error', 'Access Denied: You do not have permission to view this resource.');
+                return res.redirect('/');
+            }
+            res.status(403).json({ error: true, message: 'Access Denied: Insufficient permissions' });
+        };
     }
 };

@@ -308,14 +308,22 @@
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `ensureAdmin` middleware in `src/middleware/auth.js`.
+- Applied `ensureAdmin` to all routes in `src/routes/admin.js`.
+- Applied `ensureRole` to all routes in `src/routes/patrols.js` and `src/routes/schedules.js`.
+- Verified that `src/routes/sites.js` already had the correct `ensureRole` middleware.
 
 **Verification**:
-- [ ] Admin routes protected
-- [ ] Patrol routes protected
-- [ ] Schedule routes protected
-- [ ] Site routes protected
-- [ ] Unauthorized access rejected
+- [x] Admin routes protected
+- [x] Patrol routes protected
+- [x] Schedule routes protected
+- [x] Site routes protected
+- [x] Unauthorized access rejected
 
 ---
 
