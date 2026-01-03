@@ -85,17 +85,17 @@ class LocationService : Service() {
         
         transitions.add(ActivityTransition.Builder()
             .setActivityType(DetectedActivity.STILL)
-            .setActivityTransitionType(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
             .build())
             
         transitions.add(ActivityTransition.Builder()
             .setActivityType(DetectedActivity.WALKING)
-            .setActivityTransitionType(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
             .build())
 
         transitions.add(ActivityTransition.Builder()
             .setActivityType(DetectedActivity.RUNNING)
-            .setActivityTransitionType(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+            .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
             .build())
 
         val request = ActivityTransitionRequest(transitions)

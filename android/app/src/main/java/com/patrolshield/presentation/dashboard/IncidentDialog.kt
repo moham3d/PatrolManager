@@ -150,10 +150,3 @@ fun IncidentDialog(
         }
     )
 }
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("CANCEL")
-            }
-        }
-    )
-}

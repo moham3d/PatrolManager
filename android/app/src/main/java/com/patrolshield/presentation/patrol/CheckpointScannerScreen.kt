@@ -227,23 +227,3 @@ private fun vibrate(context: Context) {
         vibrator.vibrate(200)
     }
 }
-
-private fun playBeep() {
-    val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
-    toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
-}
-
-private fun vibrate(context: Context) {
-    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    }
-    
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        vibrator.vibrate(200)
-    }
-}

@@ -198,85 +198,48 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
     override fun onNewIntent(intent: Intent?) {
-
         super.onNewIntent(intent)
-
         if (intent != null) {
-
             handleNfcIntent(intent)
-
         }
-
     }
-
-
 
     private fun handleNfcIntent(intent: Intent) {
-
         if (NfcAdapter.ACTION_TAG_DISCOVERED == intent.action ||
-
             NfcAdapter.ACTION_TECH_DISCOVERED == intent.action ||
-
             NfcAdapter.ACTION_NDEF_DISCOVERED == intent.action) {
-
             
-
             val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
-
             tag?.let {
-
                 val tagId = bytesToHexString(it.id)
-
                 CoroutineScope(Dispatchers.Main).launch {
-
                     NfcManager.onTagDetected(tagId)
-
                 }
-
             }
-
         }
-
     }
-
-
 
     private fun bytesToHexString(src: ByteArray?): String {
-
         if (src == null || src.isEmpty()) return ""
-
         val sb = StringBuilder()
-
         for (b in src) {
-
             val v = b.toInt() and 0xFF
-
             val hv = Integer.toHexString(v)
-
             if (hv.length < 2) sb.append(0)
-
             sb.append(hv)
-
         }
-
         return sb.toString().uppercase()
-
     }
 
-
-
     @Composable
-
     fun DashboardPlaceholder() {
-
-
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
-    ) {
-        Text("Welcome to PatrolShield Dashboard!")
+        androidx.compose.foundation.layout.Box(
+            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) {
+            Text("Welcome to PatrolShield Dashboard!")
+        }
     }
 }
