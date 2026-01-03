@@ -14,8 +14,13 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.patrolshield.data.remote.dto.IncidentDto
+import com.patrolshield.data.remote.dto.PanicDto
+
 data class SupervisorState(
     val livePatrols: List<LivePatrolDto> = emptyList(),
+    val incidents: List<IncidentDto> = emptyList(),
+    val panics: List<PanicDto> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -36,6 +41,7 @@ class SupervisorViewModel @Inject constructor(
         viewModelScope.launch {
             while(true) {
                 fetchLivePatrols()
+                fetchActiveIncidents()
                 delay(30_000L) // Poll every 30 seconds
             }
         }
@@ -47,23 +53,54 @@ class SupervisorViewModel @Inject constructor(
                 is Resource.Success -> {
                     _state.value = _state.value.copy(
                         livePatrols = result.data ?: emptyList(),
+                        error = null
+                    )
+                }
+                is Resource.Error -> {
+                    _state.value = _state.value.copy(error = result.message)
+                }
+                is Resource.Loading -> {}
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    private suspend fun fetchActiveIncidents() {
+        supervisorRepository.getActiveIncidents().onEach { result ->
+            when (result) {
+                is Resource.Success -> {
+                    _state.value = _state.value.copy(
+                        incidents = result.data?.incidents ?: emptyList(),
+                        panics = result.data?.panics ?: emptyList(),
                         isLoading = false,
                         error = null
                     )
                 }
                 is Resource.Error -> {
-                    _state.value = _state.value.copy(
-                        error = result.message,
-                        isLoading = false
-                    )
+                    _state.value = _state.value.copy(error = result.message, isLoading = false)
                 }
                 is Resource.Loading -> {
-                     // Don't show loading on poll updates to avoid flickering
-                     if (_state.value.livePatrols.isEmpty()) {
-                         _state.value = _state.value.copy(isLoading = true)
-                     }
+                    if (_state.value.incidents.isEmpty()) {
+                        _state.value = _state.value.copy(isLoading = true)
+                    }
                 }
             }
         }.launchIn(viewModelScope)
+    }
+
+    fun resolveIncident(id: Int, notes: String, evidenceUri: android.net.Uri?, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            supervisorRepository.resolveIncident(id, notes, evidenceUri).onEach { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        fetchActiveIncidents()
+                        onSuccess()
+                    }
+                    is Resource.Error -> {
+                        _state.value = _state.value.copy(error = result.message)
+                    }
+                    is Resource.Loading -> {}
+                }
+            }.launchIn(this)
+        }
     }
 }

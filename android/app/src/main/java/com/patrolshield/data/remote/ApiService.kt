@@ -44,6 +44,17 @@ interface ApiService {
     @GET("supervisor/live-patrols")
     suspend fun getLivePatrols(): Response<List<LivePatrolDto>>
 
+    @GET("incidents/active")
+    suspend fun getActiveIncidents(): Response<ActiveIncidentsDto>
+
+    @retrofit2.http.Multipart
+    @POST("incidents/api/{id}/resolve")
+    suspend fun resolveIncident(
+        @retrofit2.http.Path("id") id: Int,
+        @retrofit2.http.Part("notes") notes: okhttp3.RequestBody,
+        @retrofit2.http.Part evidence: okhttp3.MultipartBody.Part?
+    ): Response<Unit>
+
     @POST("patrols/heartbeat")
     suspend fun sendHeartbeat(@Body request: HeartbeatRequest): Response<Unit>
 

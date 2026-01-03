@@ -1292,13 +1292,20 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 8 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Implemented a `TabRow` in `SupervisorDashboard.kt` to switch between "Overview" and "Incidents".
+- Created `IncidentResolutionDialog.kt` to allow supervisors to provide notes and attach evidence when resolving incidents.
+- Added a real-time incident list to the "Incidents" tab with badge indicators for total active alerts.
 
 **Verification**:
-- [ ] TabRow visible
-- [ ] Incidents tab populated
-- [ ] Status displayed
-- [ ] Resolve modal works
+- [x] TabRow visible
+- [x] Incidents tab populated
+- [x] Status displayed
+- [x] Resolve modal works
 
 ---
 
