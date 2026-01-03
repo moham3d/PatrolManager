@@ -26,7 +26,7 @@ app.use(generalRateLimit);
 
 // Middleware
 app.use(morgan('dev'));
-app.use(cors());
+app.use(require('./src/config/cors'));
 app.use((req, res, next) => {
     req.io = io;
     next();

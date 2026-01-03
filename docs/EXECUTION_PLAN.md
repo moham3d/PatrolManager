@@ -147,12 +147,18 @@
 
 **Dependencies**: None  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/config/cors.js` to configure allowed origins from the environment.
+- Updated `server.js` to use the new CORS configuration.
 
 **Verification**:
-- [ ] Only allowed origins can access API
-- [ ] Credentials work correctly
-- [ ] Preflight requests handled properly
+- [x] Only allowed origins can access API
+- [x] Credentials work correctly
+- [x] Preflight requests handled properly
 
 ---
 
