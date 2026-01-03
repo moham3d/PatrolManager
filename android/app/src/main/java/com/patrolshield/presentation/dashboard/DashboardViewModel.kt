@@ -185,6 +185,7 @@ class DashboardViewModel @Inject constructor(
         description: String,
         lat: Double?,
         lng: Double?,
+        images: List<android.net.Uri>,
         onSuccess: () -> Unit
     ) {
         viewModelScope.launch {
@@ -195,7 +196,7 @@ class DashboardViewModel @Inject constructor(
             // Fallback to 1 if nothing else found (should be rare if schedules exist)
             val siteId = activeSiteId ?: scheduleSiteId ?: 1 
             
-            incidentRepository.reportIncident(type, priority, description, siteId, lat, lng).collect { result ->
+            incidentRepository.reportIncident(type, priority, description, siteId, lat, lng, images).collect { result ->
                 when(result) {
                     is Resource.Success -> {
                         val message = if (result.data == null) "Incident saved locally" else "Incident reported successfully"

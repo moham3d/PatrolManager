@@ -1211,13 +1211,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 10.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `com.patrolshield.common.ImageUtils.kt` to handle image compression logic (JPEG, 80% quality, <5MB).
+- Updated `IncidentRepository.kt` interface and `IncidentRepositoryImpl.kt` to handle image URIs and local storage of compressed files.
+- Updated `DashboardViewModel.kt` and `GuardDashboard.kt` to propagate image evidence from the UI to the repository.
 
 **Verification**:
-- [ ] Images compressed
-- [ ] Size limited to 5MB
-- [ ] Local storage works
-- [ ] Quality acceptable
+- [x] Images compressed
+- [x] Size limited to 5MB
+- [x] Local storage works
+- [x] Quality acceptable
 
 ---
 

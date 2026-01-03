@@ -10,6 +10,7 @@ interface IncidentRepository {
         description: String,
         siteId: Int,
         lat: Double?,
-        lng: Double?
+        lng: Double?,
+        images: List<android.net.Uri>
     ): Flow<Resource<Unit>>
 }

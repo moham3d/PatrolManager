@@ -68,9 +68,9 @@ fun GuardDashboard(
     if (showIncidentDialog) {
         IncidentDialog(
             onDismiss = { showIncidentDialog = false },
-            onSubmit = { type, priority, desc, lat, lng ->
+            onSubmit = { type, priority, desc, lat, lng, images ->
                 showIncidentDialog = false
-                viewModel.reportIncident(type, priority, desc, lat, lng) {
+                viewModel.reportIncident(type, priority, desc, lat, lng, images) {
                     android.widget.Toast.makeText(context, "Incident Reported", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
