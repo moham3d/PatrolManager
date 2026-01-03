@@ -282,12 +282,18 @@
 
 **Dependencies**: None  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `src/models/Shift.js` to include `'scheduled'` in the `status` ENUM and set it as the default value.
+- Verified that `src/controllers/shiftController.js` already uses the correct status values.
 
 **Verification**:
-- [ ] 'scheduled' status added to model
-- [ ] Controller uses valid status values
-- [ ] No status mismatch errors
+- [x] 'scheduled' status added to model
+- [x] Controller uses valid status values
+- [x] No status mismatch errors
 
 ---
 

@@ -14,8 +14,8 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true
         },
         status: {
-            type: DataTypes.ENUM('active', 'completed'),
-            defaultValue: 'active'
+            type: DataTypes.ENUM('scheduled', 'active', 'completed'),
+            defaultValue: 'scheduled'
         },
         startLocation: {
             type: DataTypes.JSON, // Stores { lat, lng }
