@@ -85,6 +85,7 @@
                 </button>
             </div>
             <form action="/shifts" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Site</label>
                     <select name="siteId"

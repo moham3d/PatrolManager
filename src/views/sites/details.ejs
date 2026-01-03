@@ -33,6 +33,7 @@
                     </a>
                     <form action="/sites/<%= site.id %>/delete" method="POST" class="inline"
                         onsubmit="return confirm('Are you sure? This will delete all associated zones and checkpoints.');">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit"
                             class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500 shadow transition">
                             <i class="fas fa-trash-alt mr-1"></i> Delete
@@ -112,6 +113,7 @@
                                         </button>
                                         <form action="/sites/zones/<%= zone.id %>/delete" method="POST"
                                             onsubmit="return confirm('Delete Zone?');" class="inline">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="text-gray-400 hover:text-red-600"
                                                 title="Delete">
                                                 <i class="fas fa-trash text-xs"></i>
@@ -172,6 +174,7 @@
                                             </button>
                                             <form action="/sites/checkpoints/<%= cp.id %>/delete" method="POST"
                                                 onsubmit="return confirm('Delete Checkpoint?');" class="inline">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="text-gray-400 hover:text-red-600"
                                                     title="Delete">
                                                     <i class="fas fa-trash text-xs"></i>
@@ -234,6 +237,7 @@
                                     <td class="px-4 py-3 text-right">
                                         <form action="/shifts/<%= shift.id %>/delete" method="POST" class="inline"
                                             onsubmit="return confirm('Cancel this shift?')">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit"
                                                 class="text-red-400 hover:text-red-600 text-xs font-bold">CANCEL</button>
                                         </form>
@@ -284,6 +288,7 @@
                                         <form action="/sites/<%= site.id %>/remove-staff" method="POST"
                                             onsubmit="return confirm('Remove manager?');">
                                             <input type="hidden" name="userId" value="<%= manager.id %>">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="text-red-400 hover:text-red-600"><i
                                                     class="fas fa-times"></i></button>
                                         </form>
@@ -316,6 +321,7 @@
                                         <form action="/sites/<%= site.id %>/remove-staff" method="POST"
                                             onsubmit="return confirm('Remove guard?');">
                                             <input type="hidden" name="userId" value="<%= guard.id %>">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="text-red-400 hover:text-red-600"><i
                                                     class="fas fa-times"></i></button>
                                         </form>
@@ -415,6 +421,7 @@
                         class="fas fa-times"></i></button>
             </div>
             <form action="/sites/<%= site.id %>/add-staff" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Select User</label>
                     <select name="userId"
@@ -451,6 +458,7 @@
                         class="fas fa-times"></i></button>
             </div>
             <form action="/shifts/create" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input type="hidden" name="siteId" value="<%= site.id %>">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Select Guard</label>
@@ -523,6 +531,7 @@
                         class="fas fa-times"></i></button>
             </div>
             <form id="zoneForm" action="/sites/<%= site.id %>/zones" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Zone Name</label>
                     <input name="name" id="zoneName" type="text" placeholder="e.g. Server Room, Perimeter A"
@@ -554,6 +563,7 @@
                     <h3 class="font-bold text-xl mb-4" id="cpModalTitle">Add Checkpoint</h3>
                 </div>
                 <form id="checkpointForm" action="/sites/<%= site.id %>/checkpoints" method="POST" class="space-y-3">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-gray-700 text-xs font-bold mb-1 uppercase">Name</label>

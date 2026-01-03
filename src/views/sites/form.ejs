@@ -22,6 +22,7 @@
             <% } %>
 
                 <form action="/sites<%= site && site.id ? '/' + site.id : '' %>" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
                             <div class="mb-4">

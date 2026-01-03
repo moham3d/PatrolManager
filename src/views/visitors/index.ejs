@@ -82,12 +82,14 @@
                             <td class="px-6 py-4 flex space-x-2">
                                 <% if(v.status==='expected' ) { %>
                                     <form action="/visitors/<%= v.id %>/check-in" method="POST">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button
                                             class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">Check
                                             In</button>
                                     </form>
                                     <% } else if(v.status==='checked_in' ) { %>
                                         <form action="/visitors/<%= v.id %>/check-out" method="POST">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button
                                                 class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs font-bold">Check
                                                 Out</button>
@@ -119,6 +121,7 @@
                 </button>
             </div>
             <form action="/visitors/register" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Visitor Name</label>
                     <input type="text" name="name"

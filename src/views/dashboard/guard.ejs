@@ -25,6 +25,7 @@
                 </p>
 
                 <form action="/shifts/clock-out" method="POST" class="mt-6" id="clockOutForm">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <input type="hidden" name="latitude" id="lat">
                     <input type="hidden" name="longitude" id="lng">
                     <button type="button" onclick="getLocationAndSubmit()"
@@ -67,6 +68,7 @@
 
                                 <% if (nextShift) { %>
                                     <form action="/shifts/clock-in" method="POST" class="mt-4" id="clockInForm">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <input type="hidden" name="siteId" value="<%= nextShift.siteId %>">
                                         <input type="hidden" name="latitude" id="inLat">
                                         <input type="hidden" name="longitude" id="inLng">
@@ -150,7 +152,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'CSRF-Token': '<%= csrfToken %>'
                         },
                         body: JSON.stringify({
                             location: { lat, lng }

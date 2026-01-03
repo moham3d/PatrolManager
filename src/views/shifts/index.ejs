@@ -83,6 +83,7 @@
                                 <% if (user.role==='manager' ) { %>
                                     <form action="/shifts/<%= shift.id %>/delete" method="POST"
                                         onsubmit="return confirm('Delete this shift?');">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
                                     </form>
                                     <% } %>
@@ -109,6 +110,7 @@
                     class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
             <form action="/shifts/create" method="POST" class="p-6 space-y-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
                     <label class="block text-gray-700 text-sm font-bold mb-2">Guard</label>
                     <select name="userId"

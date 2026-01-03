@@ -106,6 +106,7 @@
                             <!-- Guard Claim Action -->
                             <% if (!incident.assignee && ['guard'].includes(user.Role.name)) { %>
                                 <form action="/incidents/<%= incident.id %>/claim" method="POST" class="inline">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit"
                                         class="bg-blue-600 text-white hover:bg-blue-700 font-bold text-sm px-4 py-2 rounded shadow transition">
                                         Im on it (Claim)
@@ -185,6 +186,7 @@
                             class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
                     </div>
                     <form id="assignForm" method="POST" class="p-6">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <p class="mb-4 text-sm text-gray-600">Assign <span id="modalIncidentType"
                                 class="font-bold"></span> to:
                         </p>
@@ -227,6 +229,7 @@
                                                 class="fas fa-times"></i></button>
                                     </div>
                                     <form id="resolveForm" method="POST" enctype="multipart/form-data" class="p-6">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <!-- Hidden Type -->
                                         <input type="hidden" name="type" value="incident">
 

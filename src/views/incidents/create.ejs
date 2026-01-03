@@ -6,6 +6,7 @@
         </h1>
 
         <form action="/incidents" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Issue Type</label>
                 <input name="type" type="text" placeholder="e.g. Broken Lighting, Water Leak"

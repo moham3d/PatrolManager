@@ -157,6 +157,7 @@
                                             <% if (user.Role.name==='guard' ) { %>
                                                 <form action="/incidents/<%= incident.id %>/claim" method="POST"
                                                     class="mt-2">
+                                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                     <button
                                                         class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 w-full">I'll
                                                         Handle It (Claim)</button>
@@ -197,6 +198,7 @@
                     class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
             <form id="assignForm" method="POST" class="p-6">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <p class="mb-4 text-sm text-gray-600">Assign <span id="modalIncidentType" class="font-bold"></span> to:
                 </p>
                 <div class="mb-4">
@@ -230,6 +232,7 @@
                     class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
             </div>
             <form id="resolveForm" method="POST" enctype="multipart/form-data" class="p-6">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <input type="hidden" name="type" value="incident">
                 <p class="mb-4 text-sm text-gray-600">Mark as <strong>Resolved</strong>.</p>
                 <div class="mb-4">

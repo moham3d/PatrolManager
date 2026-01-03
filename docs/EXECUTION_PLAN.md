@@ -173,13 +173,21 @@
 
 **Dependencies**: None  
 **Estimated Time**: 6 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Installed `csurf` and created `src/middleware/csrf.js`.
+- Updated `server.js` to use the CSRF middleware and exclude API routes.
+- Updated all forms in the `.ejs` files to include the CSRF token.
+- Noted that `csurf` is deprecated.
 
 **Verification**:
-- [ ] CSRF tokens generated correctly
-- [ ] All web forms include token
-- [ ] API routes exempted
-- [ ] Invalid tokens rejected
+- [x] CSRF tokens generated correctly
+- [x] All web forms include token
+- [x] API routes exempted
+- [x] Invalid tokens rejected
 
 ---
 

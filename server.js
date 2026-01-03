@@ -55,17 +55,27 @@ app.use(session({
 // Flash Messages
 app.use(flash());
 
-// Make user and flash messages available in all views
-// Passport Setup
+// Make user and flash available in all views
 app.use(passport.initialize());
 app.use(passport.session());
 require('./src/config/passport')(passport);
 
-// Make user and flash available in all views
+const csrfProtection = require('./src/middleware/csrf');
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) {
+        return next();
+    }
+    csrfProtection(req, res, next);
+});
+
+// Make user, flash and csrf token available in all views
 app.use((req, res, next) => {
     res.locals.user = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
+    if (req.csrfToken) {
+        res.locals.csrfToken = req.csrfToken();
+    }
     next();
 });
 
