@@ -26,6 +26,14 @@ module.exports = (sequelize, DataTypes) => {
         lng: {
             type: DataTypes.FLOAT,
             allowNull: true
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        zoneId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     });
 

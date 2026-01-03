@@ -25,6 +25,22 @@ module.exports = (sequelize, DataTypes) => {
         notes: {
             type: DataTypes.TEXT,
             allowNull: true
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        guardId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        templateId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        shiftId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     });
 

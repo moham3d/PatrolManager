@@ -20,6 +20,14 @@ module.exports = (sequelize, DataTypes) => {
         lng: {
             type: DataTypes.FLOAT,
             allowNull: true
+        },
+        guardId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        patrolRunId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     });
 

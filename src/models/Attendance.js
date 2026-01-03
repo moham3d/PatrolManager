@@ -24,6 +24,18 @@ module.exports = (sequelize, DataTypes) => {
         method: {
             type: DataTypes.STRING, // gps, bio, manual
             defaultValue: 'gps'
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        shiftId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     });
 

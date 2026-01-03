@@ -18,6 +18,14 @@ module.exports = (sequelize, DataTypes) => {
         status: {
             type: DataTypes.ENUM('valid', 'invalid', 'manual_override'),
             defaultValue: 'valid'
+        },
+        patrolRunId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        checkpointId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
         }
     });
 

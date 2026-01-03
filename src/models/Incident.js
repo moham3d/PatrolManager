@@ -46,6 +46,14 @@ module.exports = (sequelize, DataTypes) => {
         zoneId: {
             type: DataTypes.INTEGER,
             allowNull: true
+        },
+        reporterId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
         }
     });
 

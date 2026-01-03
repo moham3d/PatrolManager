@@ -24,6 +24,14 @@ module.exports = (sequelize, DataTypes) => {
         endLocation: {
             type: DataTypes.JSON, // Stores { lat, lng }
             allowNull: true
+        },
+        userId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
         }
     });
 

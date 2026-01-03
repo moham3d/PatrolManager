@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
         estimatedDurationMinutes: {
             type: DataTypes.INTEGER,
             defaultValue: 30
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
         }
     });
 

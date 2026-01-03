@@ -40,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
         status: {
             type: DataTypes.ENUM('expected', 'checked_in', 'checked_out', 'cancelled', 'banned'),
             defaultValue: 'expected'
+        },
+        siteId: {
+            type: DataTypes.INTEGER,
+            allowNull: false
         }
     });
 
