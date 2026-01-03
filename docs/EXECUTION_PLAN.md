@@ -181,6 +181,7 @@
 - Installed `csurf` and created `src/middleware/csrf.js`.
 - Updated `server.js` to use the CSRF middleware and exclude API routes.
 - Updated all forms in the `.ejs` files to include the CSRF token.
+- Fixed 'misconfigured csrf' error by disabling the `cookie` option in `csurf` to use the existing `express-session` instead of requiring `cookie-parser`.
 - Noted that `csurf` is deprecated.
 
 **Verification**:

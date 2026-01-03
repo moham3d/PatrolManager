@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const reportController = require('../controllers/reportController');
-const { ensureAuth } = require('../middleware/auth');
+const { ensureAuth, ensureRole } = require('../middleware/auth');
 const { apiRateLimit } = require('../middleware/rateLimiter');
 
 const { cacheMiddleware } = require('../config/cache');

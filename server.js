@@ -15,6 +15,7 @@ require('dotenv').config();
 const db = require('./src/config/database');
 const socketHandler = require('./src/sockets/socketHandler');
 const { requestLoggerMiddleware } = require('./src/config/logger');
+const { generalRateLimit } = require('./src/middleware/rateLimiter');
 
 // Initialize Server
 const server = http.createServer(app);
