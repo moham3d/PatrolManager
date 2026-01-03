@@ -17,7 +17,8 @@ router.get('/', ensureAuth, (req, res) => {
 
 
 // Auth Routes
-router.use('/', require('./auth'));
+const { authRateLimit } = require('../middleware/rateLimiter');
+router.use('/', authRateLimit, require('./auth'));
 
 // Protected Routes (handled by ensureAuth inside them, or apply middleware here if preferred)
 router.use('/sites', require('./sites'));

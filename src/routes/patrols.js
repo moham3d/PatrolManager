@@ -2,14 +2,15 @@ const express = require('express');
 const router = express.Router();
 const patrolController = require('../controllers/patrolController');
 const { ensureAuth } = require('../middleware/auth');
+const { apiRateLimit } = require('../middleware/rateLimiter');
 
 // Mobile API
 // Note: ensureAuth handles JWT for these too
-router.get('/my-schedule', ensureAuth, patrolController.myPatrols);
-router.post('/start', ensureAuth, patrolController.startPatrol);
-router.post('/scan', ensureAuth, patrolController.scanCheckpoint);
-router.post('/end', ensureAuth, patrolController.endPatrol);
-router.post('/heartbeat', ensureAuth, patrolController.heartbeat);
+router.get('/my-schedule', apiRateLimit, ensureAuth, patrolController.myPatrols);
+router.post('/start', apiRateLimit, ensureAuth, patrolController.startPatrol);
+router.post('/scan', apiRateLimit, ensureAuth, patrolController.scanCheckpoint);
+router.post('/end', apiRateLimit, ensureAuth, patrolController.endPatrol);
+router.post('/heartbeat', apiRateLimit, ensureAuth, patrolController.heartbeat);
 
 // Web Interface
 router.get('/', ensureAuth, patrolController.index);

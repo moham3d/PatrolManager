@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const siteController = require('../controllers/siteController');
 const { ensureAuth, ensureRole } = require('../middleware/auth');
+const { apiRateLimit } = require('../middleware/rateLimiter');
+
+router.use(apiRateLimit);
 
 router.get('/', ensureAuth, siteController.index);
 router.get('/:id', ensureAuth, siteController.show);

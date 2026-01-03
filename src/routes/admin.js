@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const { ensureAuth, ensureAdmin } = require('../middleware/auth');
+const { apiRateLimit } = require('../middleware/rateLimiter');
+
+router.use(apiRateLimit);
 
 // Middleware to check if admin (assuming ensureAdmin exists, or we check role)
 // For now, let's just use ensureAuth and verify role in controller or assume ensureAuth does it?

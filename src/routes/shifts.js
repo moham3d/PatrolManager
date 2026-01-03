@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const shiftController = require('../controllers/shiftController');
 const { ensureAuth, ensureRole } = require('../middleware/auth');
+const { apiRateLimit } = require('../middleware/rateLimiter');
+
+router.use(apiRateLimit);
 
 router.get('/', ensureAuth, shiftController.index);
 router.post('/clock-in', ensureAuth, shiftController.clockIn);

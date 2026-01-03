@@ -3,6 +3,9 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { ensureAuth } = require('../middleware/auth');
 const { hasPermission } = require('../middleware/rbac');
+const { apiRateLimit } = require('../middleware/rateLimiter');
+
+router.use(apiRateLimit);
 
 // Apply auth middleware to all user routes
 router.use(ensureAuth);

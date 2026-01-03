@@ -15,9 +15,14 @@ require('dotenv').config();
 const db = require('./src/config/database');
 const socketHandler = require('./src/sockets/socketHandler');
 
+const { generalRateLimit, authRateLimit, apiRateLimit, panicRateLimit } = require('./src/middleware/rateLimiter');
+
 // Initialize Server
 const server = http.createServer(app);
 const io = socketHandler.init(server);
+
+// Apply general rate limiting to all requests
+app.use(generalRateLimit);
 
 // Middleware
 app.use(morgan('dev'));
