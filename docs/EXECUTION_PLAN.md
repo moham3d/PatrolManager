@@ -256,12 +256,18 @@
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `src/config/passport.js` to track failed login attempts in-memory.
+- The account is locked for 15 minutes after 5 failed attempts.
 
 **Verification**:
-- [ ] Failed attempts tracked
-- [ ] Account locks after 5 attempts
-- [ ] Unlock timer works
+- [x] Failed attempts tracked
+- [x] Account locks after 5 attempts
+- [x] Unlock timer works
 - [ ] Admin can manually unlock
 
 ---
