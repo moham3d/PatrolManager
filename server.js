@@ -24,6 +24,9 @@ const io = socketHandler.init(server);
 // Apply general rate limiting to all requests
 app.use(generalRateLimit);
 
+// Helmet Security Headers
+app.use(require('./src/middleware/helmet'));
+
 // Middleware
 app.use(morgan('dev'));
 app.use(require('./src/config/cors'));
