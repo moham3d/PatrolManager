@@ -94,9 +94,58 @@ app.use('/', require('./src/routes'));
 app.use('/reports', require('./src/routes/reports'));
 app.use('/schedules', require('./src/routes/schedules'));
 
+const { ValidationError, NotFoundError, AuthorizationError, BusinessLogicError } = require('./src/utils/errors');
+
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('Error:', err);
+
+    // Handle known error types
+    if (err instanceof ValidationError) {
+        return res.status(400).json({
+            success: false,
+            message: 'Validation failed',
+            errors: err.errors
+        });
+    }
+
+    if (err instanceof NotFoundError) {
+        return res.status(404).json({
+            success: false,
+            message: err.message
+        });
+    }
+
+    if (err instanceof AuthorizationError) {
+        return res.status(403).json({
+            success: false,
+            message: err.message
+        });
+    }
+
+    if (err instanceof BusinessLogicError) {
+        return res.status(409).json({
+            success: false,
+            message: err.message
+        });
+    }
+
+    // Handle Sequelize validation errors
+    if (err.name === 'SequelizeValidationError') {
+        return res.status(400).json({
+            success: false,
+            message: 'Database validation failed',
+            errors: err.errors
+        });
+    }
+
+    // Handle Sequelize unique constraint errors
+    if (err.name === 'SequelizeUniqueConstraintError') {
+        return res.status(409).json({
+            success: false,
+            message: 'Resource already exists'
+        });
+    }
 
     res.format({
         'text/html': function () {
@@ -109,7 +158,9 @@ app.use((err, req, res, next) => {
         'application/json': function () {
             res.status(err.status || 500).json({
                 error: true,
-                message: err.message
+                message: process.env.NODE_ENV === 'production'
+                    ? 'Internal server error'
+                    : err.message
             });
         }
     });

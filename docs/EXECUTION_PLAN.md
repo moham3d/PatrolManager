@@ -754,7 +754,7 @@ Add validation to all controller methods:
 
 ---
 
-### 🟡 Task 6.2: Implement Global Error Handler [HIGH]
+### 🔴 Task 6.2: Implement Global Error Handler [HIGH]
 **Agent**: Backend Engineer  
 **File**: `server.js`  
 **Description**:
@@ -764,13 +764,19 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 6.1  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated the global error handler in `server.js` to handle custom error types (`ValidationError`, `NotFoundError`, `AuthorizationError`, `BusinessLogicError`) and Sequelize errors.
+- Improved error logging and response format for both HTML and JSON.
 
 **Verification**:
-- [ ] All error types caught
-- [ ] Appropriate HTTP status codes
+- [x] All error types caught
+- [x] Appropriate HTTP status codes
 - [ ] Request IDs tracked
-- [ ] Errors logged properly
+- [x] Errors logged properly
 
 ---
 
