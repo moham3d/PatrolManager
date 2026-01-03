@@ -1037,13 +1037,20 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 7.1  
 **Estimated Time**: 3 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added a "Personnel Status" section to the supervisor dashboard in `src/views/dashboard/supervisor.ejs`.
+- Implemented real-time online/offline status indicators (green/gray dots) for guards using Socket.IO.
+- Handled initial status synchronization using the `request_active_users` event.
 
 **Verification**:
-- [ ] Status indicators visible
-- [ ] Colors update correctly
-- [ ] Socket events received
-- [ ] Real-time updates working
+- [x] Status indicators visible
+- [x] Colors update correctly
+- [x] Socket events received
+- [x] Real-time updates working
 
 ---
 
