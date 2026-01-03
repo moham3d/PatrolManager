@@ -1373,13 +1373,21 @@ Add validation to all controller methods:
 
 **Dependencies**: None  
 **Estimated Time**: 4 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Added `androidx.security:security-crypto` dependency to `android/app/build.gradle`.
+- Created `com.patrolshield.common.SecurePreferences.kt` using `EncryptedSharedPreferences` for secure token storage.
+- Updated `AuthRepositoryImpl.kt` to save the JWT token securely upon login.
+- Updated `AuthInterceptor.kt` to retrieve the Bearer token from `SecurePreferences` for all API calls.
 
 **Verification**:
-- [ ] Tokens encrypted
-- [ ] Data secure
-- [ ] Reading works
-- [ ] Writing works
+- [x] Tokens encrypted
+- [x] Data secure
+- [x] Reading works
+- [x] Writing works
 
 ---
 

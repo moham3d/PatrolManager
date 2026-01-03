@@ -12,9 +12,22 @@ import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 
+import com.patrolshield.common.SecurePreferences
+import com.patrolshield.data.local.dao.UserDao
+import com.patrolshield.data.local.entities.UserEntity
+import com.patrolshield.data.remote.ApiService
+import com.patrolshield.data.remote.dto.LoginRequest
+import com.patrolshield.domain.repository.AuthRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import retrofit2.HttpException
+import java.io.IOException
+import javax.inject.Inject
+
 class AuthRepositoryImpl @Inject constructor(
     private val api: ApiService,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val securePrefs: SecurePreferences
 ) : AuthRepository {
 
     override suspend fun login(email: String, password: String): Flow<Resource<UserEntity>> = flow {
@@ -24,8 +37,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
                 
-                // Save Token
-                // TODO: use EncryptedSharedPreferences
+                // Save Token Securely
+                securePrefs.saveToken(loginResponse.token)
                 
                 // Save User
                 val userDto = loginResponse.user
@@ -39,7 +52,7 @@ class AuthRepositoryImpl @Inject constructor(
                             3 -> "supervisor" // Fallback based on seeder order
                             else -> "guard"
                         }, 
-                        token = loginResponse.token,
+                        token = loginResponse.token, // Keep in Room for legacy compatibility if needed
                         activeShiftId = loginResponse.activeShift?.id
                     )
                     userDao.insertUser(user)
@@ -60,6 +73,7 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
+        securePrefs.clear()
         userDao.clearUser()
     }
 }
