@@ -36,7 +36,12 @@ module.exports = {
     // Check for specific roles
     ensureRole: (roles) => {
         return (req, res, next) => {
-            if (!req.user) return res.redirect('/login');
+            if (!req.user) {
+                if (req.xhr || req.headers.accept?.includes('json') || req.path.startsWith('/api')) {
+                    return res.status(401).json({ error: true, message: 'Authentication required' });
+                }
+                return res.redirect('/login');
+            }
 
             // Allow single role string or array
             const allowedRoles = Array.isArray(roles) ? roles.map(r => r.toLowerCase()) : [roles.toLowerCase()];
@@ -56,7 +61,12 @@ module.exports = {
 
     ensureAdmin: () => {
         return (req, res, next) => {
-            if (!req.user) return res.redirect('/login');
+            if (!req.user) {
+                if (req.xhr || req.headers.accept?.includes('json') || req.path.startsWith('/api')) {
+                    return res.status(401).json({ error: true, message: 'Authentication required' });
+                }
+                return res.redirect('/login');
+            }
 
             if (req.user.Role && req.user.Role.name.toLowerCase() === 'admin') {
                 return next();
