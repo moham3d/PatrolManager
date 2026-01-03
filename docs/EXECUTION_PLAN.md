@@ -203,13 +203,19 @@
 
 **Dependencies**: None  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Updated `server.js` to set `secure`, `httpOnly`, and `sameSite` properties for session cookies.
+- Updated `src/routes/auth.js` to regenerate the session after a successful login.
 
 **Verification**:
-- [ ] Cookies marked as secure
-- [ ] Cookies marked as httpOnly
-- [ ] SameSite attribute set
-- [ ] Session regenerated on login
+- [x] Cookies marked as secure
+- [x] Cookies marked as httpOnly
+- [x] SameSite attribute set
+- [x] Session regenerated on login
 
 ---
 

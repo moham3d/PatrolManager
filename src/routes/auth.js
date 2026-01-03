@@ -27,28 +27,32 @@ router.post('/login', (req, res, next) => {
         req.logIn(user, (err) => {
             if (err) return next(err);
 
-            // If requesting JSON (Mobile), return JWT
-            // Note: Our test runner sends Accept: application/json
-            // But we also want to support browser form submit (which wants redirect)
+            req.session.regenerate((err) => {
+                if (err) return next(err);
 
-            // Mobile/API always wants JSON
-            if (req.xhr || req.headers.accept?.includes('json')) {
-                const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
+                // If requesting JSON (Mobile), return JWT
+                // Note: Our test runner sends Accept: application/json
+                // But we also want to support browser form submit (which wants redirect)
 
-                // Fetch Active Shift
-                Shift.findOne({
-                    where: { userId: user.id, status: 'active' }
-                }).then(activeShift => {
-                    return res.json({ message: 'Logged in', token, user, activeShift });
-                }).catch(err => {
-                    console.error('Error fetching active shift', err);
-                    return res.json({ message: 'Logged in', token, user, activeShift: null });
-                });
-                return;
-            }
+                // Mobile/API always wants JSON
+                if (req.xhr || req.headers.accept?.includes('json')) {
+                    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });
 
-            // Browser
-            res.redirect('/dashboard');
+                    // Fetch Active Shift
+                    Shift.findOne({
+                        where: { userId: user.id, status: 'active' }
+                    }).then(activeShift => {
+                        return res.json({ message: 'Logged in', token, user, activeShift });
+                    }).catch(err => {
+                        console.error('Error fetching active shift', err);
+                        return res.json({ message: 'Logged in', token, user, activeShift: null });
+                    });
+                    return;
+                }
+
+                // Browser
+                res.redirect('/dashboard');
+            });
         });
     })(req, res, next);
 });
