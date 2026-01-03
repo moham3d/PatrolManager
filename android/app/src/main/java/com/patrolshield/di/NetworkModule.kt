@@ -33,27 +33,6 @@ object NetworkModule {
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
             .addInterceptor { chain ->
-                val request = chain.request()
-                try {
-                    chain.proceed(request)
-                } catch (e: Exception) {
-                    // Fallback to local development server if primary is unavailable (Debug only)
-                    if (com.patrolshield.BuildConfig.DEBUG && (e is java.io.IOException)) {
-                        val newUrl = request.url.newBuilder()
-                            .scheme("http")
-                            .host("192.168.1.41")
-                            .port(3000)
-                            .build()
-                        val newRequest = request.newBuilder()
-                            .url(newUrl)
-                            .build()
-                        chain.proceed(newRequest)
-                    } else {
-                        throw e
-                    }
-                }
-            }
-            .addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("Accept", "application/json")
                     .build()
