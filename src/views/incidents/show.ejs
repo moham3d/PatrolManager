@@ -103,6 +103,61 @@
                         </div>
                     </div>
                 <% } %>
+
+                <!-- Incident Timeline -->
+                <!-- ... -->
+
+                <!-- Comment Thread -->
+                <div class="bg-white rounded-lg shadow p-6 mt-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Discussion</h2>
+                    
+                    <div class="space-y-6 mb-8">
+                        <% if(incident.comments && incident.comments.length > 0) { %>
+                            <% incident.comments.forEach(comment => { %>
+                                <div class="flex space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold">
+                                            <%= comment.user ? comment.user.name.charAt(0) : '?' %>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 bg-gray-50 rounded-lg px-4 py-3 border border-gray-100 relative">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <h3 class="text-sm font-bold text-gray-900"><%= comment.user ? comment.user.name : 'Unknown' %></h3>
+                                            <p class="text-xs text-gray-400"><%= new Date(comment.createdAt).toLocaleString() %></p>
+                                        </div>
+                                        <p class="text-sm text-gray-700 whitespace-pre-line"><%= comment.comment %></p>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <p class="text-center text-gray-400 text-sm italic py-4">No comments yet. Start the conversation!</p>
+                        <% } %>
+                    </div>
+
+                    <!-- Add Comment Form -->
+                    <form action="/incidents/<%= incident.id %>/comments" method="POST" class="mt-6 border-t pt-6">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                                    <%= user.name.charAt(0) %>
+                                </div>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="border-b border-gray-200 focus-within:border-blue-600 transition">
+                                    <textarea rows="3" name="comment" id="comment" required
+                                              class="block w-full border-0 border-b border-transparent p-0 pb-2 focus:ring-0 text-sm placeholder:text-gray-400" 
+                                              placeholder="Add a comment..."></textarea>
+                                </div>
+                                <div class="flex justify-end pt-2">
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent text-sm font-bold rounded-md shadow-sm text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                        Post Comment
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- Sidebar Details -->

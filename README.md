@@ -33,39 +33,35 @@ PatrolShield serves three primary distinct user roles:
 
 ## 🛠️ Technology Stack
 
--   **Backend**: Python (FastAPI), PostgreSQL, SQLAlchemy.
--   **Frontend (Web)**: React, Vite, TailwindCSS.
--   **Mobile**: React PWA (Progressive Web App) with offline capabilities (Service Workers, IndexedDB).
--   **Infrastructure**: Docker, Kubernetes ready.
-
-## 📚 Documentation Index
-
--   **[Product Overview](docs/PRODUCT_OVERVIEW.md)**: Detailed breakdown of workflows and capabilities.
--   **[User Guide](docs/USER_GUIDE.md)**: Manual for Managers, Supervisors, and Guards.
--   **[Developer Guide](docs/DEVELOPER_GUIDE.md)**: Setup, architecture, and contribution guidelines.
--   **[Architecture](docs/ARCHITECTURE.md)**: System design, data flow, and security details.
--   **[API Documentation](docs/)**: Detailed API specifications.
+-   **Backend**: Node.js (v20+), Express.js (v5), Sequelize ORM.
+-   **Frontend (Web)**: EJS (Server-side rendering), TailwindCSS, Leaflet.js, Chart.js.
+-   **Mobile**: Native Android (Kotlin, Jetpack Compose, CameraX, Room).
+-   **Database**: SQLite (Dev), PostgreSQL (Prod).
+-   **Real-time**: Socket.IO.
 
 ## ⚡ Quick Start
-
-### Prerequisites
--   Docker & Docker Compose
 
 ### Development Environment
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/your-org/PatrolShield.git
-    cd PatrolShield
+    git clone https://github.com/your-org/PatrolManager.git
+    cd PatrolManager
     ```
 
-2.  **Start Services**
+2.  **Install Dependencies**
     ```bash
-    docker-compose up -d
+    npm install
     ```
 
-3.  **Access Interfaces**
-    -   **Web App**: [http://localhost:3000](http://localhost:3000)
-    -   **API Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
+3.  **Start the Server**
+    ```bash
+    npm run dev
+    ```
 
-For detailed development instructions, see the [Developer Guide](docs/DEVELOPER_GUIDE.md).
+4.  **Access Web Dashboard**
+    -   [http://localhost:3000](http://localhost:3000)
+
+### Android App
+1. Open the `android/` directory in Android Studio.
+2. Build and run on an emulator or physical device.

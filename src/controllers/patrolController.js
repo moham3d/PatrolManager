@@ -185,6 +185,35 @@ exports.update = async (req, res) => {
     }
 };
 
+exports.showRun = async (req, res) => {
+    try {
+        const run = await PatrolRun.findByPk(req.params.id, {
+            include: [
+                { model: PatrolTemplate, as: 'template' },
+                { model: User, as: 'guard' },
+                { model: Site, as: 'site' },
+                { model: CheckpointVisit, as: 'visits', include: [Checkpoint] }
+            ]
+        });
+
+        if (!run) return res.status(404).send('Patrol Run not found');
+
+        const gpsLogs = await require('../models').GPSLog.findAll({
+            where: { patrolRunId: run.id },
+            order: [['timestamp', 'ASC']]
+        });
+
+        res.render('patrols/run_details', { 
+            title: `Patrol Run #${run.id}`, 
+            run, 
+            gpsLogs 
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
 // --- Mobile API: Officer Operations ---
 
 // GET /patrols/my-today (For officer to see assigned patrols - simplified)

@@ -1,9 +1,17 @@
 module.exports = (sequelize, DataTypes) => {
-    const GPSLog = sequelize.define('GPSLog', {
+    const IncidentComment = sequelize.define('IncidentComment', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
+        },
+        incidentId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: {
+                model: 'Incidents',
+                key: 'id'
+            }
         },
         userId: {
             type: DataTypes.INTEGER,
@@ -13,29 +21,9 @@ module.exports = (sequelize, DataTypes) => {
                 key: 'id'
             }
         },
-        lat: {
-            type: DataTypes.FLOAT,
+        comment: {
+            type: DataTypes.TEXT,
             allowNull: false
-        },
-        lng: {
-            type: DataTypes.FLOAT,
-            allowNull: false
-        },
-        accuracy: {
-            type: DataTypes.FLOAT,
-            allowNull: true
-        },
-        patrolRunId: {
-            type: DataTypes.INTEGER,
-            allowNull: true,
-            references: {
-                model: 'PatrolRuns',
-                key: 'id'
-            }
-        },
-        timestamp: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW
         },
         createdBy: {
             type: DataTypes.INTEGER,
@@ -51,9 +39,10 @@ module.exports = (sequelize, DataTypes) => {
         }
     });
 
-    GPSLog.associate = (models) => {
-        GPSLog.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+    IncidentComment.associate = (models) => {
+        IncidentComment.belongsTo(models.Incident, { foreignKey: 'incidentId', as: 'incident' });
+        IncidentComment.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     };
 
-    return GPSLog;
+    return IncidentComment;
 };

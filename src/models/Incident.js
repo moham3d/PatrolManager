@@ -75,6 +75,7 @@ module.exports = (sequelize, DataTypes) => {
         Incident.belongsTo(models.Site, { foreignKey: 'siteId' });
         Incident.belongsTo(models.Zone, { foreignKey: 'zoneId' });
         Incident.hasMany(models.IncidentEvidence, { foreignKey: 'incidentId', as: 'evidence' });
+        Incident.hasMany(models.IncidentComment, { foreignKey: 'incidentId', as: 'comments' });
     };
 
     return Incident;

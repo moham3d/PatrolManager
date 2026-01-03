@@ -47,9 +47,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination = startDestination) {
-                        composable("login") {
+                    androidx.compose.foundation.layout.Column {
+                        com.patrolshield.presentation.common.OfflineIndicator()
+                        val navController = rememberNavController()
+                        NavHost(navController = navController, startDestination = startDestination, modifier = Modifier.weight(1f)) {
+                            composable("login") {
                             LoginScreen(
                                 onNavigateToDashboard = { role ->
                                     val dest = when (role.lowercase()) {

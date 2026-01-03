@@ -30,6 +30,7 @@ router.post('/:id/claim', ensureAuth, ensureRole(['guard', 'manager', 'superviso
     param('id').isInt()
 ], validateRequest, incidentController.claim);
 router.post('/:id/assign', ensureAuth, ensureRole(['manager', 'supervisor']), incidentController.assign);
+router.post('/:id/comments', ensureAuth, incidentController.addComment);
 router.patch('/:id/status', ensureAuth, ensureRole(['manager', 'supervisor', 'admin']), [
     param('id').isInt(),
     body('status').isIn(['new', 'investigating', 'resolved', 'closed'])

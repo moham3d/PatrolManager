@@ -97,11 +97,11 @@ fun ProfileScreen(
                         Text("Patrols", style = MaterialTheme.typography.bodyMedium)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("0", style = MaterialTheme.typography.headlineLarge) // Placeholder for Distance
+                        Text(String.format("%.1f", state.distanceWalkedKm), style = MaterialTheme.typography.headlineLarge)
                         Text("Km Walked", style = MaterialTheme.typography.bodyMedium)
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("0", style = MaterialTheme.typography.headlineLarge) // Placeholder for Incidents
+                        Text("${state.incidentCount}", style = MaterialTheme.typography.headlineLarge)
                         Text("Incidents", style = MaterialTheme.typography.bodyMedium)
                     }
                 }

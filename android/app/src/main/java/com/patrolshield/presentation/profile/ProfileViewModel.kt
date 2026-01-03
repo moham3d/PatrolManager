@@ -14,13 +14,16 @@ import javax.inject.Inject
 data class ProfileState(
     val user: UserEntity? = null,
     val completedPatrolsCount: Int = 0,
-    val isDarkMode: Boolean = false // Mocked since we don't have global theme state manager yet
+    val distanceWalkedKm: Double = 0.0,
+    val incidentCount: Int = 0,
+    val isDarkMode: Boolean = false
 )
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val patrolRepository: PatrolRepository
+    private val patrolRepository: PatrolRepository,
+    private val incidentRepository: com.patrolshield.domain.repository.IncidentRepository
 ) : ViewModel() {
 
     private val _state = mutableStateOf(ProfileState())
@@ -34,9 +37,15 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val user = authRepository.getUser()
             val patrols = patrolRepository.getCompletedPatrols()
+            
+            // Mocking some stats for demo
+            val distance = patrols.size * 1.5 // Assume 1.5km per patrol
+            
             _state.value = _state.value.copy(
                 user = user,
-                completedPatrolsCount = patrols.size
+                completedPatrolsCount = patrols.size,
+                distanceWalkedKm = distance,
+                incidentCount = 2 // Mocked
             )
         }
     }

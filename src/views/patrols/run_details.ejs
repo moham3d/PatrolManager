@@ -1,0 +1,121 @@
+<%- include('../partials/header') %>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">Patrol Run #<%= run.id %></h1>
+                <p class="text-gray-600">Officer: <strong><%= run.guard.name %></strong> • Site: <strong><%= run.site.name %></strong></p>
+            </div>
+            <div class="text-right">
+                <span class="px-3 py-1 rounded-full font-bold uppercase <%= run.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                    <%= run.status %>
+                </span>
+                <p class="text-xs text-gray-400 mt-1"><%= new Date(run.startTime).toLocaleString() %></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Replay Map -->
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border">
+                    <div class="bg-gray-50 px-6 py-3 border-b flex justify-between items-center">
+                        <h3 class="font-bold text-gray-700 uppercase text-xs tracking-wider">Historical Replay</h3>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="replaySlider" min="0" max="<%= gpsLogs.length - 1 %>" value="0" class="w-48 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <button id="playBtn" class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
+                                <i class="fas fa-play text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="replayMap" style="height: 500px;"></div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Visit Log -->
+                <div class="bg-white rounded-xl shadow-lg border overflow-hidden">
+                    <div class="bg-gray-50 px-6 py-4 border-b">
+                        <h3 class="font-bold text-gray-700">Checkpoints Log</h3>
+                    </div>
+                    <div class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                        <% run.visits.forEach((v, index) => { %>
+                            <div class="p-4 hover:bg-gray-50 transition flex items-start gap-3">
+                                <div class="bg-green-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5">
+                                    <%= index + 1 %>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800"><%= v.Checkpoint ? v.Checkpoint.name : 'Unknown' %></p>
+                                    <p class="text-xs text-gray-500"><%= new Date(v.scannedAt).toLocaleTimeString() %></p>
+                                </div>
+                            </div>
+                        <% }) %>
+                        <% if(run.visits.length === 0) { %>
+                            <div class="p-8 text-center text-gray-400 italic">No checkpoints scanned during this run.</div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gpsLogs = <%- JSON.stringify(gpsLogs) %>;
+            if (gpsLogs.length === 0) return;
+
+            const map = L.map('replayMap').setView([gpsLogs[0].lat, gpsLogs[0].lng], 16);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+            const path = gpsLogs.map(log => [log.lat, log.lng]);
+            const polyline = L.polyline([], { color: '#3b82f6', weight: 4 }).addTo(map);
+            const marker = L.marker([gpsLogs[0].lat, gpsLogs[0].lng]).addTo(map);
+            marker.bindPopup("Starting position");
+
+            map.fitBounds(L.polyline(path).getBounds(), { padding: [50, 50] });
+
+            const slider = document.getElementById('replaySlider');
+            const playBtn = document.getElementById('playBtn');
+            let currentIndex = 0;
+            let isPlaying = false;
+            let playInterval;
+
+            function updatePosition(index) {
+                const current = gpsLogs[index];
+                const currentPath = path.slice(0, index + 1);
+                polyline.setLatLngs(currentPath);
+                marker.setLatLng([current.lat, current.lng]);
+                marker.setPopupContent(`Time: ${new Date(current.timestamp).toLocaleTimeString()}`);
+                slider.value = index;
+            }
+
+            slider.addEventListener('input', (e) => {
+                currentIndex = parseInt(e.target.value);
+                updatePosition(currentIndex);
+            });
+
+            playBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    clearInterval(playInterval);
+                    playBtn.innerHTML = '<i class="fas fa-play text-xs"></i>';
+                } else {
+                    playInterval = setInterval(() => {
+                        if (currentIndex < gpsLogs.length - 1) {
+                            currentIndex++;
+                            updatePosition(currentIndex);
+                        } else {
+                            clearInterval(playInterval);
+                            isPlaying = false;
+                            playBtn.innerHTML = '<i class="fas fa-play text-xs"></i>';
+                        }
+                    }, 200);
+                    playBtn.innerHTML = '<i class="fas fa-pause text-xs"></i>';
+                }
+                isPlaying = !isPlaying;
+            });
+        });
+    </script>
+
+    <%- include('../partials/footer') %>

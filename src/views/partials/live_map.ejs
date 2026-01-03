@@ -6,6 +6,16 @@
 <div class="bg-white rounded-lg shadow overflow-hidden relative" style="height: 500px;">
     <div id="command-map" class="h-full w-full z-0"></div>
 
+    <!-- Floating Map Controls -->
+    <div class="absolute top-4 left-4 z-[400] bg-white px-2 py-2 rounded shadow flex flex-col gap-2">
+        <button onclick="toggleLayer('markers')" id="btn-markers" class="p-2 rounded hover:bg-gray-100 transition bg-blue-50 text-blue-600" title="Toggle Markers">
+            <i class="fas fa-map-marker-alt"></i>
+        </button>
+        <button onclick="toggleLayer('heatmap')" id="btn-heatmap" class="p-2 rounded hover:bg-gray-100 transition text-gray-600" title="Toggle Heatmap">
+            <i class="fas fa-fire"></i>
+        </button>
+    </div>
+
     <!-- Floating Status Pill -->
     <div class="absolute top-4 right-4 z-[400] bg-white px-3 py-1 rounded-full shadow flex items-center gap-2">
         <span class="relative flex h-3 w-3">
@@ -22,6 +32,7 @@
 
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
@@ -30,13 +41,31 @@
         const map = L.map('command-map').setView([30.0444, 31.2357], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        const clusterGroup = L.markerClusterGroup();
-        map.addLayer(clusterGroup);
-
+        const clusterGroup = L.markerClusterGroup().addTo(map);
+        const heatmapLayer = L.heatLayer([], { radius: 25, blur: 15 });
+        
         const markers = {}; // Store markers by ID "type_id"
         const userMarkers = {}; // Store markers by userId
         const sitePolygons = {};
         const patrols = {}; // Store patrol data by runId
+        const incidentPoints = []; // For heatmap
+
+        window.toggleLayer = function(type) {
+            const btnM = document.getElementById('btn-markers');
+            const btnH = document.getElementById('btn-heatmap');
+
+            if (type === 'heatmap') {
+                map.removeLayer(clusterGroup);
+                map.addLayer(heatmapLayer);
+                btnH.classList.add('bg-blue-50', 'text-blue-600');
+                btnM.classList.remove('bg-blue-50', 'text-blue-600');
+            } else {
+                map.removeLayer(heatmapLayer);
+                map.addLayer(clusterGroup);
+                btnM.classList.add('bg-blue-50', 'text-blue-600');
+                btnH.classList.remove('bg-blue-50', 'text-blue-600');
+            }
+        };
 
         // --- Icons ---
         const getIncidentIcon = (priority) => {
@@ -99,6 +128,14 @@
                 alertSound.play().catch(e => console.log("Audio blocked", e));
             } else {
                 clusterGroup.addLayer(marker);
+                
+                if (type === 'incident') {
+                    let intensity = 0.5;
+                    if (priority === 'critical') intensity = 1.0;
+                    if (priority === 'high') intensity = 0.8;
+                    incidentPoints.push([lat, lng, intensity]);
+                    heatmapLayer.setLatLngs(incidentPoints);
+                }
             }
             
             markers[key] = marker;

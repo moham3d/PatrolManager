@@ -17,6 +17,17 @@ const models = {
     Shift: require('./Shift')(db, Sequelize),
     Attendance: require('./Attendance')(db, Sequelize),
     Visitor: require('./Visitor')(db, Sequelize),
+    Schedule: require('./Schedule')(db, Sequelize),
+    IncidentEvidence: require('./IncidentEvidence')(db, Sequelize),
+    IncidentComment: require('./IncidentComment')(db, Sequelize),
+    GPSLog: require('./GPSLog')(db, Sequelize),
+    AuditLog: require('./AuditLog')(db, Sequelize),
+    SyncQueue: require('./SyncQueue')(db, Sequelize),
+    Notification: require('./Notification')(db, Sequelize),
+    DeviceRegistration: require('./DeviceRegistration')(db, Sequelize),
+    Alert: require('./Alert')(db, Sequelize),
+    ReportSchedule: require('./ReportSchedule')(db, Sequelize),
+    SiteAssignments: require('./SiteAssignments')(db, Sequelize),
 };
 
 // Associate Models

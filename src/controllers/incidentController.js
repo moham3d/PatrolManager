@@ -124,14 +124,30 @@ exports.show = async (req, res) => {
                 { model: User, as: 'assignee' },
                 { model: Site },
                 { model: require('../models').Zone },
-                { model: require('../models').IncidentEvidence, as: 'evidence' }
-            ]
+                { model: require('../models').IncidentEvidence, as: 'evidence' },
+                { 
+                    model: require('../models').IncidentComment, 
+                    as: 'comments',
+                    include: [{ model: User, as: 'user' }]
+                }
+            ],
+            order: [[ { model: require('../models').IncidentComment, as: 'comments' }, 'createdAt', 'ASC' ]]
         });
 
         if (!incident) return res.status(404).send('Incident not found');
 
+        // Fetch Timeline from Audit Logs
+        const timeline = await require('../models').AuditLog.findAll({
+            where: {
+                entity: 'Incident',
+                entityId: incident.id
+            },
+            include: [{ model: User, as: 'user' }],
+            order: [['timestamp', 'ASC']]
+        });
+
         const users = await User.findAll({ order: [['name', 'ASC']] });
-        res.render('incidents/show', { title: `Incident #${incident.id}`, incident, users });
+        res.render('incidents/show', { title: `Incident #${incident.id}`, incident, users, timeline });
     } catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
@@ -344,6 +360,31 @@ exports.updateStatus = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: true, message: err.message });
+    }
+};
+
+exports.addComment = async (req, res) => {
+    try {
+        const { comment } = req.body;
+        const incidentId = req.params.id;
+
+        if (!comment || comment.trim() === '') {
+            req.flash('error', 'Comment cannot be empty');
+            return res.redirect('back');
+        }
+
+        await require('../models').IncidentComment.create({
+            incidentId,
+            userId: req.user.id,
+            comment,
+            createdBy: req.user.id
+        });
+
+        req.flash('success', 'Comment added');
+        res.redirect(`/incidents/${incidentId}`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
     }
 };
 

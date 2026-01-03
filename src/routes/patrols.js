@@ -29,5 +29,6 @@ router.post('/', ensureAuth, ensureRole(['admin', 'manager']), siteValidation, v
 router.get('/:id/edit', ensureAuth, ensureRole(['admin', 'manager']), patrolController.edit);
 router.post('/:id', ensureAuth, ensureRole(['admin', 'manager']), siteValidation, validateRequest, patrolController.update);
 router.get('/:id', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), patrolController.show);
+router.get('/runs/:id', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), patrolController.showRun);
 
 module.exports = router;

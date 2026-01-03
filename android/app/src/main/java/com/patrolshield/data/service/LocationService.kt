@@ -23,6 +23,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.ActivityTransition
+import com.google.android.gms.location.ActivityTransitionRequest
+import com.google.android.gms.location.DetectedActivity
+
 @AndroidEntryPoint
 class LocationService : Service() {
 
@@ -36,6 +41,7 @@ class LocationService : Service() {
     private lateinit var locationClient: com.google.android.gms.location.FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private var activeRunId: Int? = null
+    private var isGpsRunning = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -50,7 +56,7 @@ class LocationService : Service() {
                         // 1. Send Live Heartbeat
                         patrolRepository.sendHeartbeat(location.latitude, location.longitude, activeRunId)
 
-                        // 2. Log Locally (Existing Logic)
+                        // 2. Log Locally
                         val payload = mapOf(
                             "lat" to location.latitude,
                             "lng" to location.longitude,
@@ -61,6 +67,7 @@ class LocationService : Service() {
                             LogEntity(
                                 type = "GPS_LOG",
                                 payload = Gson().toJson(payload),
+                                priority = 4,
                                 synced = false
                             )
                         )
@@ -68,14 +75,42 @@ class LocationService : Service() {
                 }
             }
         }
+        
+        setupActivityRecognition()
+    }
+
+    private fun setupActivityRecognition() {
+        // In a real app, we'd register a PendingIntent for transitions.
+        // For this POC, we'll simulate the logic or use a simplified check.
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when(intent?.action) {
             "ACTION_START" -> start()
             "ACTION_STOP" -> stop()
+            "ACTIVITY_STILL" -> pauseGps()
+            "ACTIVITY_MOVING" -> resumeGps()
         }
         return START_STICKY
+    }
+
+    private fun pauseGps() {
+        if (isGpsRunning) {
+            locationClient.removeLocationUpdates(locationCallback)
+            isGpsRunning = false
+            consoleLog("GPS Paused (Device Still)")
+        }
+    }
+
+    private fun resumeGps() {
+        if (!isGpsRunning) {
+            startLocationUpdates()
+            consoleLog("GPS Resumed (Device Moving)")
+        }
+    }
+
+    private fun consoleLog(msg: String) {
+        android.util.Log.d("LocationService", msg)
     }
 
     private fun start() {
@@ -109,9 +144,11 @@ class LocationService : Service() {
     }
 
     private fun startLocationUpdates() {
+        if (isGpsRunning) return
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 10000L).build()
         try {
             locationClient.requestLocationUpdates(request, locationCallback, null)
+            isGpsRunning = true
         } catch (e: SecurityException) {
             e.printStackTrace()
         }
@@ -119,6 +156,7 @@ class LocationService : Service() {
 
     private fun stop() {
         locationClient.removeLocationUpdates(locationCallback)
+        isGpsRunning = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }

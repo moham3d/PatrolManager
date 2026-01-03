@@ -23,6 +23,9 @@ const io = socketHandler.init(server);
 // Request Logger
 app.use(requestLoggerMiddleware);
 
+// Compression
+app.use(require('compression')());
+
 // Health Check
 app.use('/api/health', require('./src/routes/health'));
 
