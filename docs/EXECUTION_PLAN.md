@@ -661,11 +661,17 @@ Add validation to all controller methods:
 
 **Dependencies**: Task 2.1  
 **Estimated Time**: 2 hours  
-**Status**: ⬜ Not Started
+**Status**: ✅ Complete
+**Started**: 2026-01-03
+**Completed**: 2026-01-03
+
+**Notes**:
+- Created `src/models/Notification.js` to store in-app notifications for users.
+- Added association with the `User` model.
 
 **Verification**:
-- [ ] Model created
-- [ ] Notifications stored
+- [x] Model created
+- [x] Notifications stored
 - [ ] Read status tracked
 - [ ] Notification filtering works
 
