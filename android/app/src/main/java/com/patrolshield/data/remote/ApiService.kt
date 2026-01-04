@@ -56,4 +56,7 @@ interface ApiService {
         @Part("comment") comment: okhttp3.RequestBody,
         @Part evidence: okhttp3.MultipartBody.Part?
     ): Response<Unit>
+
+    @GET("incidents/active")
+    suspend fun getActiveIncidents(): Response<List<Incident>>
 }

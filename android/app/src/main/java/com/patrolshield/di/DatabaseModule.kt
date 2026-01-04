@@ -23,7 +23,9 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "patrol_shield_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
@@ -34,5 +36,15 @@ object DatabaseModule {
     @Provides
     fun provideShiftDao(db: AppDatabase): ShiftDao {
         return db.shiftDao()
+    }
+
+    @Provides
+    fun providePatrolDao(db: AppDatabase): com.patrolshield.data.local.dao.PatrolDao {
+        return db.patrolDao()
+    }
+
+    @Provides
+    fun provideIncidentDao(db: AppDatabase): com.patrolshield.data.local.dao.IncidentDao {
+        return db.incidentDao()
     }
 }

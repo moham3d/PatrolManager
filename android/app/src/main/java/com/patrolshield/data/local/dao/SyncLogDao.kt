@@ -12,8 +12,8 @@ interface SyncLogDao {
     @Insert
     suspend fun insertLog(log: SyncLogEntity)
 
-    @Query("SELECT * FROM sync_logs ORDER BY timestamp ASC")
-    fun getAllLogs(): Flow<List<SyncLogEntity>>
+    @Query("SELECT * FROM sync_logs ORDER BY priority DESC, timestamp ASC")
+    suspend fun getPendingLogs(): List<SyncLogEntity>
 
     @Delete
     suspend fun deleteLog(log: SyncLogEntity)

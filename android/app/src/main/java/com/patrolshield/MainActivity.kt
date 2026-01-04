@@ -87,8 +87,14 @@ class MainActivity : ComponentActivity() {
                             composable("login") {
                                 LoginScreen(
                                     onNavigateToDashboard = { role ->
-                                        navController.navigate("clock_in") {
-                                            popUpTo("login") { inclusive = true }
+                                        if (role == "supervisor" || role == "manager") {
+                                            navController.navigate("supervisor_dashboard") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                        } else {
+                                            navController.navigate("clock_in") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
                                         }
                                     }
                                 )
@@ -107,6 +113,9 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 )
+                            }
+                            composable("supervisor_dashboard") {
+                                com.patrolshield.presentation.supervisor.SupervisorDashboard()
                             }
                             composable("dashboard") {
                                 PatrolListScreen(
