@@ -7,63 +7,55 @@ import androidx.lifecycle.viewModelScope
 import com.patrolshield.common.Resource
 import com.patrolshield.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val repository: AuthRepository
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _state = mutableStateOf(LoginState())
-    val state: State<LoginState> = _state
+    private val _email = mutableStateOf("")
+    val email: State<String> = _email
 
-    fun onEvent(event: LoginEvent) {
-        when (event) {
-            is LoginEvent.EnteredEmail -> {
-                _state.value = _state.value.copy(email = event.value)
-            }
-            is LoginEvent.EnteredPassword -> {
-                _state.value = _state.value.copy(password = event.value)
-            }
-            is LoginEvent.Login -> {
-                login()
+    private val _password = mutableStateOf("")
+    val password: State<String> = _password
+
+    private val _isLoading = mutableStateOf(false)
+    val isLoading: State<Boolean> = _isLoading
+
+    private val _loginEvent = MutableSharedFlow<LoginEvent>()
+    val loginEvent = _loginEvent.asSharedFlow()
+
+    fun onEmailChange(value: String) {
+        _email.value = value
+    }
+
+    fun onPasswordChange(value: String) {
+        _password.value = value
+    }
+
+    fun login() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = authRepository.login(_email.value, _password.value)
+            _isLoading.value = false
+            when (result) {
+                is Resource.Success -> {
+                    _loginEvent.emit(LoginEvent.Success(result.data?.user?.role ?: "guard"))
+                }
+                is Resource.Error -> {
+                    _loginEvent.emit(LoginEvent.Error(result.message ?: "Unknown error"))
+                }
+                else -> {}
             }
         }
     }
 
-    private fun login() {
-        val email = state.value.email
-        val password = state.value.password
-
-        if (email.isBlank() || password.isBlank()) {
-            _state.value = _state.value.copy(error = "Please enter email and password")
-            return
-        }
-
-        viewModelScope.launch {
-            repository.login(email, password).collect { result ->
-                when (result) {
-                    is Resource.Success -> {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            isSuccess = true,
-                            role = result.data?.role,
-                            error = null
-                        )
-                    }
-                    is Resource.Error -> {
-                        _state.value = _state.value.copy(
-                            isLoading = false,
-                            error = result.message ?: "An unexpected error occurred"
-                        )
-                    }
-                    is Resource.Loading -> {
-                        _state.value = _state.value.copy(isLoading = true, error = null)
-                    }
-                }
-            }
-        }
+    sealed class LoginEvent {
+        data class Success(val role: String) : LoginEvent()
+        data class Error(val message: String) : LoginEvent()
     }
 }

@@ -1,18 +1,18 @@
 package com.patrolshield.domain.repository
 
 import com.patrolshield.common.Resource
-import com.patrolshield.data.local.entities.PatrolEntity
-import com.patrolshield.data.remote.dto.PatrolDto
+import com.patrolshield.data.local.entities.ShiftEntity
+import com.patrolshield.data.remote.dto.*
 import kotlinx.coroutines.flow.Flow
 
 interface PatrolRepository {
-    suspend fun getMySchedule(): Flow<Resource<List<PatrolDto>>>
-    suspend fun startPatrol(templateId: Int): Flow<Resource<PatrolEntity>>
-    suspend fun scanCheckpoint(runId: Int, checkpointId: Int, lat: Double, lng: Double): Flow<Resource<String>>
-    suspend fun getCheckpoints(templateId: Int): List<com.patrolshield.data.local.entities.CheckpointEntity>
-    suspend fun sendPanic(lat: Double? = null, lng: Double? = null, runId: Int? = null): Resource<Unit>
-    suspend fun endPatrol(): Flow<Resource<Unit>>
-    fun getActivePatrol(): Flow<PatrolEntity?>
-    suspend fun getCompletedPatrols(): List<PatrolEntity>
-    suspend fun sendHeartbeat(lat: Double, lng: Double, activeRunId: Int?)
+    suspend fun clockIn(lat: Double, lng: Double, siteId: Int): Resource<ShiftResponse>
+    suspend fun clockOut(lat: Double, lng: Double): Resource<Unit>
+    fun getActiveShift(): Flow<ShiftEntity?>
+
+    suspend fun getMySchedule(): Resource<List<PatrolDto>>
+    suspend fun startPatrol(patrolId: Int): Resource<Int>
+    suspend fun scanCheckpoint(runId: Int, checkpointId: Int, value: String, lat: Double?, lng: Double?): Resource<Unit>
+    suspend fun endPatrol(runId: Int): Resource<Unit>
+    suspend fun triggerPanic(lat: Double, lng: Double, runId: Int?): Resource<Unit>
 }

@@ -12,7 +12,7 @@ object LocationUtils {
         return try {
             locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                 ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-        } catch (e: SecurityException) {
+        } catch (e: Exception) {
             null
         }
     }

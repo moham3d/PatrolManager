@@ -9,72 +9,83 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.flow.collectLatest
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel = hiltViewModel(),
-    onNavigateToDashboard: (String) -> Unit // Now accepts role
+    onNavigateToDashboard: (String) -> Unit,
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
-    val state = viewModel.state.value
-    
-    LaunchedEffect(state.isSuccess) {
-        if (state.isSuccess) {
-            onNavigateToDashboard(state.role ?: "guard")
+    val email = viewModel.email.value
+    val password = viewModel.password.value
+    val isLoading = viewModel.isLoading.value
+    val snackbarHostState = androidx.compose.runtime.remember { SnackbarHostState() }
+
+    LaunchedEffect(key1 = true) {
+        viewModel.loginEvent.collectLatest { event ->
+            when (event) {
+                is LoginViewModel.LoginEvent.Success -> {
+                    onNavigateToDashboard(event.role)
+                }
+                is LoginViewModel.LoginEvent.Error -> {
+                    snackbarHostState.showSnackbar(event.message)
+                }
+            }
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(padding)
                 .padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "Tungsten", style = MaterialTheme.typography.headlineLarge)
-            
+            Text(
+                text = "PatrolShield Titan",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
             Spacer(modifier = Modifier.height(32.dp))
-
             OutlinedTextField(
-                value = state.email,
-                onValueChange = { viewModel.onEvent(LoginEvent.EnteredEmail(it)) },
+                value = email,
+                onValueChange = viewModel::onEmailChange,
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                enabled = !isLoading
             )
-            
             Spacer(modifier = Modifier.height(16.dp))
-            
             OutlinedTextField(
-                value = state.password,
-                onValueChange = { viewModel.onEvent(LoginEvent.EnteredPassword(it)) },
+                value = password,
+                onValueChange = viewModel::onPasswordChange,
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
+                visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation()
+                enabled = !isLoading
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
-            
+            Spacer(modifier = Modifier.height(32.dp))
             Button(
-                onClick = { viewModel.onEvent(LoginEvent.Login) },
-                enabled = !state.isLoading,
-                modifier = Modifier.fillMaxWidth()
+                onClick = viewModel::login,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
             ) {
-                Text("Login")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("LOGIN")
+                }
             }
-
-            if (state.error != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = state.error,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
-        
-        if (state.isLoading) {
-            CircularProgressIndicator()
         }
     }
 }

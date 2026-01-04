@@ -118,7 +118,7 @@
     *   `TabRow`: Overview | Incidents | Map.
 *   **API Interaction**:
     *   **GET** `/incidents/active`: Poll every 30s.
-    *   **GET** `/incidents/api/{id}/resolve`: Supervisor can resolve incidents on mobile.
+    *   **POST** `/incidents/api/{id}/resolve`: Supervisor can resolve incidents on mobile.
 *   **Offline Handling**:
     *   Supervisor features are "Read-Only" offline (show cached data).
     *   "Write" actions (Resolving incident) are queued.

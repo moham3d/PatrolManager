@@ -1,45 +1,43 @@
 package com.patrolshield.common
 
 import android.content.Context
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "user_settings")
-
 @Singleton
-class UserPreferences @Inject constructor(
-    @ApplicationContext private val context: Context
-) {
-    private val DARK_MODE_KEY = booleanPreferencesKey("dark_mode")
-    private val NOTIFICATIONS_ENABLED_KEY = booleanPreferencesKey("notifications_enabled")
-    private val LANGUAGE_KEY = stringPreferencesKey("language")
+class UserPreferences @Inject constructor(@ApplicationContext context: Context) {
+    private val masterKey = MasterKey.Builder(context)
+        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+        .build()
 
-    val darkModeFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[DARK_MODE_KEY] ?: false
+    private val sharedPreferences = EncryptedSharedPreferences.create(
+        context,
+        "patrol_prefs",
+        masterKey,
+        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+    )
+
+    fun saveAuthToken(token: String?) {
+        sharedPreferences.edit().putString("auth_token", token).apply()
     }
 
-    val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[NOTIFICATIONS_ENABLED_KEY] ?: true
+    fun getAuthToken(): String? {
+        return sharedPreferences.getString("auth_token", null)
     }
 
-    suspend fun setDarkMode(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[DARK_MODE_KEY] = enabled
-        }
+    fun saveSiteId(siteId: Int) {
+        sharedPreferences.edit().putInt("site_id", siteId).apply()
     }
 
-    suspend fun setNotificationsEnabled(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[NOTIFICATIONS_ENABLED_KEY] = enabled
-        }
+    fun getSiteId(): Int {
+        return sharedPreferences.getInt("site_id", -1)
+    }
+
+    fun clear() {
+        sharedPreferences.edit().clear().apply()
     }
 }

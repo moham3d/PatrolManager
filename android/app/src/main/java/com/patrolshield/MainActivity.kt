@@ -7,29 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.patrolshield.presentation.login.LoginScreen
-import com.patrolshield.presentation.dashboard.GuardDashboard
-import com.patrolshield.presentation.dashboard.SupervisorDashboard
-import com.patrolshield.presentation.dashboard.SupervisorViewModel
-import com.patrolshield.presentation.dashboard.AdminDashboard
-import com.patrolshield.presentation.dashboard.ManagerDashboard
-import com.patrolshield.presentation.visitor.VisitorScreen
-import com.patrolshield.presentation.shift.ClockInScreen
-import com.patrolshield.presentation.patrol.PatrolScreen
-import com.patrolshield.presentation.profile.ProfileScreen
-import com.patrolshield.presentation.user.UserListScreen
-import com.patrolshield.presentation.user.UserCreateScreen
-import com.patrolshield.presentation.site.SiteListScreen
-import com.patrolshield.presentation.site.SiteCreateScreen
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
-
 import android.content.Intent
 import android.nfc.NfcAdapter
 import android.nfc.Tag
@@ -37,173 +15,32 @@ import com.patrolshield.common.NfcManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.patrolshield.presentation.login.LoginScreen
+import com.patrolshield.presentation.shift.ClockInScreen
+import com.patrolshield.presentation.patrol.PatrolListScreen
+import com.patrolshield.presentation.patrol.PatrolExecutionScreen
+import com.patrolshield.presentation.incident.IncidentReportScreen
+import com.patrolshield.domain.repository.AuthRepository
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.patrolshield.domain.repository.PatrolRepository
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+
+import com.patrolshield.presentation.common.OfflineIndicator
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     @Inject
-    lateinit var userDao: com.patrolshield.data.local.dao.UserDao
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        handleNfcIntent(intent)
-        
-        var startDestination = "login"
-        kotlinx.coroutines.runBlocking {
-            val user = userDao.getUser()
-            if (user != null && !user.token.isNullOrEmpty()) {
-                startDestination = when (user.role.lowercase()) {
-                    "supervisor" -> "supervisor_dashboard"
-                    "admin" -> "admin_dashboard"
-                    "manager" -> "manager_dashboard"
-                    else -> {
-                        if (user.activeShiftId != null) "dashboard" else "clock_in"
-                    }
-                }
-            }
-        }
-
-        setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    androidx.compose.foundation.layout.Column {
-                        com.patrolshield.presentation.common.OfflineIndicator()
-                        val navController = rememberNavController()
-                        NavHost(navController = navController, startDestination = startDestination, modifier = Modifier.weight(1f)) {
-                            composable("login") {
-                                LoginScreen(
-                                    onNavigateToDashboard = { role ->
-                                        val dest = when (role.lowercase()) {
-                                            "supervisor" -> "supervisor_dashboard"
-                                            "admin" -> "admin_dashboard"
-                                            "manager" -> "manager_dashboard"
-                                            else -> "clock_in" // Guards must clock in first
-                                        }
-                                        navController.navigate(dest) {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    }
-                                )
-                            }
-                            composable("clock_in") {
-                                ClockInScreen(
-                                    onClockInSuccess = {
-                                        navController.navigate("dashboard") {
-                                            popUpTo("clock_in") { inclusive = true }
-                                        }
-                                    },
-                                    onLogout = {
-                                        kotlinx.coroutines.runBlocking { userDao.clearUser() }
-                                        navController.navigate("login") {
-                                            popUpTo("clock_in") { inclusive = true }
-                                        }
-                                    }
-                                )
-                            }
-                            composable("dashboard") {
-                                GuardDashboard(
-                                    onNavigateToProfile = {
-                                        navController.navigate("profile")
-                                    },
-                                    onStartPatrol = {
-                                        navController.navigate("patrol")
-                                    },
-                                    onNavigateToVisitors = {
-                                        navController.navigate("visitors")
-                                    }
-                                )
-                            }
-                            composable("visitors") {
-                                VisitorScreen(
-                                    onBack = { navController.popBackStack() }
-                                )
-                            }
-                            composable("supervisor_dashboard") {
-                                SupervisorDashboard(
-                                    onLogout = {
-                                        kotlinx.coroutines.runBlocking { userDao.clearUser() }
-                                        navController.navigate("login") {
-                                            popUpTo("supervisor_dashboard") { inclusive = true }
-                                        }
-                                    }
-                                )
-                            }
-                            composable("admin_dashboard") {
-                                AdminDashboard(
-                                    onLogout = {
-                                        kotlinx.coroutines.runBlocking { userDao.clearUser() }
-                                        navController.navigate("login") {
-                                            popUpTo("admin_dashboard") { inclusive = true }
-                                        }
-                                    },
-                                    onNavigateToUsers = { navController.navigate("admin_users") },
-                                    onNavigateToSites = { navController.navigate("admin_sites") }
-                                )
-                            }
-                            composable("admin_users") {
-                                UserListScreen(
-                                    onBack = { navController.popBackStack() },
-                                    onNavigateToCreate = { navController.navigate("admin_user_create") }
-                                )
-                            }
-                            composable("admin_user_create") {
-                                UserCreateScreen(
-                                    onBack = { navController.popBackStack() }
-                                )
-                            }
-                            composable("admin_sites") {
-                                SiteListScreen(
-                                    onBack = { navController.popBackStack() },
-                                    onNavigateToCreate = { navController.navigate("admin_site_create") }
-                                )
-                            }
-                            composable("admin_site_create") {
-                                SiteCreateScreen(
-                                    onBack = { navController.popBackStack() }
-                                )
-                            }
-                            composable("manager_dashboard") {
-                                ManagerDashboard(
-                                    onLogout = {
-                                        kotlinx.coroutines.runBlocking { userDao.clearUser() }
-                                        navController.navigate("login") {
-                                            popUpTo("manager_dashboard") { inclusive = true }
-                                        }
-                                    }
-                                )
-                            }
-                            composable("patrol") {
-                               PatrolScreen(
-                                   onEndPatrol = {
-                                       navController.navigate("dashboard") {
-                                           popUpTo("patrol") { inclusive = true }
-                                       }
-                                   }
-                               ) 
-                            }
-                            composable("profile") {
-                                ProfileScreen(
-                                    onBack = { navController.popBackStack() },
-                                    onLogout = {
-                                        navController.navigate("login") {
-                                            popUpTo(0) { inclusive = true } // Clear entire stack
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    lateinit var authRepository: AuthRepository
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        if (intent != null) {
-            handleNfcIntent(intent)
-        }
+        intent?.let { handleNfcIntent(it) }
     }
 
     private fun handleNfcIntent(intent: Intent) {
@@ -214,7 +51,7 @@ class MainActivity : ComponentActivity() {
             val tag = intent.getParcelableExtra<Tag>(NfcAdapter.EXTRA_TAG)
             tag?.let {
                 val tagId = bytesToHexString(it.id)
-                CoroutineScope(Dispatchers.Main).launch {
+                CoroutineScope(Dispatchers.IO).launch {
                     NfcManager.onTagDetected(tagId)
                 }
             }
@@ -233,13 +70,89 @@ class MainActivity : ComponentActivity() {
         return sb.toString().uppercase()
     }
 
-    @Composable
-    fun DashboardPlaceholder() {
-        androidx.compose.foundation.layout.Box(
-            modifier = androidx.compose.ui.Modifier.fillMaxSize(),
-            contentAlignment = androidx.compose.ui.Alignment.Center
-        ) {
-            Text("Welcome to PatrolShield Dashboard!")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    androidx.compose.foundation.layout.Column {
+                        OfflineIndicator()
+                        val navController = rememberNavController()
+                        val startDest = if (authRepository.isAuthenticated()) "clock_in" else "login"
+                        
+                        NavHost(navController = navController, startDestination = startDest, modifier = Modifier.weight(1f)) {
+                            composable("login") {
+                                LoginScreen(
+                                    onNavigateToDashboard = { role ->
+                                        navController.navigate("clock_in") {
+                                            popUpTo("login") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("clock_in") {
+                                ClockInScreen(
+                                    onClockInSuccess = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("clock_in") { inclusive = true }
+                                        }
+                                    },
+                                    onLogout = {
+                                        kotlinx.coroutines.runBlocking { authRepository.logout() }
+                                        navController.navigate("login") {
+                                            popUpTo("clock_in") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable("dashboard") {
+                                PatrolListScreen(
+                                    onPatrolStarted = { runId, patrolId ->
+                                        navController.navigate("patrol_execution/$patrolId/$runId")
+                                    }
+                                )
+                            }
+                            composable(
+                                route = "patrol_execution/{patrolId}/{runId}",
+                                arguments = listOf(
+                                    navArgument("patrolId") { type = NavType.IntType },
+                                    navArgument("runId") { type = NavType.IntType }
+                                )
+                            ) { backStackEntry ->
+                                val patrolId = backStackEntry.arguments?.getInt("patrolId") ?: -1
+                                val runId = backStackEntry.arguments?.getInt("runId") ?: -1
+                                PatrolExecutionScreen(
+                                    patrolId = patrolId,
+                                    runId = runId,
+                                    onFinish = {
+                                        navController.navigate("dashboard") {
+                                            popUpTo("dashboard") { inclusive = true }
+                                        }
+                                    }
+                                )
+                            }
+                            composable(
+                                route = "incident_report/{siteId}/{runId}",
+                                arguments = listOf(
+                                    navArgument("siteId") { type = NavType.IntType },
+                                    navArgument("runId") { type = NavType.IntType; defaultValue = -1 }
+                                )
+                            ) { backStackEntry ->
+                                val siteId = backStackEntry.arguments?.getInt("siteId") ?: -1
+                                val runId = backStackEntry.arguments?.getInt("runId").takeIf { it != -1 }
+                                IncidentReportScreen(
+                                    siteId = siteId,
+                                    patrolRunId = runId,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -3,6 +3,8 @@ package com.patrolshield.di
 import android.content.Context
 import androidx.room.Room
 import com.patrolshield.data.local.AppDatabase
+import com.patrolshield.data.local.dao.SyncLogDao
+import com.patrolshield.data.local.dao.ShiftDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,30 +22,17 @@ object DatabaseModule {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "patrolshield_db"
-        )
-        .fallbackToDestructiveMigration()
-        .build()
+            "patrol_shield_db"
+        ).build()
     }
-    @Provides
-    @Singleton
-    fun provideUserDao(db: AppDatabase) = db.userDao()
 
     @Provides
-    @Singleton
-    fun providePatrolDao(db: AppDatabase) = db.patrolDao()
-
-    // fun provideCheckpointDao(db: AppDatabase) = db.checkpointDao() - Removed
-
-    @Provides
-    @Singleton
-    fun provideLogDao(db: AppDatabase) = db.logDao()
+    fun provideSyncLogDao(db: AppDatabase): SyncLogDao {
+        return db.syncLogDao()
+    }
 
     @Provides
-    @Singleton
-    fun provideIncidentDao(db: AppDatabase) = db.incidentDao()
-
-    @Provides
-    @Singleton
-    fun provideNotificationDao(db: AppDatabase) = db.notificationDao()
+    fun provideShiftDao(db: AppDatabase): ShiftDao {
+        return db.shiftDao()
+    }
 }

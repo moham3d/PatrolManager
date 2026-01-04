@@ -1,17 +1,17 @@
 package com.patrolshield.di
 
-import com.patrolshield.common.SecurePreferences
+import com.google.gson.GsonBuilder
+import com.patrolshield.common.UserPreferences
 import com.patrolshield.data.remote.ApiService
-import com.patrolshield.data.remote.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.google.gson.GsonBuilder
 import javax.inject.Singleton
 
 @Module
@@ -20,44 +20,38 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(securePrefs: SecurePreferences): AuthInterceptor {
-        return AuthInterceptor(securePrefs)
-    }
+    fun provideOkHttpClient(userPrefs: UserPreferences): OkHttpClient {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
 
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
-        val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
-        return OkHttpClient.Builder()
-            .addInterceptor(authInterceptor)
-            .addInterceptor(logging)
-            .addInterceptor { chain ->
-                val request = chain.request().newBuilder()
-                    .addHeader("Accept", "application/json")
-                    .build()
-                chain.proceed(request)
+        val authInterceptor = Interceptor { chain ->
+            val request = chain.request().newBuilder()
+            request.addHeader("Accept", "application/json")
+            userPrefs.getAuthToken()?.let {
+                request.addHeader("Authorization", "Bearer $it")
             }
+            chain.proceed(request.build())
+        }
+
+        return OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .addInterceptor(authInterceptor)
             .build()
     }
 
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideApiService(okHttpClient: OkHttpClient): ApiService {
         val gson = GsonBuilder()
             .setLenient()
             .create()
-
+            
         return Retrofit.Builder()
-            .baseUrl("https://app.digitexc.com/")
+            .baseUrl("http://10.0.2.2:3000/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
-    }
-
-    @Provides
-    @Singleton
-    fun provideApiService(retrofit: Retrofit): ApiService {
-        return retrofit.create(ApiService::class.java)
+            .create(ApiService::class.java)
     }
 }

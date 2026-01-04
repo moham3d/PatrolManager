@@ -1,73 +1,41 @@
 package com.patrolshield.data.repository
 
 import com.patrolshield.common.Resource
-import com.patrolshield.common.SecurePreferences
-import com.patrolshield.data.local.dao.UserDao
-import com.patrolshield.data.local.entities.UserEntity
+import com.patrolshield.common.UserPreferences
 import com.patrolshield.data.remote.ApiService
 import com.patrolshield.data.remote.dto.LoginRequest
+import com.patrolshield.data.remote.dto.LoginResponse
 import com.patrolshield.domain.repository.AuthRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import retrofit2.HttpException
-import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val api: ApiService,
-    private val userDao: UserDao,
-    private val securePrefs: SecurePreferences
+    private val apiService: ApiService,
+    private val userPrefs: UserPreferences
 ) : AuthRepository {
 
-    override suspend fun login(email: String, password: String): Flow<Resource<UserEntity>> = flow {
-        emit(Resource.Loading())
-        try {
-            val response = api.login(LoginRequest(email, password))
+    override fun getAuthToken(): String? = userPrefs.getAuthToken()
+
+    override fun isAuthenticated(): Boolean = getAuthToken() != null
+
+    override suspend fun login(email: String, password: String): Resource<LoginResponse> {
+        return try {
+            val response = apiService.login(LoginRequest(email, password))
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
-                
-                // Save Token Securely
-                val token = loginResponse.token
-                if (token == null) {
-                    emit(Resource.Error("Invalid Token"))
-                    return@flow
-                }
-                securePrefs.saveToken(token)
-                
-                // Save User
-                val userDto = loginResponse.user
-                if (userDto != null) {
-                    val user = UserEntity(
-                        id = userDto.id,
-                        name = userDto.name,
-                        email = userDto.email,
-                        role = userDto.Role?.name ?: when (userDto.roleId) {
-                            1 -> "admin"
-                            3 -> "supervisor" // Fallback based on seeder order
-                            else -> "guard"
-                        }, 
-                        token = loginResponse.token, // Keep in Room for legacy compatibility if needed
-                        activeShiftId = loginResponse.activeShift?.id
-                    )
-                    userDao.insertUser(user)
-                    emit(Resource.Success(user))
-                } else {
-                    emit(Resource.Error("Invalid User Data"))
-                }
+                userPrefs.saveAuthToken(loginResponse.token)
+                loginResponse.user.siteId?.let { userPrefs.saveSiteId(it) }
+                Resource.Success(loginResponse)
             } else {
-                emit(Resource.Error(response.message()))
+                Resource.Error("Login failed: ${response.message()}")
             }
         } catch (e: Exception) {
-            emit(Resource.Error("Login Failed: ${e.localizedMessage}"))
+            Resource.Error("An error occurred: ${e.localizedMessage}")
         }
     }
 
-    override suspend fun getUser(): UserEntity? {
-        return userDao.getUser()
-    }
-
     override suspend fun logout() {
-        securePrefs.clear()
-        userDao.clearUser()
+        userPrefs.clear()
     }
 }

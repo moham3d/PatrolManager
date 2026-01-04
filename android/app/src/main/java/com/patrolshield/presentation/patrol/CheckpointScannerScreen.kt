@@ -1,28 +1,29 @@
 package com.patrolshield.presentation.patrol
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.nfc.NfcAdapter
-import android.nfc.Tag
-import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.util.Log
+import android.content.pm.PackageManager
+import android.util.Size
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.camera.core.*
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -30,97 +31,40 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.barcode.common.Barcode
-import com.google.mlkit.vision.common.InputImage
-import com.patrolshield.common.Resource
-import kotlinx.coroutines.flow.collectLatest
+import com.patrolshield.common.BarcodeAnalyzer
 import java.util.concurrent.Executors
 
-import com.patrolshield.common.LocationUtils
-import com.patrolshield.common.NfcManager
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckpointScannerScreen(
-    runId: Int,
-    onNavigateBack: () -> Unit,
-    viewModel: CheckpointScannerViewModel = hiltViewModel()
+    onScan: (String) -> Unit,
+    onClose: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
+    var hasCameraPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
-    DisposableEffect(lifecycleOwner) {
-        val activity = context as? ComponentActivity
-        if (activity != null && nfcAdapter != null) {
-            val intent = Intent(activity, activity.javaClass).apply {
-                addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            }
-            val pendingIntent = android.app.PendingIntent.getActivity(
-                activity, 0, intent, android.app.PendingIntent.FLAG_MUTABLE
-            )
-            nfcAdapter.enableForegroundDispatch(activity, pendingIntent, null, null)
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { granted ->
+            hasCameraPermission = granted
         }
-        onDispose {
-            val activity = context as? ComponentActivity
-            if (activity != null && nfcAdapter != null) {
-                nfcAdapter.disableForegroundDispatch(activity)
-            }
+    )
+
+    LaunchedEffect(key1 = true) {
+        if (!hasCameraPermission) {
+            launcher.launch(Manifest.permission.CAMERA)
         }
     }
 
-    LaunchedEffect(Unit) {
-        NfcManager.nfcTag.collectLatest { tagId ->
-            val loc = LocationUtils.getLocation(context)
-            if (loc != null) {
-                viewModel.onNfcTagDetected(tagId, runId, loc.latitude, loc.longitude)
-            } else {
-                Toast.makeText(context, "Location not available for NFC scan", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    val scannerOptions = BarcodeScannerOptions.Builder()
-        .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-        .build()
-    val scanner = remember { BarcodeScanning.getClient(scannerOptions) }
-    
-    var lastScannedTimestamp by remember { mutableStateOf(0L) }
-    val scanCooldown = 3000L // 3 seconds cooldown between scans
-
-    LaunchedEffect(Unit) {
-        viewModel.scanResult.collectLatest { resource ->
-            when (resource) {
-                is Resource.Success -> {
-                    Toast.makeText(context, resource.data ?: "Scanned Successfully", Toast.LENGTH_SHORT).show()
-                    playBeep()
-                    onNavigateBack()
-                }
-                is Resource.Error -> {
-                    Toast.makeText(context, resource.message ?: "Scan Failed", Toast.LENGTH_SHORT).show()
-                    vibrate(context)
-                }
-                is Resource.Loading -> {}
-            }
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Scan Checkpoint (QR/NFC)") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+    if (hasCameraPermission) {
+        Box(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { ctx ->
                     val previewView = PreviewView(ctx).apply {
@@ -129,101 +73,56 @@ fun CheckpointScannerScreen(
                             ViewGroup.LayoutParams.MATCH_PARENT
                         )
                     }
+
                     val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
+
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
-                        val preview = Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-                        val imageAnalysis = ImageAnalysis.Builder()
+
+                        val preview = Preview.Builder().build()
+                        preview.setSurfaceProvider(previewView.surfaceProvider)
+
+                        val imageAnalyzer = ImageAnalysis.Builder()
+                            .setTargetResolution(Size(1280, 720))
                             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                             .build()
-                        
-                        imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor()) { imageProxy ->
-                            val mediaImage = imageProxy.image
-                            if (mediaImage != null) {
-                                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                                scanner.process(image)
-                                    .addOnSuccessListener { barcodes ->
-                                        if (barcodes.isNotEmpty()) {
-                                            val now = System.currentTimeMillis()
-                                            if (now - lastScannedTimestamp > scanCooldown) {
-                                                lastScannedTimestamp = now
-                                                val barcodeValue = barcodes[0].rawValue ?: ""
-                                                val loc = LocationUtils.getLocation(ctx)
-                                                if (loc != null) {
-                                                    viewModel.onBarcodeDetected(barcodeValue, runId, loc.latitude, loc.longitude)
-                                                } else {
-                                                    Log.e("Scanner", "Location not available")
-                                                }
-                                            }
-                                        }
+                            .also {
+                                it.setAnalyzer(
+                                    Executors.newSingleThreadExecutor(),
+                                    BarcodeAnalyzer { code ->
+                                        onScan(code)
                                     }
-                                    .addOnCompleteListener {
-                                        imageProxy.close()
-                                    }
-                            } else {
-                                imageProxy.close()
+                                )
                             }
-                        }
 
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
                         try {
                             cameraProvider.unbindAll()
                             cameraProvider.bindToLifecycle(
                                 lifecycleOwner,
                                 cameraSelector,
                                 preview,
-                                imageAnalysis
+                                imageAnalyzer
                             )
                         } catch (exc: Exception) {
-                            Log.e("Scanner", "Use case binding failed", exc)
+                            exc.printStackTrace()
                         }
                     }, ContextCompat.getMainExecutor(ctx))
+
                     previewView
                 },
                 modifier = Modifier.fillMaxSize()
             )
-            
-            // Overlay UI
-            Box(
+
+            FloatingActionButton(
+                onClick = onClose,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
             ) {
-                // Draw a simple scanning frame or text
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
-                    modifier = Modifier.align(Alignment.BottomCenter)
-                ) {
-                    Text(
-                        "Align QR Code or Tap NFC Tag",
-                        style = MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+                Icon(Icons.Default.Close, contentDescription = "Close Scanner")
             }
         }
-    }
-}
-
-private fun playBeep() {
-    val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
-    toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 150)
-}
-
-private fun vibrate(context: Context) {
-    val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    }
-    
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        vibrator.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
-    } else {
-        vibrator.vibrate(200)
     }
 }
