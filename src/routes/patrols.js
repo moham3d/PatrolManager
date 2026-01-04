@@ -4,7 +4,7 @@ const patrolController = require('../controllers/patrolController');
 const { ensureAuth, ensureRole } = require('../middleware/auth');
 const { apiRateLimit } = require('../middleware/rateLimiter');
 const { body } = require('express-validator');
-const { validateRequest, siteValidation } = require('../middleware/validator');
+const { validateRequest, siteValidation, patrolValidation } = require('../middleware/validator');
 
 // Mobile API
 // Note: ensureAuth handles JWT for these too
@@ -25,9 +25,9 @@ router.post('/heartbeat', apiRateLimit, ensureAuth, ensureRole(['guard']), patro
 // Web Interface
 router.get('/', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), patrolController.index);
 router.get('/create', ensureAuth, ensureRole(['admin', 'manager']), patrolController.create);
-router.post('/', ensureAuth, ensureRole(['admin', 'manager']), siteValidation, validateRequest, patrolController.store);
+router.post('/', ensureAuth, ensureRole(['admin', 'manager']), patrolValidation, validateRequest, patrolController.store);
 router.get('/:id/edit', ensureAuth, ensureRole(['admin', 'manager']), patrolController.edit);
-router.post('/:id', ensureAuth, ensureRole(['admin', 'manager']), siteValidation, validateRequest, patrolController.update);
+router.post('/:id', ensureAuth, ensureRole(['admin', 'manager']), patrolValidation, validateRequest, patrolController.update);
 router.get('/:id', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), patrolController.show);
 router.get('/runs/:id', ensureAuth, ensureRole(['admin', 'manager', 'supervisor']), patrolController.showRun);
 

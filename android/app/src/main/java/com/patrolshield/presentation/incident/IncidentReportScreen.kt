@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -81,10 +82,10 @@ fun IncidentReportScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .padding(16.dp)
-                .androidx.compose.foundation.verticalScroll(androidx.compose.foundation.rememberScrollState())
+                .verticalScroll(rememberScrollState())
         ) {
             Text("Incident Type", style = MaterialTheme.typography.labelLarge)
-            Row(modifier = Modifier.fillMaxWidth().horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("Security", "Maintenance", "Safety", "Medical", "Fire").forEach { t ->
                     FilterChip(
                         selected = type == t,
@@ -119,7 +120,7 @@ fun IncidentReportScreen(
             Text("Evidence", style = MaterialTheme.typography.labelLarge)
             
             if (selectedImageUri != null) {
-                androidx.compose.foundation.Image(
+                Image(
                     painter = coil.compose.rememberAsyncImagePainter(selectedImageUri),
                     contentDescription = "Selected Evidence",
                     modifier = Modifier
@@ -145,7 +146,7 @@ fun IncidentReportScreen(
                             cameraLauncher.launch(uri)
                         }
                     ) {
-                        Icon(androidx.compose.material.icons.filled.CameraAlt, contentDescription = null)
+                        Icon(Icons.Filled.CameraAlt, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Camera")
                     }
@@ -160,7 +161,7 @@ fun IncidentReportScreen(
                             )
                         }
                     ) {
-                        Icon(androidx.compose.material.icons.filled.PhotoLibrary, contentDescription = null)
+                        Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Gallery")
                     }

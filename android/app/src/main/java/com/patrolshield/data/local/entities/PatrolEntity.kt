@@ -8,9 +8,9 @@ data class PatrolEntity(
     @PrimaryKey val id: Int, // API ID
     val name: String,
     val description: String?,
-    val scheduledDate: String,
-    val startTime: String,
-    val endTime: String,
+    val scheduledDate: Long,
+    val startTime: Long?,
+    val endTime: Long?,
     val status: String, // "scheduled", "started", "completed"
     val syncStatus: String = "SYNCED" // "SYNCED", "PENDING"
 )

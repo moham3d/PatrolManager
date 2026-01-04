@@ -154,7 +154,7 @@ fun SupervisorDashboard(
                 },
                 confirmButton = {
                     Button(onClick = {
-                        val imageFile = selectedImageUri?.let { ImageUtils.compressImage(it, context) }
+                        val imageFile = selectedImageUri?.let { ImageUtils.compressImage(context, it) }
                         selectedIncidentId?.let { id ->
                             viewModel.resolveIncident(id, resolutionComment, imageFile)
                         }

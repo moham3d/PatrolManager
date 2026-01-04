@@ -8,11 +8,14 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import com.patrolshield.data.local.dao.IncidentDao
+import com.patrolshield.data.local.dao.SyncLogDao
+import com.patrolshield.data.local.entities.IncidentEntity
+import com.patrolshield.data.local.entities.SyncLogEntity
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 @Singleton
 class IncidentRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
@@ -75,17 +78,23 @@ class IncidentRepositoryImpl @Inject constructor(
                         apiId = dto.id,
                         type = dto.type,
                         priority = dto.priority,
-                        description = dto.description,
+                        description = dto.description ?: "",
                         siteId = dto.siteId,
                         lat = dto.lat,
                         lng = dto.lng,
-                        imagePath = dto.evidence.firstOrNull()?.filePath,
-                        createdAt = dto.createdAt,
+                        imagePath = dto.evidence?.firstOrNull()?.filePath,
+                        createdAt = java.time.format.DateTimeFormatter.ISO_INSTANT.run {
+                            try {
+                                java.time.Instant.parse(dto.createdAt).toEpochMilli()
+                            } catch (e: Exception) {
+                                System.currentTimeMillis()
+                            }
+                        },
                         syncStatus = "synced"
                     )
                 }
                 // Clear old and insert new (simple cache strategy)
-                incidentDao.clearAll() // Need to add clearAll to Dao or manually delete
+                incidentDao.clearAll()
                 incidentDao.insertIncidents(entities)
             }
         } catch (e: Exception) {
@@ -97,7 +106,7 @@ class IncidentRepositoryImpl @Inject constructor(
             val entities = incidentDao.getAllIncidents()
             val dtos = entities.map { entity ->
                 com.patrolshield.data.remote.dto.Incident(
-                    id = entity.apiId,
+                    id = entity.apiId ?: 0,
                     type = entity.type,
                     priority = entity.priority,
                     status = "active", // Default since we fetch active
@@ -106,7 +115,7 @@ class IncidentRepositoryImpl @Inject constructor(
                     reporterId = 0, // Not stored in entity
                     lat = entity.lat,
                     lng = entity.lng,
-                    createdAt = entity.createdAt,
+                    createdAt = java.time.Instant.ofEpochMilli(entity.createdAt).toString(),
                     evidence = if (entity.imagePath != null) listOf(
                         com.patrolshield.data.remote.dto.IncidentEvidence(0, entity.imagePath, "image")
                     ) else emptyList()

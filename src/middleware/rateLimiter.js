@@ -3,7 +3,7 @@ const rateLimit = require('express-rate-limit');
 // Strict limit for auth routes
 exports.authRateLimit = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 5, // 5 attempts
+  max: 100, // 100 attempts (Dev mode relaxed)
   message: {
     success: false,
     message: 'Too many login attempts. Please try again later.'
@@ -35,10 +35,10 @@ exports.apiRateLimit = rateLimit({
 
 // General limit for all other routes
 exports.generalRateLimit = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 1000, // 1000 requests per minute
-    message: {
-        success: false,
-        message: 'Too many requests from this IP, please try again after a minute'
-    }
+  windowMs: 60 * 1000, // 1 minute
+  max: 1000, // 1000 requests per minute
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again after a minute'
+  }
 });

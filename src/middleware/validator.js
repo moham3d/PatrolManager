@@ -37,6 +37,20 @@ const incidentValidation = [
     .withMessage('Invalid longitude')
 ];
 
+const patrolValidation = [
+  body('name')
+    .trim()
+    .isLength({ min: 3, max: 100 })
+    .withMessage('Patrol name must be 3-100 characters'),
+  body('duration')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Duration must be a positive number'),
+  body('siteId')
+    .isInt()
+    .withMessage('Valid Site ID is required')
+];
+
 const validateRequest = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -52,5 +66,6 @@ const validateRequest = (req, res, next) => {
 module.exports = {
   siteValidation,
   incidentValidation,
+  patrolValidation,
   validateRequest
 };

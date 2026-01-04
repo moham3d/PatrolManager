@@ -1,7 +1,7 @@
 const LocalStrategy = require('passport-local').Strategy;
 const JwtStrategy = require('passport-jwt').Strategy;
 const ExtractJwt = require('passport-jwt').ExtractJwt;
-const { User, Role, Permission } = require('../models');
+const { User, Role, Permission, Site } = require('../models');
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_TIME = 15 * 60 * 1000; // 15 minutes
@@ -27,6 +27,9 @@ module.exports = function (passport) {
                 include: [{
                     model: Role,
                     include: [Permission]
+                }, {
+                    model: Site,
+                    as: 'assignedSites'
                 }]
             });
             if (!user) {
@@ -68,6 +71,9 @@ module.exports = function (passport) {
                 include: [{
                     model: Role,
                     include: [Permission]
+                }, {
+                    model: Site,
+                    as: 'assignedSites'
                 }]
             });
             if (user) return done(null, user);
@@ -87,6 +93,9 @@ module.exports = function (passport) {
                 include: [{
                     model: Role,
                     include: [Permission]
+                }, {
+                    model: Site,
+                    as: 'assignedSites'
                 }]
             });
             done(null, user);

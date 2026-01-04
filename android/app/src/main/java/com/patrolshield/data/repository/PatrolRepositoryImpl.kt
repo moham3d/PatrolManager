@@ -1,8 +1,13 @@
 package com.patrolshield.data.repository
 
 import com.patrolshield.common.Resource
+import com.patrolshield.data.local.dao.PatrolDao
 import com.patrolshield.data.local.dao.ShiftDao
+import com.patrolshield.data.local.dao.SyncLogDao
+import com.patrolshield.data.local.entities.CheckpointEntity
+import com.patrolshield.data.local.entities.PatrolEntity
 import com.patrolshield.data.local.entities.ShiftEntity
+import com.patrolshield.data.local.entities.SyncLogEntity
 import com.patrolshield.data.remote.ApiService
 import com.patrolshield.data.remote.dto.*
 import com.patrolshield.domain.repository.PatrolRepository
@@ -10,7 +15,6 @@ import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@Singleton
 @Singleton
 class PatrolRepositoryImpl @Inject constructor(
     private val apiService: ApiService,
@@ -104,7 +108,7 @@ class PatrolRepositoryImpl @Inject constructor(
         // 2. Return from DB (Single Source of Truth)
         return try {
             val localPatrols = patrolDao.getSchedule()
-            val dtos = localPatrols.map { p ->
+            val dtos: List<PatrolDto> = localPatrols.map { p ->
                 PatrolDto(
                     id = p.patrol.id,
                     name = p.patrol.name,
@@ -149,7 +153,7 @@ class PatrolRepositoryImpl @Inject constructor(
 
     override suspend fun scanCheckpoint(runId: Int, checkpointId: Int, value: String, lat: Double?, lng: Double?): Resource<Unit> {
         // 1. Update Local DB
-        patrolDao.updateCheckpointStatus(checkpointId, true, System.currentTimeMillis())
+        patrolDao.updateCheckpointStatus(checkpointId, true, System.currentTimeMillis().toString())
 
         // 2. Try API
         return try {

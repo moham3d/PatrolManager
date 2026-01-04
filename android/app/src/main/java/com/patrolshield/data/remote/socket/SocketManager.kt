@@ -28,8 +28,8 @@ class SocketManager @Inject constructor(
             opts.reconnection = true
             opts.forceNew = true
 
-            // Use 10.0.2.2 for emulator
-            socket = IO.socket("http://10.0.2.2:3000", opts)
+            // Using dev IP
+            socket = IO.socket("http://192.168.1.41:3000", opts)
 
             socket?.on(Socket.EVENT_CONNECT) {
                 Log.d(TAG, "Connected to Socket.IO")

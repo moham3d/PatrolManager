@@ -26,8 +26,8 @@ exports.index = async (req, res) => {
 
         const totalPages = Math.ceil(count / limit);
 
-        renderOrJson(res, 'patrols/index', { 
-            title: 'Patrol Templates', 
+        renderOrJson(res, 'patrols/index', {
+            title: 'Patrol Templates',
             templates,
             currentPage: page,
             totalPages,
@@ -203,10 +203,10 @@ exports.showRun = async (req, res) => {
             order: [['timestamp', 'ASC']]
         });
 
-        res.render('patrols/run_details', { 
-            title: `Patrol Run #${run.id}`, 
-            run, 
-            gpsLogs 
+        res.render('patrols/run_details', {
+            title: `Patrol Run #${run.id}`,
+            run,
+            gpsLogs
         });
     } catch (err) {
         console.error(err);
@@ -220,7 +220,19 @@ exports.showRun = async (req, res) => {
 exports.myPatrols = async (req, res) => {
     try {
         console.log('GET /patrols/my-schedule hit by user:', req.user.id);
+
+        // Get user's assigned site IDs
+        const userSiteIds = req.user.assignedSites ? req.user.assignedSites.map(s => s.id) : [];
+        console.log('User assigned sites:', userSiteIds);
+
+        if (userSiteIds.length === 0) {
+            return res.json([]); // No sites assigned = No patrols
+        }
+
         const templates = await PatrolTemplate.findAll({
+            where: {
+                siteId: userSiteIds
+            },
             include: [{ model: Site }]
         });
 

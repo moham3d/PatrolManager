@@ -33,6 +33,7 @@ fun PatrolExecutionScreen(
     val currentIndex = viewModel.currentIndex.value
     val isLoading = viewModel.isLoading.value
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
     var showScanner by remember { mutableStateOf(false) }
 
     if (showScanner) {

@@ -16,4 +16,9 @@ interface IncidentDao {
 
     @Query("SELECT * FROM incidents ORDER BY createdAt DESC")
     suspend fun getAllIncidents(): List<IncidentEntity>
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertIncidents(incidents: List<IncidentEntity>)
+
+    @Query("DELETE FROM incidents")
+    suspend fun clearAll()
 }

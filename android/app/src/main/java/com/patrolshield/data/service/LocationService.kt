@@ -15,8 +15,13 @@ import androidx.core.app.ServiceCompat
 import com.google.android.gms.location.*
 import com.patrolshield.R
 import com.patrolshield.common.UserPreferences
+import com.patrolshield.data.local.entities.SyncLogEntity
 import com.patrolshield.data.remote.socket.SocketManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -93,7 +98,7 @@ class LocationService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("PatrolShield Active")
             .setContentText("Tracking location for patrol...")
-            .setSmallIcon(R.drawable.ic_launcher_foreground) // Try to use generic or launcher
+            .setSmallIcon(R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
