@@ -96,20 +96,29 @@ router.get('/', ensureAuth, async (req, res) => {
 
         else {
             // Guard
+            console.log(`[Dashboard] Guard ID: ${req.user.id}`);
+            
             const activeShift = await Shift.findOne({
                 where: { userId: req.user.id, status: 'active' },
                 include: [{ model: Site, as: 'site' }]
             });
 
+            // Look for next scheduled work (including running late)
+            // We want scheduled shifts where the END time hasn't passed yet.
+            const now = new Date();
+            console.log(`[Dashboard] Searching for shifts ending after: ${now.toISOString()}`);
+            
             const nextShift = await Shift.findOne({
                 where: {
                     userId: req.user.id,
                     status: 'scheduled',
-                    startTime: { [Op.gt]: new Date() }
+                    endTime: { [Op.gt]: now }
                 },
                 order: [['startTime', 'ASC']],
                 include: [{ model: Site, as: 'site' }]
             });
+            
+            console.log(`[Dashboard] Found nextShift: ${nextShift ? nextShift.id : 'null'}`);
 
             return res.render('dashboard/guard', { title: 'Guard Dashboard', activeShift, nextShift });
         }

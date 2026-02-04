@@ -63,8 +63,9 @@
                             <p class="text-gray-500 mb-6">No upcoming shifts scheduled.</p>
                             <% } %>
 
+                            <a href="/shifts/my-schedule" class="text-blue-600 font-bold hover:underline block mt-2">
                                 VIEW SCHEDULE
-                                </a>
+                            </a>
 
                                 <% if (nextShift) { %>
                                     <form action="/shifts/clock-in" method="POST" class="mt-4" id="clockInForm">

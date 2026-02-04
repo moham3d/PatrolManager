@@ -75,9 +75,19 @@ exports.store = async (req, res) => {
 
     try {
 
-        const { name, email, password, roleId, managerId } = req.body;
+        const { name, email, password, roleId, managerId, nationalId, phoneNumber } = req.body;
+        const profilePicture = req.file ? `/uploads/users/${req.file.filename}` : null;
 
-        const user = await User.create({ name, email, password, roleId, managerId: managerId || null });
+        const user = await User.create({
+            name,
+            email,
+            password,
+            roleId,
+            managerId: managerId || null,
+            nationalId,
+            phoneNumber,
+            profilePicture
+        });
 
         res.format({
             'text/html': () => res.redirect('/users'),
@@ -142,7 +152,7 @@ exports.update = async (req, res) => {
     }
 
     try {
-        const { name, email, password, roleId, managerId } = req.body;
+        const { name, email, password, roleId, managerId, nationalId, phoneNumber } = req.body;
         const user = await User.findByPk(req.params.id);
 
         if (!user) return res.status(404).send('User not found');
@@ -151,6 +161,12 @@ exports.update = async (req, res) => {
         user.email = email;
         user.roleId = roleId;
         user.managerId = managerId || null;
+        user.nationalId = nationalId;
+        user.phoneNumber = phoneNumber;
+
+        if (req.file) {
+            user.profilePicture = `/uploads/users/${req.file.filename}`;
+        }
 
         // Only update password if provided
         if (password && password.trim() !== '') {

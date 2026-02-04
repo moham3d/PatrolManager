@@ -20,8 +20,31 @@
                     </div>
                     <% } %>
 
-                        <form action="<%= user ? '/users/' + user.id : '/users' %>" method="POST">
+                        <form action="<%= user ? '/users/' + user.id : '/users' %>" method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            
+                            <!-- Profile Picture Upload -->
+                            <div class="mb-6 text-center">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">Profile Picture</label>
+                                <div class="mt-2 flex justify-center">
+                                    <% if (user && user.profilePicture) { %>
+                                        <img src="<%= user.profilePicture %>" alt="Profile" class="h-24 w-24 rounded-full object-cover border-2 border-gray-200 mb-2">
+                                    <% } else { %>
+                                        <span class="inline-block h-24 w-24 rounded-full overflow-hidden bg-gray-100">
+                                            <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                                            </svg>
+                                        </span>
+                                    <% } %>
+                                </div>
+                                <input type="file" name="profilePicture" accept="image/*" class="mt-2 text-sm text-gray-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-full file:border-0
+                                    file:text-sm file:font-semibold
+                                    file:bg-blue-50 file:text-blue-700
+                                    hover:file:bg-blue-100">
+                            </div>
+
                             <div class="mb-4">
                                 <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
                                     Full Name
@@ -40,6 +63,26 @@
                                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                                     id="email" type="email" name="email" value="<%= user ? user.email : '' %>" required
                                     placeholder="john@example.com">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="phoneNumber">
+                                    Phone Number
+                                </label>
+                                <input
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    id="phoneNumber" type="text" name="phoneNumber" value="<%= user ? user.phoneNumber : '' %>"
+                                    placeholder="+1 234 567 890">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="nationalId">
+                                    National ID / Passport Number
+                                </label>
+                                <input
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    id="nationalId" type="text" name="nationalId" value="<%= user ? user.nationalId : '' %>"
+                                    placeholder="A123456789">
                             </div>
 
                             <div class="mb-4">

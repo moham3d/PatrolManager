@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
-const { Shift, User, Role, Permission } = require('../models');
+const { Shift, User, Role, Permission, GPSLog } = require('../models');
+const { Op } = require('sequelize');
 const jwt = require('jsonwebtoken');
 
 let io;
@@ -248,21 +249,42 @@ exports.init = (httpServer) => {
             const onlineUser = onlineUsers.get(socket.id);
             if (onlineUser) {
                 try {
-                    const activeShift = await Shift.findOne({
+                    // Check for ACTIVE shift OR SCHEDULED shift starting soon
+                    const now = new Date();
+                    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+
+                    const validShift = await Shift.findOne({
                         where: {
                             userId: onlineUser.userId,
-                            status: 'active'
+                            [Op.or]: [
+                                { status: 'active' },
+                                {
+                                    status: 'scheduled',
+                                    startTime: { [Op.lte]: oneHourFromNow }, // Starts within 1 hour
+                                    endTime: { [Op.gt]: now } // Hasn't ended yet
+                                }
+                            ]
                         }
                     });
 
-                    if (!activeShift) {
-                        if (callback) callback({ success: false, message: 'No active shift' });
+                    if (!validShift) {
+                        if (callback) callback({ success: false, message: 'No active or upcoming shift' });
                         return;
                     }
 
+                    // Update memory state
                     onlineUser.lat = loc.lat;
                     onlineUser.lng = loc.lng;
                     onlineUser.lastUpdate = new Date();
+
+                    // Persist to Database
+                    await GPSLog.create({
+                        userId: onlineUser.userId,
+                        lat: loc.lat,
+                        lng: loc.lng,
+                        accuracy: loc.accuracy || null,
+                        timestamp: new Date()
+                    });
 
                     const payload = {
                         userId: onlineUser.userId,

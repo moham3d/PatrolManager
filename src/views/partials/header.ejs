@@ -39,30 +39,45 @@
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex items-center space-x-6">
                     <div class="space-x-4">
-                        <a href="/sites" class="hover:text-blue-200 transition-colors">Sites</a>
-                        <a href="/patrols" class="hover:text-blue-200 transition-colors">Patrols</a>
-                        <a href="/incidents" class="hover:text-blue-200 transition-colors">Incidents</a>
-                        <a href="/reports" class="hover:text-blue-200 transition-colors">Data & Reports</a>
-                        <a href="/shifts" class="hover:text-blue-200 transition-colors">Shifts</a>
+                        <% 
+                        const currentRole = (typeof user !== 'undefined' && user && user.Role) ? user.Role.name.toLowerCase() : '';
+                        const canManage = ['admin', 'manager', 'supervisor'].includes(currentRole);
+                        const canViewReports = ['admin', 'manager'].includes(currentRole);
+                        %>
 
-                        <% if (typeof user !=='undefined' && user && user.Role && ['admin', 'manager'
-                            ].includes(user.Role.name.toLowerCase())) { %>
+                        <% if (canManage) { %>
+                            <a href="/sites" class="hover:text-blue-200 transition-colors">Sites</a>
+                            <a href="/patrols" class="hover:text-blue-200 transition-colors">Patrols</a>
+                            <a href="/incidents" class="hover:text-blue-200 transition-colors">Incidents</a>
+                        <% } %>
+
+                        <% if (canViewReports) { %>
+                            <a href="/reports" class="hover:text-blue-200 transition-colors">Data & Reports</a>
+                        <% } %>
+
+                        <% if (canManage) { %>
+                            <a href="/shifts" class="hover:text-blue-200 transition-colors">Shifts</a>
+                            <a href="/schedules" class="hover:text-blue-200 transition-colors">Rostering</a>
+                        <% } else if (currentRole === 'guard') { %>
+                            <a href="/shifts/my-schedule" class="hover:text-blue-200 transition-colors">My Schedule</a>
+                        <% } %>
+
+                        <% if (['admin', 'manager'].includes(currentRole)) { %>
                             <a href="/users" class="hover:text-blue-200 transition-colors">Users</a>
-                            <% } %>
+                        <% } %>
 
-                                <% if (typeof user !=='undefined' && user && user.Role) { %>
-                                    <% if (['admin', 'manager' ].includes(user.Role.name.toLowerCase())) { %>
-                                        <a href="/docs/admin" class="hover:text-blue-200 transition-colors"><i
-                                                class="fas fa-book"></i> Manual</a>
-                                        <% } else { %>
-                                            <a href="/docs/guard" class="hover:text-blue-200 transition-colors"><i
-                                                    class="fas fa-book"></i> Manual</a>
-                                            <% } %>
-                                                <% } else { %>
-                                                    <a href="/docs/manual"
-                                                        class="hover:text-blue-200 transition-colors"><i
-                                                            class="fas fa-book"></i> Manual</a>
-                                                    <% } %>
+                        <% if (typeof user !=='undefined' && user && user.Role) { %>
+                            <% if (['admin', 'manager' ].includes(user.Role.name.toLowerCase())) { %>
+                                <a href="/docs/admin" class="hover:text-blue-200 transition-colors"><i
+                                        class="fas fa-book"></i> Manual</a>
+                            <% } else { %>
+                                <a href="/docs/guard" class="hover:text-blue-200 transition-colors"><i
+                                        class="fas fa-book"></i> Manual</a>
+                            <% } %>
+                        <% } else { %>
+                            <a href="/docs/manual" class="hover:text-blue-200 transition-colors"><i
+                                    class="fas fa-book"></i> Manual</a>
+                        <% } %>
                     </div>
                     <div class="border-l border-blue-700 pl-6">
                         <% if (typeof user !=='undefined' && user) { %>
@@ -82,36 +97,52 @@
             <!-- Mobile Menu (Hidden by default) -->
             <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-blue-800">
                 <div class="flex flex-col space-y-3 mt-4">
-                    <a href="/sites" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Sites</a>
-                    <a href="/patrols" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Patrols</a>
-                    <a href="/incidents"
-                        class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Incidents</a>
-                    <a href="/reports" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Data &
-                        Reports</a>
-                    <a href="/shifts" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Shifts</a>
+                    <% 
+                    // Redefine for safety in this scope block if needed, or reuse if EJS scope permits. 
+                    // Assuming local scope per scriptlet tag group, better to redefine or check.
+                    const mRole = (typeof user !== 'undefined' && user && user.Role) ? user.Role.name.toLowerCase() : '';
+                    const mCanManage = ['admin', 'manager', 'supervisor'].includes(mRole);
+                    const mCanViewReports = ['admin', 'manager'].includes(mRole);
+                    %>
 
-                    <% if (typeof user !=='undefined' && user && user.Role && ['admin', 'manager'
-                        ].includes(user.Role.name.toLowerCase())) { %>
+                    <% if (mCanManage) { %>
+                        <a href="/sites" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Sites</a>
+                        <a href="/patrols" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Patrols</a>
+                        <a href="/incidents" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Incidents</a>
+                    <% } %>
+
+                    <% if (mCanViewReports) { %>
+                        <a href="/reports" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Data & Reports</a>
+                    <% } %>
+
+                    <% if (mCanManage) { %>
+                        <a href="/shifts" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Shifts</a>
+                        <a href="/schedules" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Rostering</a>
+                    <% } else if (mRole === 'guard') { %>
+                        <a href="/shifts/my-schedule" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">My Schedule</a>
+                    <% } %>
+
+                    <% if (['admin', 'manager'].includes(mRole)) { %>
                         <a href="/users" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Users</a>
+                    <% } %>
+
+                    <% if (typeof user !=='undefined' && user && user.Role) { %>
+                        <% if (['admin', 'manager' ].includes(user.Role.name.toLowerCase())) { %>
+                            <a href="/docs/admin"
+                                class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
+                                    class="fas fa-book"></i> Manual</a>
+                        <% } else { %>
+                            <a href="/docs/guard"
+                                class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
+                                    class="fas fa-book"></i> Manual</a>
                         <% } %>
+                    <% } else { %>
+                        <a href="/docs/manual"
+                            class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
+                                class="fas fa-book"></i> Manual</a>
+                    <% } %>
 
-                            <% if (typeof user !=='undefined' && user && user.Role) { %>
-                                <% if (['admin', 'manager' ].includes(user.Role.name.toLowerCase())) { %>
-                                    <a href="/docs/admin"
-                                        class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
-                                            class="fas fa-book"></i> Manual</a>
-                                    <% } else { %>
-                                        <a href="/docs/guard"
-                                            class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
-                                                class="fas fa-book"></i> Manual</a>
-                                        <% } %>
-                                            <% } else { %>
-                                                <a href="/docs/manual"
-                                                    class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
-                                                        class="fas fa-book"></i> Manual</a>
-                                                <% } %>
-
-                                                    <div class="border-t border-blue-800 pt-3 mt-2">
+                    <div class="border-t border-blue-800 pt-3 mt-2">
                                                         <% if (typeof user !=='undefined' && user) { %>
                                                             <div class="px-3 py-2 mb-2 text-blue-200 text-sm">Signed in
                                                                 as <%= user.name %>

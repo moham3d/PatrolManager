@@ -64,15 +64,16 @@
 
                         <div>
                             <label class="block text-gray-700 text-sm font-bold mb-2">
-                                Site Location & Geofence <span class="text-xs font-normal text-gray-500">(Draw polygon for boundaries)</span>
+                                Site Location & Geofence <span class="text-red-500">*</span> <span class="text-xs font-normal text-gray-500">(Draw polygon or place marker)</span>
                             </label>
                             <div id="map" class="h-80 rounded-lg border border-gray-300 shadow-inner"></div>
-                            <div id="coords-display" class="mt-2 text-xs text-gray-600 italic">No coordinates set.</div>
+                            <div id="coords-display" class="mt-2 text-xs text-gray-600 italic">No coordinates set. Please place a marker.</div>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-end border-t pt-4">
                         <button
+                            id="submit-btn"
                             class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded shadow text-lg transition"
                             type="submit">
                             <%= site && site.id ? 'Update Site' : 'Create Site' %>
@@ -83,6 +84,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // ... (previous map init code) ...
             const initialLat = 51.505;
             const initialLng = -0.09;
 
@@ -117,6 +119,18 @@
             const lngInput = document.getElementById('longitude');
             const boundariesInput = document.getElementById('boundaries');
             const coordsDisplay = document.getElementById('coords-display');
+            const form = document.querySelector('form');
+
+            form.addEventListener('submit', function(e) {
+                if (!latInput.value || !lngInput.value) {
+                    e.preventDefault();
+                    alert('Please set the site location by placing a marker or drawing a polygon on the map.');
+                    map.getContainer().scrollIntoView({ behavior: 'smooth' });
+                    // Highlight map
+                    map.getContainer().classList.add('ring', 'ring-red-500', 'ring-4');
+                    setTimeout(() => map.getContainer().classList.remove('ring', 'ring-red-500', 'ring-4'), 3000);
+                }
+            });
 
             map.on(L.Draw.Event.CREATED, function (event) {
                 const layer = event.layer;

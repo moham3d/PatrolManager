@@ -14,6 +14,7 @@ This document provides a quick reference for all AI agents created for the Patro
 | **Frontend Developer** | `.agent/rules/frontend-developer.md` | EJS views, Socket.IO UI, charts, maps |
 | **Mobile Engineer** | `.agent/rules/mobile-engineer.md` | Android native, Kotlin, Jetpack Compose, offline-first |
 | **DevOps Engineer** | `.agent/rules/devops-engineer.md` | Cron jobs, logging, monitoring, automation |
+| **QA Engineer** | `.agent/rules/qa-engineer.md` | Testing (Unit, Integration), Security verification, CI/CD |
 | **Integration Specialist** | `.agent/rules/integration-specialist.md` | Socket.IO, real-time events, rooms, broadcasts |
 | **Product Manager** | `.agent/rules/product-manager.md` | Strategy, design, engineering triad |
 
@@ -113,6 +114,21 @@ This document provides a quick reference for all AI agents created for the Patro
 - Implement automated reports
 - Fix attendance monitor issues
 - Upgrade to Winston logging
+
+---
+
+### 🧪 QA Engineer
+**Purpose**: Verify system integrity and security through automated testing
+**Key Files**:
+- `/tests/` - All test files
+- `/jest.config.js` - Test configuration
+
+**Critical Tasks**:
+- Implement security tests (RBAC, Rate Limiting)
+- Create integration tests for all controllers
+- Setup CI/CD test pipeline
+- Verify input validation rules
+- Ensure >80% code coverage
 
 ---
 

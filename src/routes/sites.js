@@ -9,11 +9,12 @@ const { validateRequest, siteValidation } = require('../middleware/validator');
 router.use(apiRateLimit);
 
 router.get('/', ensureAuth, siteController.index);
-router.get('/:id', ensureAuth, siteController.show);
 
 // Admin & Manager Only
 router.get('/create', ensureAuth, ensureRole(['admin', 'manager']), siteController.create);
 router.post('/', ensureAuth, ensureRole(['admin', 'manager']), siteValidation, validateRequest, siteController.store);
+
+router.get('/:id', ensureAuth, siteController.show);
 router.get('/:id/edit', ensureAuth, ensureRole(['admin', 'manager']), siteController.edit);
 router.post('/:id', ensureAuth, ensureRole(['admin', 'manager']), siteValidation, validateRequest, siteController.update);
 router.post('/:id/delete', ensureAuth, ensureRole(['admin', 'manager']), siteController.destroy);

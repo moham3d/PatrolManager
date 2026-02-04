@@ -50,6 +50,27 @@ exports.index = async (req, res) => {
     }
 };
 
+exports.getMySchedule = async (req, res) => {
+    try {
+        const shifts = await Shift.findAll({
+            where: {
+                userId: req.user.id,
+                status: ['scheduled', 'active']
+            },
+            include: [{ model: Site, as: 'site' }],
+            order: [['startTime', 'ASC']]
+        });
+
+        res.format({
+            'text/html': () => res.render('shifts/my_schedule', { shifts }),
+            'application/json': () => res.json({ success: true, data: shifts })
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: true, message: err.message });
+    }
+};
+
 exports.create = async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -97,6 +118,22 @@ exports.create = async (req, res) => {
         const createdShifts = await Shift.bulkCreate(shiftsToCreate, { transaction: t });
 
         await t.commit();
+
+        // Emit Socket Events
+        try {
+            const io = require('../sockets/socketHandler').getIO();
+            for (const shift of createdShifts) {
+                io.to(`user_${shift.userId}`).emit('shift_assigned', {
+                    shiftId: shift.id,
+                    siteId: shift.siteId,
+                    startTime: shift.startTime,
+                    endTime: shift.endTime,
+                    message: 'New shift assigned'
+                });
+            }
+        } catch (socketErr) {
+            console.error("Socket emit error:", socketErr);
+        }
 
         res.format({
             'text/html': () => {

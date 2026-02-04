@@ -59,15 +59,22 @@
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 w-10 h-10">
-                                                <div
-                                                    class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
-                                                    <%= user.name.charAt(0).toUpperCase() %>
-                                                </div>
+                                                <% if (user.profilePicture) { %>
+                                                    <img class="w-10 h-10 rounded-full object-cover border border-gray-200" src="<%= user.profilePicture %>" alt="" />
+                                                <% } else { %>
+                                                    <div
+                                                        class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
+                                                        <%= user.name.charAt(0).toUpperCase() %>
+                                                    </div>
+                                                <% } %>
                                             </div>
                                             <div class="ml-3">
                                                 <p class="text-gray-900 whitespace-no-wrap font-medium">
                                                     <%= user.name %>
                                                 </p>
+                                                <% if (user.phoneNumber) { %>
+                                                    <p class="text-gray-500 text-xs"><%= user.phoneNumber %></p>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </td>

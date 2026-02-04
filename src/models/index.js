@@ -17,7 +17,7 @@ const models = {
     Shift: require('./Shift')(db, Sequelize),
     Attendance: require('./Attendance')(db, Sequelize),
     Visitor: require('./Visitor')(db, Sequelize),
-    Schedule: require('./Schedule')(db, Sequelize),
+    // Schedule: require('./Schedule')(db, Sequelize),
     IncidentEvidence: require('./IncidentEvidence')(db, Sequelize),
     IncidentComment: require('./IncidentComment')(db, Sequelize),
     GPSLog: require('./GPSLog')(db, Sequelize),

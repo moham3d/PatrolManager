@@ -9,6 +9,7 @@ const { validateRequest } = require('../middleware/validator');
 router.use(apiRateLimit);
 
 router.get('/', ensureAuth, shiftController.index);
+router.get('/my-schedule', ensureAuth, shiftController.getMySchedule);
 router.post('/clock-in', ensureAuth, [
     body('siteId').isInt(),
     body('latitude').isFloat(),

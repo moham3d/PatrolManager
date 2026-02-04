@@ -19,8 +19,16 @@ exports.login = (req, res, next) => {
         req.session.regenerate((err) => {
             if (err) return next(err);
 
-            req.logIn(user, (err) => {
+            req.logIn(user, async (err) => {
                 if (err) return next(err);
+
+                // Update Last Login
+                try {
+                    user.lastLogin = new Date();
+                    await user.save();
+                } catch (saveErr) {
+                    console.error("Failed to update last login", saveErr);
+                }
 
                 if (req.xhr || req.headers.accept?.includes('json')) {
                     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1d' });

@@ -35,6 +35,22 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.BOOLEAN,
             defaultValue: true
         },
+        profilePicture: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        nationalId: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        phoneNumber: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        lastLogin: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
         createdBy: {
             type: DataTypes.INTEGER,
             allowNull: true

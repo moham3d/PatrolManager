@@ -1,8 +1,9 @@
-const { Schedule, Site, User } = require('../models');
+const { Shift, Site, User } = require('../models');
 
 exports.index = async (req, res) => {
     try {
-        const schedules = await Schedule.findAll({
+        const schedules = await Shift.findAll({
+            where: { status: 'scheduled' },
             include: ['site', 'user'],
             order: [['startTime', 'ASC']]
         });
@@ -32,7 +33,7 @@ exports.create = async (req, res) => {
             end.setDate(end.getDate() + 1);
         }
 
-        const schedule = await Schedule.create({
+        const shift = await Shift.create({
             userId,
             siteId,
             startTime: start,
@@ -42,7 +43,7 @@ exports.create = async (req, res) => {
 
         res.format({
             'text/html': () => res.redirect('/schedules'),
-            'application/json': () => res.status(201).json(schedule)
+            'application/json': () => res.status(201).json(shift)
         });
     } catch (err) {
         console.error(err);
@@ -52,7 +53,7 @@ exports.create = async (req, res) => {
 
 exports.delete = async (req, res) => {
     try {
-        await Schedule.destroy({ where: { id: req.params.id } });
+        await Shift.destroy({ where: { id: req.params.id } });
         res.format({
             'text/html': () => res.redirect('/schedules'),
             'application/json': () => res.json({ message: 'Deleted' })
