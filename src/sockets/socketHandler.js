@@ -105,6 +105,33 @@ exports.init = (httpServer) => {
             socket.join(room);
         });
 
+        // --- Walkie Talkie (PTT) ---
+        socket.on('voice_message', (data) => {
+            // data: { siteId, audioBlob }
+            if (!data || !data.audioBlob || !data.siteId) return;
+
+            // Broadcast to site room (Guards + Supervisors + Admin)
+            // Only allows broadcasting if user is actually joined to that room (Security)
+            if (socket.rooms.has(`site_${data.siteId}`)) {
+                socket.to(`site_${data.siteId}`).emit('play_voice', {
+                    userId: user.id,
+                    userName: user.name,
+                    audioBlob: data.audioBlob,
+                    siteId: data.siteId
+                });
+            } else {
+                // Allow admins to speak to any site
+                if (roleName === 'admin') {
+                     socket.to(`site_${data.siteId}`).emit('play_voice', {
+                        userId: user.id,
+                        userName: user.name,
+                        audioBlob: data.audioBlob,
+                        siteId: data.siteId
+                    });
+                }
+            }
+        });
+
         // --- Emergency Events ---
         socket.on('panic_alert', (data, callback) => {
             if (!data || !data.location) {

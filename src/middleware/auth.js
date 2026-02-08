@@ -1,15 +1,57 @@
 const passport = require('passport');
+const { Role, Permission } = require('../models'); // Import models
 
+// Helper to check permission
+const checkPermission = (permissionSlug) => {
+    return async (req, res, next) => {
+        try {
+            if (!req.user || !req.user.Role) {
+                // If checking API/JSON
+                if (req.xhr || req.headers.accept?.includes('json') || req.path.startsWith('/api')) {
+                    return res.status(401).json({ error: true, message: 'Unauthorized' });
+                }
+                return res.redirect('/login');
+            }
+
+            // Super Admin bypass (Optional, but useful)
+            if (req.user.Role.name.toLowerCase() === 'admin') {
+                return next();
+            }
+
+            // Check if Role has Permission
+            const role = await Role.findByPk(req.user.roleId, {
+                include: [{
+                    model: Permission,
+                    where: { name: permissionSlug }, // Assuming 'name' matches slug, or change to 'slug' if added
+                    required: true
+                }]
+            });
+
+            if (role) {
+                return next();
+            }
+
+            // Access Denied
+            if (req.accepts('html') && !req.is('json') && !req.path.startsWith('/api')) {
+                req.flash('error', 'Access Denied: Insufficient permissions.');
+                return res.redirect('/');
+            }
+            res.status(403).json({ error: true, message: 'Access Denied: Insufficient permissions' });
+
+        } catch (err) {
+            console.error('RBAC Error:', err);
+            res.status(500).json({ error: true, message: 'Internal Server Error' });
+        }
+    };
+};
+
+// Legacy Role Check (Kept for backward compatibility)
 const checkRole = (roles) => {
     return (req, res, next) => {
-        // Allow single role string or array
         const allowedRoles = Array.isArray(roles) ? roles.map(r => r.toLowerCase()) : [roles.toLowerCase()];
-
         if (req.user && req.user.Role && allowedRoles.includes(req.user.Role.name.toLowerCase())) {
             return next();
         }
-
-        // Access Denied
         if (req.accepts('html') && !req.is('json') && !req.path.startsWith('/api')) {
             req.flash('error', 'Access Denied: You do not have permission to view this resource.');
             return res.redirect('/');
@@ -19,28 +61,19 @@ const checkRole = (roles) => {
 };
 
 module.exports = {
-    // Check if user is authenticated (Web Session)
+    // Basic Auth
     isAuthenticated: (req, res, next) => {
-        if (req.isAuthenticated()) {
-            return next();
-        }
+        if (req.isAuthenticated()) return next();
         res.redirect('/login');
     },
 
-    // Check if user is authenticated (Web or Mobile)
+    // Hybrid Auth (Web + JWT)
     ensureAuth: (req, res, next) => {
-        // 1. Check Session
-        if (req.isAuthenticated()) {
-            return next();
-        }
-
-        // 2. Check JWT (Mobile)
-        passport.authenticate('jwt', { session: false }, (err, user, info) => {
+        if (req.isAuthenticated()) return next();
+        passport.authenticate('jwt', { session: false }, (err, user) => {
             if (err) return next(err);
             if (!user) {
-                if (req.accepts('html') && !req.is('json') && !req.path.startsWith('/api')) {
-                    return res.redirect('/login');
-                }
+                if (req.accepts('html') && !req.is('json') && !req.path.startsWith('/api')) return res.redirect('/login');
                 return res.status(401).json({ error: true, message: 'Unauthorized' });
             }
             req.user = user;
@@ -48,50 +81,32 @@ module.exports = {
         })(req, res, next);
     },
 
-    // Check for specific roles
+    // Legacy Role Check
     ensureRole: (roles) => {
         return (req, res, next) => {
-            // 1. Check Session
-            if (req.isAuthenticated()) {
-                return checkRole(roles)(req, res, next);
-            }
-
-            // 2. Check JWT (Mobile)
-            passport.authenticate('jwt', { session: false }, (err, user, info) => {
-                if (err) return next(err);
-                if (user) {
-                    req.user = user;
-                    return checkRole(roles)(req, res, next);
-                }
-                
-                if (req.xhr || req.headers.accept?.includes('json') || req.path.startsWith('/api')) {
-                    return res.status(401).json({ error: true, message: 'Authentication required' });
-                }
-                return res.redirect('/login');
+            if (req.isAuthenticated()) return checkRole(roles)(req, res, next);
+            passport.authenticate('jwt', { session: false }, (err, user) => {
+                if (user) { req.user = user; return checkRole(roles)(req, res, next); }
+                res.status(401).json({ error: true, message: 'Unauthorized' });
             })(req, res, next);
         };
     },
 
-    ensureAdmin: () => {
+    // New Permission Check
+    ensurePermission: (permission) => {
         return (req, res, next) => {
-            // 1. Check Session
+            // Check Session
             if (req.isAuthenticated()) {
-                return checkRole('admin')(req, res, next);
+                return checkPermission(permission)(req, res, next);
             }
-
-            // 2. Check JWT (Mobile)
-            passport.authenticate('jwt', { session: false }, (err, user, info) => {
+            // Check JWT
+            passport.authenticate('jwt', { session: false }, (err, user) => {
                 if (err) return next(err);
-                if (user) {
-                    req.user = user;
-                    return checkRole('admin')(req, res, next);
-                }
-                
-                if (req.xhr || req.headers.accept?.includes('json') || req.path.startsWith('/api')) {
-                    return res.status(401).json({ error: true, message: 'Authentication required' });
-                }
-                return res.redirect('/login');
+                if (user) { req.user = user; return checkPermission(permission)(req, res, next); }
+                res.status(401).json({ error: true, message: 'Unauthorized' });
             })(req, res, next);
         };
-    }
+    },
+
+    ensureAdmin: () => checkRole('admin') // Helper alias
 };

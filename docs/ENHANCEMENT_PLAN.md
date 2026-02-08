@@ -30,6 +30,39 @@ Allow admins to upload image files (blueprints, floor plans) for specific sites.
 *   Better visualization for guards in complex buildings.
 *   Professional presentation for clients.
 
+### 2. Walkie Talkie (Push-to-Talk) System
+**Status:** ✅ POC Verified
+**Priority:** High (Operational Efficiency)
+
+#### 📝 Description
+Enable voice communication between guards and the command center directly within the app. Replaces expensive traditional radio hardware. Uses a "Hold-to-Talk" mechanism similar to WhatsApp voice notes but with auto-playback.
+
+#### ⚙️ Technical Approach
+*   **Protocol**: WebSockets (Socket.io) for relaying Audio Blobs.
+*   **Audio Format**: WebM/Ogg (Efficient compression).
+*   **Channels**: Use Socket Rooms to isolate voice traffic per Site or Zone (e.g., `room:site_1`).
+*   **Reference**: See `docs/POC_WALKIE_TALKIE.md` for the successful proof-of-concept.
+
+---
+
+### 3. Dynamic RBAC (Role-Based Access Control)
+**Status:** Planned
+**Priority:** Critical (Security & Admin UX)
+
+#### 📝 Description
+Move from hardcoded roles (Admin/Guard) to a dynamic permission system. Admins should be able to create custom roles (e.g., "Camera Operator") and assign granular permissions via the dashboard without code changes.
+
+#### ⚙️ Technical Approach
+1.  **Database**:
+    *   Create `Permissions` table (e.g., `view_reports`, `delete_sites`).
+    *   Create `Roles` table (Dynamic).
+    *   Create `RolePermissions` (Many-to-Many link).
+2.  **Backend**:
+    *   Update `middleware/auth.js` to check `user.Role.Permissions` instead of role names.
+    *   Implement caching (Redis/Memory) for permissions to avoid DB hits on every request.
+3.  **Frontend**:
+    *   Build "Role Management" interface with checkboxes for permissions.
+
 ---
 
 ## 🛠️ Architecture Improvements
