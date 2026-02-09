@@ -1,8 +1,8 @@
 const passport = require('passport');
 const { Role, Permission } = require('../models'); // Import models
 
-// Helper to check permission
-const checkPermission = (permissionSlug) => {
+// Helper to check permission(s)
+const checkPermission = (permissionSlugs) => {
     return async (req, res, next) => {
         try {
             if (!req.user || !req.user.Role) {
@@ -18,16 +18,34 @@ const checkPermission = (permissionSlug) => {
                 return next();
             }
 
-            // Check if Role has Permission
-            const role = await Role.findByPk(req.user.roleId, {
-                include: [{
-                    model: Permission,
-                    where: { name: permissionSlug }, // Assuming 'name' matches slug, or change to 'slug' if added
-                    required: true
-                }]
-            });
+            const isArray = Array.isArray(permissionSlugs);
+            let hasPermission = false;
 
-            if (role) {
+            if (isArray) {
+                // Check if Role has ANY of the provided Permissions
+                const roleWithPermissions = await Role.findByPk(req.user.roleId, {
+                    include: [{
+                        model: Permission,
+                        as: 'permissions', // Use the alias defined in Role.js
+                        where: { slug: { [Sequelize.Op.in]: permissionSlugs } },
+                        required: true // Ensures that the role must have at least one of these permissions
+                    }]
+                });
+                hasPermission = !!roleWithPermissions;
+            } else {
+                // Check if Role has the single Permission
+                const roleWithPermission = await Role.findByPk(req.user.roleId, {
+                    include: [{
+                        model: Permission,
+                        as: 'permissions', // Use the alias defined in Role.js
+                        where: { slug: permissionSlugs },
+                        required: true
+                    }]
+                });
+                hasPermission = !!roleWithPermission;
+            }
+
+            if (hasPermission) {
                 return next();
             }
 
@@ -40,6 +58,7 @@ const checkPermission = (permissionSlug) => {
 
         } catch (err) {
             console.error('RBAC Error:', err);
+            // In case of any error, ensure an appropriate response is sent
             res.status(500).json({ error: true, message: 'Internal Server Error' });
         }
     };

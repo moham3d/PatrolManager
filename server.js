@@ -104,6 +104,9 @@ app.get('/debug/user', (req, res) => {
 app.use('/', require('./src/routes'));
 app.use('/reports', require('./src/routes/reports'));
 app.use('/schedules', require('./src/routes/schedules'));
+app.use('/api/rbac', require('./src/routes/rbac'));
+app.use('/api/test', require('./src/routes/test'));
+
 
 const { ValidationError, NotFoundError, AuthorizationError, BusinessLogicError } = require('./src/utils/errors');
 

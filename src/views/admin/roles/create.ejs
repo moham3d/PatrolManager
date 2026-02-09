@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - PatrolShield</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-shield-lock me-2"></i>PatrolShield</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/admin/users">Users</a>
+                <a class="nav-link" href="/admin/roles">Roles</a>
+                <a class="nav-link" href="/dashboard">Dashboard</a>
+                <a class="nav-link" href="/logout">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i><%= title %></h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (success.length > 0) { %>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <%= success %>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <% } %>
+                        <% if (error.length > 0) { %>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <%= error %>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <% } %>
+
+                        <form action="/admin/roles/create" method="POST">
+                            <input type="hidden" name="csrfToken" value="<%= csrfToken %>">
+
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Role Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required
+                                       placeholder="e.g., Camera Operator">
+                                <small class="text-muted">Enter a descriptive name for this role</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"
+                                          placeholder="Describe what this role is responsible for"></textarea>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6 class="mb-3"><i class="bi bi-check2-square me-2"></i>Permissions</h6>
+
+                                <% Object.entries(groupedPermissions).forEach(([category, perms]) => { %>
+                                    <div class="card mb-3">
+                                        <div class="card-header bg-light">
+                                            <strong><%= category %></strong>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <% perms.forEach(perm => { %>
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                   id="perm_<%= perm.id %>"
+                                                                   name="permissionIds"
+                                                                   value="<%= perm.id %>">
+                                                            <label class="form-check-label" for="perm_<%= perm.id %>">
+                                                                <%= perm.name %>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                <% }); %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save me-1"></i>Create Role
+                                </button>
+                                <a href="/admin/roles" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left me-1"></i>Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

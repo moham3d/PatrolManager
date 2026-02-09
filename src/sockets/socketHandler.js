@@ -317,6 +317,7 @@ exports.init = (httpServer) => {
                         userId: onlineUser.userId,
                         name: onlineUser.name,
                         role: onlineUser.role,
+                        status: validShift.status, // Include shift status
                         lat: onlineUser.lat,
                         lng: onlineUser.lng,
                         timestamp: onlineUser.lastUpdate

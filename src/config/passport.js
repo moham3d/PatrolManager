@@ -26,7 +26,7 @@ module.exports = function (passport) {
                 where: { email },
                 include: [{
                     model: Role,
-                    include: [Permission]
+                    include: [{ model: Permission, as: 'permissions' }]
                 }, {
                     model: Site,
                     as: 'assignedSites'
@@ -70,7 +70,7 @@ module.exports = function (passport) {
             const user = await User.findByPk(jwt_payload.id, {
                 include: [{
                     model: Role,
-                    include: [Permission]
+                    include: [{ model: Permission, as: 'permissions' }]
                 }, {
                     model: Site,
                     as: 'assignedSites'
@@ -92,7 +92,7 @@ module.exports = function (passport) {
             const user = await User.findByPk(id, {
                 include: [{
                     model: Role,
-                    include: [Permission]
+                    include: [{ model: Permission, as: 'permissions' }]
                 }, {
                     model: Site,
                     as: 'assignedSites'

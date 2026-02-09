@@ -1,5 +1,11 @@
 {
   "general": {
     "enablePromptCompletion": true
+  },
+  "security": {
+    "blockGitExtensions": true
+  },
+  "experimental": {
+    "plan": true
   }
 }

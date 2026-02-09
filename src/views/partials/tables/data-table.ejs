@@ -1,0 +1,303 @@
+<!-- Table Component -->
+<%
+const table = locals.table || {};
+const columns = table.columns || [];
+const rows = table.rows || [];
+const emptyMessage = table.emptyMessage || 'No data available';
+const sortable = table.sortable !== false;
+const hover = table.hover !== false;
+const striped = table.striped || false;
+const compact = table.compact || false;
+%>
+
+<div class="data-table <%= striped ? 'data-table--striped' : '' %> <%= hover ? 'data-table--hover' : '' %> <%= compact ? 'data-table--compact' : '' %>">
+    <div class="data-table__container">
+        <table class="data-table__table">
+            <thead class="data-table__thead">
+                <tr class="data-table__row data-table__row--header">
+                    <% columns.forEach((col, index) => { %>
+                        <th class="data-table__cell data-table__cell--header" <%= col.width ? `style="width: ${col.width}"` : '' %>>
+                            <%= col.label %>
+                            <% if (sortable && col.sortable !== false) { %>
+                                <button class="data-table__sort" data-column="<%= col.key %>" title="Sort by <%= col.label %>">
+                                    <i data-lucide="chevrons-up-down"></i>
+                                </button>
+                            <% } %>
+                        </th>
+                    <% }); %>
+                </tr>
+            </thead>
+            <tbody class="data-table__tbody">
+                <% if (rows.length === 0) { %>
+                    <tr class="data-table__row data-table__row--empty">
+                        <td class="data-table__cell" colspan="<%= columns.length %>">
+                            <div class="data-table__empty">
+                                <i data-lucide="inbox" class="data-table__empty-icon"></i>
+                                <span><%= emptyMessage %></span>
+                            </div>
+                        </td>
+                    </tr>
+                <% } else { %>
+                    <% rows.forEach((row, rowIndex) => { %>
+                        <tr class="data-table__row" data-row-id="<%= row.id || rowIndex %>">
+                            <% columns.forEach((col, colIndex) => { %>
+                                <td class="data-table__cell">
+                                    <%= typeof col.render === 'function' ? col.render(row[col.key], row, rowIndex, colIndex) : row[col.key] %>
+                                </td>
+                            <% }); %>
+                        </tr>
+                    <% }); %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination (if provided) -->
+    <% if (table.pagination) { %>
+        <div class="data-table__pagination">
+            <div class="data-table__pagination-info">
+                Showing <%= (table.pagination.page - 1) * table.pagination.limit + 1 %> to <%= Math.min(table.pagination.page * table.pagination.limit, table.pagination.total) %> of <%= table.pagination.total %> entries
+            </div>
+            <div class="data-table__pagination-controls">
+                <button class="data-table__pagination-btn <%= table.pagination.page === 1 ? 'data-table__pagination-btn--disabled' : '' %>"
+                        onclick="changePage(<%= table.pagination.page - 1 %>)"
+                        <%= table.pagination.page === 1 ? 'disabled' : '' %>>
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <span class="data-table__pagination-pages">
+                    Page <%= table.pagination.page %> of <%= Math.ceil(table.pagination.total / table.pagination.limit) %>
+                </span>
+                <button class="data-table__pagination-btn <%= table.pagination.page >= Math.ceil(table.pagination.total / table.pagination.limit) ? 'data-table__pagination-btn--disabled' : '' %>"
+                        onclick="changePage(<%= table.pagination.page + 1 %>)"
+                        <%= table.pagination.page >= Math.ceil(table.pagination.total / table.pagination.limit) ? 'disabled' : '' %>>
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<script>
+function changePage(page) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', page);
+    window.location.href = url.toString();
+}
+
+// Initialize sort buttons
+document.querySelectorAll('.data-table__sort').forEach(button => {
+    button.addEventListener('click', function() {
+        const column = this.dataset.column;
+        const url = new URL(window.location.href);
+        const currentSort = url.searchParams.get('sort');
+        const currentOrder = url.searchParams.get('order') || 'asc';
+
+        let newOrder = 'asc';
+        if (currentSort === column && currentOrder === 'asc') {
+            newOrder = 'desc';
+        }
+
+        url.searchParams.set('sort', column);
+        url.searchParams.set('order', newOrder);
+        window.location.href = url.toString();
+    });
+});
+</script>
+
+<style>
+.data-table {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.data-table__container {
+    overflow-x: auto;
+}
+
+.data-table__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table__thead {
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table__row--header {
+    background-color: var(--bg-secondary);
+}
+
+.data-table__row {
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color var(--transition-fast);
+}
+
+.data-table__row:last-child {
+    border-bottom: none;
+}
+
+.data-table__row--empty {
+    background-color: transparent;
+}
+
+.data-table--hover .data-table__row:not(.data-table__row--header):hover {
+    background-color: var(--bg-hover);
+}
+
+.data-table--striped .data-table__row:not(.data-table__row--header):nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.data-table--striped .data-table__row:not(.data-table__row--header):nth-child(even):hover {
+    background-color: var(--bg-hover);
+}
+
+.data-table__cell {
+    padding: 1rem;
+    text-align: left;
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    border-right: 1px solid var(--border-color);
+}
+
+.data-table__cell:last-child {
+    border-right: none;
+}
+
+.data-table__cell--header {
+    font-weight: var(--font-semibold);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    position: relative;
+}
+
+.data-table__sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-left: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.data-table__sort:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+}
+
+.data-table__sort i {
+    width: 14px;
+    height: 14px;
+}
+
+.data-table--compact .data-table__cell {
+    padding: 0.5rem 0.75rem;
+}
+
+/* Empty State */
+.data-table__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    gap: 1rem;
+}
+
+.data-table__empty-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--text-tertiary);
+}
+
+.data-table__empty span {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+}
+
+/* Pagination */
+.data-table__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.data-table__pagination-info {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.data-table__pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.data-table__pagination-pages {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    font-weight: var(--font-medium);
+}
+
+.data-table__pagination-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.data-table__pagination-btn:hover:not(.data-table__pagination-btn--disabled) {
+    background-color: var(--bg-hover);
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-500);
+}
+
+.data-table__pagination-btn--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.data-table__pagination-btn i {
+    width: 16px;
+    height: 16px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .data-table__pagination {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .data-table__pagination-info,
+    .data-table__pagination-controls {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>

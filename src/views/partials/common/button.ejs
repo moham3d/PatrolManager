@@ -1,0 +1,179 @@
+<!-- Button Component -->
+<%
+const button = locals.button || {};
+const type = button.type || 'button'; // 'button' | 'submit' | 'reset'
+const variant = button.variant || 'primary'; // 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
+const size = button.size || 'md'; // 'sm' | 'md' | 'lg'
+const icon = button.icon || null;
+const iconPosition = button.iconPosition || 'left'; // 'left' | 'right'
+const disabled = button.disabled || false;
+const fullWidth = button.fullWidth || false;
+const href = button.href || null;
+const onClick = button.onClick || null;
+const className = button.className || '';
+%>
+
+<% if (href) { %>
+    <a href="<%= href %>" class="btn btn--<%= variant %> btn--<%= size %> <%= fullWidth ? 'btn--full' : '' %> <%= className %>" <%= disabled ? 'tabindex="-1"' : '' %>>
+        <% if (icon && iconPosition === 'left') { %>
+            <i data-lucide="<%= icon %>"></i>
+        <% } %>
+        <span><%- locals.buttonContent %></span>
+        <% if (icon && iconPosition === 'right') { %>
+            <i data-lucide="<%= icon %>"></i>
+        <% } %>
+    </a>
+<% } else { %>
+    <button
+        type="<%= type %>"
+        class="btn btn--<%= variant %> btn--<%= size %> <%= fullWidth ? 'btn--full' : '' %> <%= className %>"
+        <%= disabled ? 'disabled' : '' %>
+        <%= onClick ? `onclick="${onClick}"` : '' %>
+    >
+        <% if (icon && iconPosition === 'left') { %>
+            <i data-lucide="<%= icon %>"></i>
+        <% } %>
+        <span><%- locals.buttonContent %></span>
+        <% if (icon && iconPosition === 'right') { %>
+            <i data-lucide="<%= icon %>"></i>
+        <% } %>
+    </button>
+<% } %>
+
+<style>
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    font-family: var(--font-primary);
+    text-decoration: none;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Variants */
+.btn--primary {
+    background-color: var(--color-primary-600);
+    color: #FFFFFF;
+}
+
+.btn--primary:hover:not(:disabled) {
+    background-color: var(--color-primary-700);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn--primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn--secondary {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+.btn--secondary:hover:not(:disabled) {
+    background-color: var(--bg-hover);
+    border-color: var(--border-color-light);
+}
+
+.btn--success {
+    background-color: var(--color-success-600);
+    color: #FFFFFF;
+}
+
+.btn--success:hover:not(:disabled) {
+    background-color: var(--color-success-700);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn--success:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn--warning {
+    background-color: var(--color-warning-600);
+    color: #FFFFFF;
+}
+
+.btn--warning:hover:not(:disabled) {
+    background-color: var(--color-warning-700);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn--warning:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn--danger {
+    background-color: var(--color-danger-600);
+    color: #FFFFFF;
+}
+
+.btn--danger:hover:not(:disabled) {
+    background-color: var(--color-danger-700);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn--danger:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Sizes */
+.btn--sm {
+    padding: 0.5rem 1rem;
+    font-size: var(--text-xs);
+}
+
+.btn--md {
+    padding: 0.75rem 1.5rem;
+    font-size: var(--text-sm);
+}
+
+.btn--lg {
+    padding: 1rem 2rem;
+    font-size: var(--text-base);
+}
+
+.btn--full {
+    width: 100%;
+}
+
+/* Icon sizing */
+.btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.btn--sm i {
+    width: 14px;
+    height: 14px;
+}
+
+.btn--lg i {
+    width: 20px;
+    height: 20px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .btn {
+        width: 100%;
+    }
+}
+</style>

@@ -1,0 +1,154 @@
+<!-- Stat Card Component -->
+<% const stat = locals.stat || {}; %>
+<%
+const title = stat.title || 'Stat';
+const value = stat.value || '0';
+const trend = stat.trend || null; // 'up' | 'down' | null
+const trendValue = stat.trendValue || '0%';
+const icon = stat.icon || 'bar-chart-2';
+const color = stat.color || 'primary'; // 'primary' | 'success' | 'warning' | 'danger'
+const extra = stat.extra || '';
+%>
+
+<div class="stat-card stat-card--<%= color %>">
+    <div class="stat-card__header">
+        <div class="stat-card__icon">
+            <i data-lucide="<%= icon %>"></i>
+        </div>
+        <% if (trend) { %>
+            <div class="stat-card__trend stat-card__trend--<%= trend %>">
+                <i data-lucide="<%= trend === 'up' ? 'trending-up' : 'trending-down' %>"></i>
+                <span><%= trendValue %></span>
+            </div>
+        <% } %>
+    </div>
+    <div class="stat-card__body">
+        <div class="stat-card__value"><%= value %></div>
+        <div class="stat-card__title"><%= title %></div>
+        <% if (extra) { %>
+            <div class="stat-card__extra"><%= extra %></div>
+        <% } %>
+    </div>
+</div>
+
+<style>
+.stat-card {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card--primary {
+    border-top: 4px solid var(--color-primary-500);
+}
+
+.stat-card--success {
+    border-top: 4px solid var(--color-success-500);
+}
+
+.stat-card--warning {
+    border-top: 4px solid var(--color-warning-500);
+}
+
+.stat-card--danger {
+    border-top: 4px solid var(--color-danger-500);
+}
+
+.stat-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.stat-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card--primary .stat-card__icon {
+    background-color: rgba(14, 165, 233, 0.1);
+    color: var(--color-primary-500);
+}
+
+.stat-card--success .stat-card__icon {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success-500);
+}
+
+.stat-card--warning .stat-card__icon {
+    background-color: rgba(249, 115, 22, 0.1);
+    color: var(--color-warning-500);
+}
+
+.stat-card--danger .stat-card__icon {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger-500);
+}
+
+.stat-card__icon i {
+    width: 24px;
+    height: 24px;
+}
+
+.stat-card__trend {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+.stat-card__trend--up {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--color-success-500);
+}
+
+.stat-card__trend--down {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--color-danger-500);
+}
+
+.stat-card__trend i {
+    width: 14px;
+    height: 14px;
+}
+
+.stat-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.stat-card__value {
+    font-size: var(--text-3xl);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.stat-card__title {
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+}
+
+.stat-card__extra {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+}
+</style>

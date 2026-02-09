@@ -1,0 +1,159 @@
+<!-- Action Card Component -->
+<% const action = locals.action || {}; %>
+<%
+const title = action.title || 'Action';
+const description = action.description || '';
+const icon = action.icon || 'arrow-right';
+const button = action.button || 'Action';
+const href = action.href || '#';
+const color = action.color || 'primary'; // 'primary' | 'success' | 'warning' | 'danger'
+const disabled = action.disabled || false;
+%>
+
+<a href="<%= href %>" class="action-card <%= disabled ? 'action-card--disabled' : '' %>">
+    <div class="action-card__icon">
+        <i data-lucide="<%= icon %>"></i>
+    </div>
+    <div class="action-card__content">
+        <h3 class="action-card__title"><%= title %></h3>
+        <% if (description) { %>
+            <p class="action-card__description"><%= description %></p>
+        <% } %>
+    </div>
+    <div class="action-card__button action-card__button--<%= color %>">
+        <span><%= button %></span>
+        <i data-lucide="chevron-right"></i>
+    </div>
+</a>
+
+<style>
+.action-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-card:hover:not(.action-card--disabled) {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-primary-500);
+}
+
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--color-primary-500), var(--color-primary-400));
+    transform: scaleX(0);
+    transition: transform var(--transition-base);
+}
+
+.action-card:hover::before {
+    transform: scaleX(1);
+}
+
+.action-card--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.action-card__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--color-primary-600), var(--color-primary-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+}
+
+.action-card__icon i {
+    width: 28px;
+    height: 28px;
+    color: #FFFFFF;
+}
+
+.action-card__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.action-card__title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.action-card__description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: var(--leading-relaxed);
+}
+
+.action-card__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: #FFFFFF;
+    transition: all var(--transition-fast);
+}
+
+.action-card__button--primary {
+    background-color: var(--color-primary-600);
+}
+
+.action-card__button--success {
+    background-color: var(--color-success-600);
+}
+
+.action-card__button--warning {
+    background-color: var(--color-warning-600);
+}
+
+.action-card__button--danger {
+    background-color: var(--color-danger-600);
+}
+
+.action-card__button:hover {
+    transform: translateX(4px);
+}
+
+.action-card__button i {
+    width: 16px;
+    height: 16px;
+    transition: transform var(--transition-fast);
+}
+
+.action-card__button:hover i {
+    transform: translateX(4px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .action-card__button {
+        width: 100%;
+    }
+}
+</style>
