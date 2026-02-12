@@ -1,169 +1,100 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title><%= title %> - PatrolShield</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Design System -->
-    <link rel="stylesheet" href="/css/design-system.css">
-
-    <%- style %>
-
-    <!-- Custom Page Styles -->
-    <style>
-        /* Override specific to this page if needed */
-    </style>
+    <%- include('../partials/head') %>
 </head>
-<body class="min-h-screen">
-    <!-- Flash Messages -->
-    <div id="flash-messages" class="fixed top-4 right-4 z-50 space-y-2">
-        <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
-            <div class="flash-message success">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="check-circle"></i>
-                    <span><%= success %></span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="close-button">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        <% } %>
 
-        <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
-            <div class="flash-message error">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="alert-circle"></i>
-                    <span><%= error %></span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="close-button">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        <% } %>
-    </div>
+<body class="bg-slate-50 min-h-screen" x-data="{ sidebarOpen: false }">
+    <!-- Sidebar -->
+    <%- include('../partials/sidebar') %>
 
-    <!-- Main Content -->
-    <main>
-        <%- body %>
-    </main>
+    <!-- Main Content Area -->
+    <div class="md:ml-64 min-h-screen flex flex-col relative">
+            <!-- Top Navigation -->
+            <%- include('../partials/top-nav') %>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        // Initialize Lucide Icons
-        lucide.createIcons();
+                <!-- Main Content -->
+                <main class="flex-1 overflow-y-auto p-6 scroll-smooth">
+                    <!-- Flash Messages -->
+                    <div id="flash-messages" class="mb-6">
+                        <% if (typeof success !=='undefined' && success && success.length> 0) { %>
+                            <div class="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 p-4 rounded-lg mb-4 flex items-start"
+                                role="alert">
+                                <i data-lucide="check-circle" class="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"></i>
+                                <div class="flex-1">
+                                    <p class="font-medium">Success</p>
+                                    <p class="text-sm">
+                                        <%= success %>
+                                    </p>
+                                </div>
+                                <button onclick="this.parentElement.remove()"
+                                    class="ml-4 text-emerald-700 hover:text-emerald-900">
+                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                            <% } %>
 
-        // Auto-dismiss flash messages after 5 seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const messages = document.querySelectorAll('.flash-message');
-            messages.forEach(function(message) {
-                setTimeout(function() {
-                    message.style.opacity = '0';
-                    setTimeout(function() {
-                        message.remove();
-                    }, 300);
-                }, 5000);
-            });
-        });
-    </script>
+                                <% if (typeof error !=='undefined' && error && error.length> 0) { %>
+                                    <div class="bg-rose-50 border-l-4 border-rose-500 text-rose-900 p-4 rounded-lg mb-4 flex items-start"
+                                        role="alert">
+                                        <i data-lucide="alert-circle" class="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"></i>
+                                        <div class="flex-1">
+                                            <p class="font-medium">Error</p>
+                                            <p class="text-sm">
+                                                <%= error %>
+                                            </p>
+                                        </div>
+                                        <button onclick="this.parentElement.remove()"
+                                            class="ml-4 text-rose-700 hover:text-rose-900">
+                                            <i data-lucide="x" class="w-5 h-5"></i>
+                                        </button>
+                                    </div>
+                                    <% } %>
 
-    <%- script %>
+                                        <% if (typeof warning !=='undefined' && warning && warning.length> 0) { %>
+                                            <div class="bg-amber-50 border-l-4 border-amber-500 text-amber-900 p-4 rounded-lg mb-4 flex items-start"
+                                                role="alert">
+                                                <i data-lucide="alert-triangle"
+                                                    class="w-5 h-5 mr-3 flex-shrink-0 mt-0.5"></i>
+                                                <div class="flex-1">
+                                                    <p class="font-medium">Warning</p>
+                                                    <p class="text-sm">
+                                                        <%= warning %>
+                                                    </p>
+                                                </div>
+                                                <button onclick="this.parentElement.remove()"
+                                                    class="ml-4 text-amber-700 hover:text-amber-900">
+                                                    <i data-lucide="x" class="w-5 h-5"></i>
+                                                </button>
+                                            </div>
+                                            <% } %>
+                    </div>
+
+                    <!-- Page Content -->
+                    <%- body %>
+                </main>
+        </div>
+
+        <!-- Scripts -->
+        <%- include('../partials/scripts') %>
+        <%- include('../partials/walkie_talkie') %>
+
+            <script>
+                // Auto-dismiss flash messages after 5 seconds
+                document.addEventListener('DOMContentLoaded', function () {
+                    const messages = document.querySelectorAll('#flash-messages > div');
+                    messages.forEach(function (message) {
+                        setTimeout(function () {
+                            message.style.opacity = '0';
+                            message.style.transition = 'opacity 300ms';
+                            setTimeout(function () {
+                                message.remove();
+                            }, 300);
+                        }, 5000);
+                    });
+                });
+            </script>
 </body>
+
 </html>
-
-<style>
-/* Flash Messages Styles */
-.flash-message {
-    display: flex;
-    align-items: center;
-    padding: 1rem;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    animation: slideIn 0.3s ease-out;
-    max-width: 400px;
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-}
-
-.flash-message.success {
-    border-left: 4px solid var(--color-success-500);
-}
-
-.flash-message.success i[data-lucide="check-circle"] {
-    color: var(--color-success-500);
-}
-
-.flash-message.error {
-    border-left: 4px solid var(--color-danger-500);
-}
-
-.flash-message.error i[data-lucide="alert-circle"] {
-    color: var(--color-danger-500);
-}
-
-.flash-message.warning {
-    border-left: 4px solid var(--color-warning-500);
-}
-
-.flash-message.warning i[data-lucide="alert-triangle"] {
-    color: var(--color-warning-500);
-}
-
-.flash-message.info {
-    border-left: 4px solid var(--color-primary-500);
-}
-
-.flash-message.info i[data-lucide="info"] {
-    color: var(--color-primary-500);
-}
-
-.flash-message span {
-    flex: 1;
-    color: var(--text-primary);
-    font-size: var(--text-sm);
-}
-
-.flash-message .close-button {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0;
-    opacity: 0.6;
-    transition: opacity var(--transition-fast);
-}
-
-.flash-message .close-button:hover {
-    opacity: 1;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOut {
-    from {
-        opacity: 1;
-    }
-    to {
-        opacity: 0;
-    }
-}
-</style>

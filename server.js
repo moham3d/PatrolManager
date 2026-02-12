@@ -49,8 +49,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'src/public')));
 
 // View Engine Setup
+const expressLayouts = require('express-ejs-layouts');
 app.set('views', path.join(__dirname, 'src/views'));
 app.set('view engine', 'ejs');
+app.use(expressLayouts);
+app.set('layout', 'layouts/main');
+app.set('layout extractScripts', true);
+app.set('layout extractStyles', true);
 
 const flash = require('connect-flash');
 // ... other imports
@@ -90,13 +95,14 @@ app.use((req, res, next) => {
     res.locals.user = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
-    
+    res.locals.env = process.env;
+
     // Generate JWT for Socket.io authentication in web views
     if (req.user) {
         const jwt = require('jsonwebtoken');
         res.locals.socketToken = jwt.sign(
-            { id: req.user.id }, 
-            process.env.JWT_SECRET || 'secret', 
+            { id: req.user.id },
+            process.env.JWT_SECRET || 'secret',
             { expiresIn: '1h' }
         );
     } else {
@@ -227,9 +233,11 @@ const PORT = process.env.PORT || 3000;
 // Sync Database (Dev only - be careful in production)
 // Sync Database (Dev only - be careful in production)
 // db.sync({ alter: true }).then(() => {
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server started on http://localhost:${PORT}`);
-});
+if (require.main === module) {
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server started on http://localhost:${PORT}`);
+    });
+}
 // });
 
 module.exports = { app, io };

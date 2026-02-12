@@ -11,15 +11,16 @@ router.get('/login', (req, res) => {
         }
         return res.redirect('/');
     }
-    
+
     if (req.xhr || req.headers.accept?.includes('json')) {
         return res.status(401).json({ success: false, authenticated: false, message: 'Authentication required' });
     }
 
-    res.render('login', { 
-        title: 'Login', 
-        error: null, 
-        csrfToken: req.csrfToken ? req.csrfToken() : null 
+    res.render('login', {
+        title: 'Login',
+        layout: 'layouts/auth', // Use auth layout instead of main
+        error: null,
+        csrfToken: req.csrfToken ? req.csrfToken() : null
     });
 });
 

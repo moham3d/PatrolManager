@@ -1,0 +1,28 @@
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Mobile Menu Toggle (for main layout)
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('aside');
+        const overlay = document.querySelector('[x-show="sidebarOpen"]');
+        
+        // Active Link Highlighting
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('nav a');
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (currentPath === href || (href !== '/' && currentPath.startsWith(href))) {
+                link.classList.add('bg-brand-light', 'text-white');
+                link.classList.remove('text-slate-300');
+            }
+        });
+    });
+</script>
+
+<!-- Notyf Notifications -->
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">

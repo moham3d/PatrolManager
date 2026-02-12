@@ -1,4 +1,4 @@
-<%- include('../partials/header') %>
+<%- include('../partials/head') %>
 
 <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
@@ -22,7 +22,7 @@
     <!-- Map Editor -->
     <% if (site.layoutImage) { %>
         <div class="bg-white rounded-lg shadow overflow-hidden relative">
-            <div id="editor-map" style="height: 700px; width: 100%; background: #f3f4f6;"></div>
+            <div id="editor-map" style="height: 700px; width: 100%; background: #f3f4f6; min-height: 500px;"></div>
             
             <div class="absolute top-4 right-4 z-[400] bg-white p-4 rounded shadow-lg w-64">
                 <h3 class="font-bold text-gray-700 mb-2">Checkpoints</h3>
@@ -35,6 +35,12 @@
 
         <script>
             document.addEventListener("DOMContentLoaded", function () {
+                if (typeof L === 'undefined') {
+                    console.error("Leaflet library not loaded.");
+                    document.getElementById('editor-map').innerHTML = '<div class="flex items-center justify-center h-full text-red-500 font-bold">Error: Leaflet library not loaded.</div>';
+                    return;
+                }
+
                 const map = L.map('editor-map', {
                     crs: L.CRS.Simple,
                     minZoom: -2,
@@ -136,5 +142,3 @@
         </div>
     <% } %>
 </div>
-
-<%- include('../partials/footer') %>

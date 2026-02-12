@@ -52,13 +52,16 @@ router.get('/', ensureAuth, async (req, res) => {
                 lastBackup: new Date(Date.now() - 3600000).toISOString() // Mock: 1 hour ago
             };
 
+            const roles = await Role.findAll({ order: [['name', 'ASC']] });
+
             return res.render('dashboard/admin', { 
                 title: 'Admin Dashboard', 
                 stats, 
                 recentIncidents,
                 topGuards,
                 problemSites,
-                systemHealth
+                systemHealth,
+                roles
             });
         }
 

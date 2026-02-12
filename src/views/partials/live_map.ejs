@@ -2,8 +2,8 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-<div class="bg-white rounded-lg shadow overflow-hidden relative h-full min-h-[500px]">
-    <div id="command-map" class="absolute inset-0 z-0"></div>
+<div class="bg-white rounded-lg shadow overflow-hidden relative h-[600px] w-full border border-slate-200">
+    <div id="command-map" class="h-full w-full z-0 bg-slate-100" style="height: 600px; width: 100%; min-height: 400px;"></div>
 
     <!-- Floating Map Controls -->
     <div class="absolute top-4 left-4 z-[400] bg-white px-1 py-1 rounded-lg shadow-lg flex flex-col gap-1">
@@ -33,53 +33,70 @@
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
 <script>
+    // --- Global Map Variables ---
+    let map, clusterGroup, heatmapLayer;
+    const markers = {}; // Store markers by ID "type_id"
+    const userMarkers = {}; // Store markers by userId
+    const sitePolygons = {};
+    const patrols = {}; // Store patrol data by runId
+    const incidentPoints = []; // For heatmap
+
+    // --- Global Controls ---
+    window.toggleLayer = function(type) {
+        if (!map || !clusterGroup || !heatmapLayer) return;
+        
+        const btnM = document.getElementById('btn-markers');
+        const btnH = document.getElementById('btn-heatmap');
+
+        if (type === 'heatmap') {
+            map.removeLayer(clusterGroup);
+            map.addLayer(heatmapLayer);
+            if (btnH) btnH.classList.add('bg-blue-50', 'text-blue-600');
+            if (btnM) btnM.classList.remove('bg-blue-50', 'text-blue-600');
+        } else {
+            map.removeLayer(heatmapLayer);
+            map.addLayer(clusterGroup);
+            if (btnM) btnM.classList.add('bg-blue-50', 'text-blue-600');
+            if (btnH) btnH.classList.remove('bg-blue-50', 'text-blue-600');
+        }
+    };
+
     document.addEventListener("DOMContentLoaded", function () {
         if (typeof L === 'undefined') {
             console.error("Critical Error: Leaflet library not loaded.");
             const mapContainer = document.getElementById('command-map');
             if (mapContainer) {
-                mapContainer.innerHTML = '<div class="flex items-center justify-center h-full text-red-500 font-bold">Error: Leaflet library not loaded.</div>';
+                mapContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-full text-red-500 font-bold p-4 text-center"><div>Error: Leaflet library not loaded.</div><div class="text-xs mt-2 font-normal">Check your internet connection or Leaflet CDN status.</div></div>';
             }
             return;
         }
 
-        // --- Map Setup ---
-        const map = L.map('command-map').setView([30.0444, 31.2357], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        try {
+            // --- Map Setup ---
+            map = L.map('command-map').setView([30.0444, 31.2357], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
 
-        // Force a resize check after initialization
-        setTimeout(() => map.invalidateSize(), 500);
+            // Force a resize check after initialization
+            setTimeout(() => map.invalidateSize(), 500);
 
-        const clusterGroup = L.markerClusterGroup().addTo(map);
-        const heatmapLayer = L.heatLayer([], { radius: 25, blur: 15 });
-        
-        const markers = {}; // Store markers by ID "type_id"
-        const userMarkers = {}; // Store markers by userId
-        const sitePolygons = {};
-        const patrols = {}; // Store patrol data by runId
-        const incidentPoints = []; // For heatmap
-        
-        // --- Persistence Config ---
-        const ALERT_PERSISTENCE_MS = (<%= process.env.PANIC_ALERT_PERSISTENCE_MINUTES || 15 %>) * 60 * 1000;
+            clusterGroup = L.markerClusterGroup().addTo(map);
+            heatmapLayer = L.heatLayer([], { radius: 25, blur: 15 });
 
-        window.toggleLayer = function(type) {
-            const btnM = document.getElementById('btn-markers');
-            const btnH = document.getElementById('btn-heatmap');
-
-            if (type === 'heatmap') {
-                map.removeLayer(clusterGroup);
-                map.addLayer(heatmapLayer);
-                btnH.classList.add('bg-blue-50', 'text-blue-600');
-                btnM.classList.remove('bg-blue-50', 'text-blue-600');
-            } else {
-                map.removeLayer(heatmapLayer);
-                map.addLayer(clusterGroup);
-                btnM.classList.add('bg-blue-50', 'text-blue-600');
-                btnH.classList.remove('bg-blue-50', 'text-blue-600');
+            // --- TEST: Sample Marker ---
+            addMarker('test', 'site', 30.0444, 31.2357, '<b>System Check</b><br>Map is operational');
+        } catch (e) {
+            console.error("Map Initialization Error:", e);
+            const mapContainer = document.getElementById('command-map');
+            if (mapContainer) {
+                mapContainer.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-red-500 font-bold p-4 text-center"><div>Map Initialization Error</div><div class="text-xs mt-2 font-normal">${e.message}</div></div>`;
             }
-        };
+            return;
+        }
+        // --- Persistence Config ---
+        const ALERT_PERSISTENCE_MS = (<%= locals.env && env.PANIC_ALERT_PERSISTENCE_MINUTES ? env.PANIC_ALERT_PERSISTENCE_MINUTES : 15 %>) * 60 * 1000;
 
         // --- Icons ---
         const getIncidentIcon = (priority) => {
@@ -140,90 +157,92 @@
         });
 
         // --- Socket Setup ---
-        const socket = window.socket;
-        if (!socket) {
-            console.error("Critical Error: Socket.io not initialized.");
-            return;
-        }
+        function initSocketEvents() {
+            const socket = window.socket;
+            if (!socket) {
+                console.warn("Socket.io not yet initialized. Retrying in 500ms...");
+                setTimeout(initSocketEvents, 500);
+                return;
+            }
 
-        const statusDot = document.getElementById('status-dot');
-        const pingDot = document.getElementById('ping-dot');
-        const alertSound = document.getElementById('alert-sound');
+            console.log("Map initializing socket events...");
+            const statusDot = document.getElementById('status-dot');
+            const pingDot = document.getElementById('ping-dot');
+            const alertSound = document.getElementById('alert-sound');
 
-        socket.on('connect', () => {
-            statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-green-500';
-            pingDot.classList.remove('hidden');
-        });
+            if (socket.connected) {
+                if (statusDot) statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-green-500';
+                if (pingDot) pingDot.classList.remove('hidden');
+            }
 
-        socket.on('disconnect', () => {
-            statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-red-500';
-            pingDot.classList.add('hidden');
-        });
+            socket.on('connect', () => {
+                if (statusDot) statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-green-500';
+                if (pingDot) pingDot.classList.remove('hidden');
+            });
 
-        // --- Marker Logic ---
-        function addMarker(id, type, lat, lng, popupContent, priority = 'medium', isPanic = false, timestamp = null) {
-            if (lat === null || lng === null) return;
-            const key = `${type}_${id}`;
-            if (markers[key]) return;
+            socket.on('disconnect', () => {
+                if (statusDot) statusDot.className = 'relative inline-flex rounded-full h-3 w-3 bg-red-500';
+                if (pingDot) pingDot.classList.add('hidden');
+            });
 
-            const icon = isPanic ? panicIcon : (type === 'site' ? siteIcon : getIncidentIcon(priority));
-            const marker = L.marker([lat, lng], { icon }).bindPopup(popupContent);
-            
-            if (isPanic) {
-                marker.addTo(map);
-                map.setView([lat, lng], 16);
-                alertSound.play().catch(e => console.log("Audio blocked", e));
-            } else {
-                clusterGroup.addLayer(marker);
+            // --- Socket Listeners ---
+            socket.on('active_users_list', (users) => users.forEach(u => updateUserMarker(u)));
+            socket.on('user_location_update', (data) => updateUserMarker(data));
+            socket.on('location_batch', (updates) => updates.forEach(u => updateUserMarker(u)));
+            socket.on('user_disconnected', (userId) => {
+                if (userMarkers[userId]) {
+                    clusterGroup.removeLayer(userMarkers[userId]);
+                    delete userMarkers[userId];
+                }
+            });
+
+            socket.on('new_incident', (inc) => {
+                const lat = inc.lat != null ? inc.lat : (inc.location && inc.location.coordinates ? inc.location.coordinates[1] : null);
+                const lng = inc.lng != null ? inc.lng : (inc.location && inc.location.coordinates ? inc.location.coordinates[0] : null);
                 
-                if (type === 'incident') {
-                    let intensity = 0.5;
-                    if (priority === 'critical') intensity = 1.0;
-                    if (priority === 'high') intensity = 0.8;
-                    incidentPoints.push([lat, lng, intensity]);
-                    heatmapLayer.setLatLngs(incidentPoints);
+                if (lat != null && lng != null) {
+                    addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority, false, inc.createdAt);
                 }
-            }
-            
-            markers[key] = marker;
+            });
 
-            // --- Auto-clear logic for dynamic alerts ---
-            if (type === 'incident' || type === 'panic') {
-                const startTime = timestamp ? new Date(timestamp).getTime() : Date.now();
-                const elapsed = Date.now() - startTime;
-                const remaining = ALERT_PERSISTENCE_MS - elapsed;
-
-                if (remaining <= 0) {
-                    removeMarker(id, type);
-                } else {
-                    setTimeout(() => {
-                        console.log(`⏰ Alert ${key} expired. Removing from map.`);
-                        removeMarker(id, type);
-                    }, remaining);
+            socket.on('panic_alert', (panic) => {
+                const lat = panic.lat || (panic.location ? (panic.location.lat || (panic.location.coordinates ? panic.location.coordinates[1] : null)) : null);
+                const lng = panic.lng || (panic.location ? (panic.location.lng || (panic.location.coordinates ? panic.location.coordinates[0] : null)) : null);
+                
+                if (lat != null && lng != null) {
+                    addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>${panic.userName || panic.guard}`, 'critical', true, panic.timestamp || new Date());
                 }
-            }
-        }
+            });
 
-        function removeMarker(id, type) {
-            const key = `${type}_${id}`;
-            if (markers[key]) {
-                clusterGroup.removeLayer(markers[key]);
-                map.removeLayer(markers[key]);
-                delete markers[key];
-            }
-        }
+            socket.on('incident_resolved', (data) => removeMarker(data.incidentId, 'incident'));
+            socket.on('panic_resolved', (data) => removeMarker(data.id, 'panic'));
 
-        function updateUserMarker(data) {
-            if (userMarkers[data.userId]) {
-                userMarkers[data.userId].setLatLng([data.lat, data.lng]);
-                userMarkers[data.userId].setPopupContent(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span><br><small>Status: ${data.status || 'Unknown'}</small>`);
-            } else {
-                const icon = guardStatusIcon(data.status);
-                const marker = L.marker([data.lat, data.lng], { icon })
-                    .bindPopup(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span><br><small>Status: ${data.status || 'Unknown'}</small>`);
-                clusterGroup.addLayer(marker);
-                userMarkers[data.userId] = marker;
-            }
+            socket.on('patrol_started', (data) => {
+                fetch(`/sites/${data.siteId}`)
+                    .then(res => res.json())
+                    .then(siteData => {
+                        const template = siteData.site.patrolRuns.find(pr => pr.id === data.runId)?.template;
+                        if (template) {
+                            updatePatrolVisualization({
+                                runId: data.runId,
+                                siteId: data.siteId,
+                                checkpoints: template.checkpoints,
+                                scannedCheckpoints: []
+                            });
+                        }
+                    });
+            });
+
+            socket.on('patrol_completed', (data) => {
+                if (patrols[data.runId]) {
+                    patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
+                    patrols[data.runId].markers.forEach(m => map.removeLayer(m));
+                    delete patrols[data.runId];
+                }
+            });
+
+            socket.emit('request_active_users');
+            socket.emit('join_room', 'command_center');
         }
 
         // --- Initialize State ---
@@ -296,87 +315,101 @@
             })
             .catch(err => console.warn('Geofence Loading Error:', err));
 
-        // --- Socket Listeners ---
-        socket.on('active_users_list', (users) => users.forEach(u => updateUserMarker(u)));
-        socket.on('user_location_update', (data) => updateUserMarker(data));
-        socket.on('location_batch', (updates) => updates.forEach(u => updateUserMarker(u)));
-        socket.on('user_disconnected', (userId) => {
-            if (userMarkers[userId]) {
-                clusterGroup.removeLayer(userMarkers[userId]);
-                delete userMarkers[userId];
-            }
+        initSocketEvents();
+    });
+
+    // --- Helper Functions ---
+    function addMarker(id, type, lat, lng, popupHtml, priority = 'medium', isPanic = false, timestamp = null) {
+        if (!map || !clusterGroup) return;
+        const key = `${type}_${id}`;
+        
+        // Remove existing if any
+        if (markers[key]) clusterGroup.removeLayer(markers[key]);
+
+        let icon;
+        if (type === 'site') icon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color: #3b82f6; width: 18px; height: 18px; border-radius: 4px; border: 2px solid white; box-shadow: 0 0 4px black; display: flex; align-items: center; justify-content: center;'><i class='fas fa-building' style='color: white; font-size: 10px;'></i></div>",
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
         });
-
-        socket.on('new_incident', (inc) => {
-            const lat = inc.lat != null ? inc.lat : (inc.location && inc.location.coordinates ? inc.location.coordinates[1] : null);
-            const lng = inc.lng != null ? inc.lng : (inc.location && inc.location.coordinates ? inc.location.coordinates[0] : null);
-            
-            if (lat != null && lng != null) {
-                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority, false, inc.createdAt);
-            }
-        });
-
-        socket.on('panic_alert', (panic) => {
-            const lat = panic.lat || (panic.location ? (panic.location.lat || (panic.location.coordinates ? panic.location.coordinates[1] : null)) : null);
-            const lng = panic.lng || (panic.location ? (panic.location.lng || (panic.location.coordinates ? panic.location.coordinates[1] : null)) : null);
-            
-            if (lat != null && lng != null) {
-                addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>${panic.userName || panic.guard}`, 'critical', true, panic.timestamp || new Date());
-            }
-        });
-
-        socket.on('incident_resolved', (data) => removeMarker(data.incidentId, 'incident'));
-        socket.on('panic_resolved', (data) => removeMarker(data.id, 'panic'));
-
-        socket.on('patrol_started', (data) => {
-            fetch(`/sites/${data.siteId}`)
-                .then(res => res.json())
-                .then(siteData => {
-                    const template = siteData.site.patrolRuns.find(pr => pr.id === data.runId)?.template;
-                    if (template) {
-                        updatePatrolVisualization({
-                            runId: data.runId,
-                            siteId: data.siteId,
-                            checkpoints: template.checkpoints,
-                            scannedCheckpoints: []
-                        });
-                    }
-                });
-        });
-
-        socket.on('patrol_completed', (data) => {
-            if (patrols[data.runId]) {
-                patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
-                patrols[data.runId].markers.forEach(m => map.removeLayer(m));
-                delete patrols[data.runId];
-            }
-        });
-
-        function updatePatrolVisualization(data) {
-            if (!patrols[data.runId]) patrols[data.runId] = { polylines: [], markers: [] };
-            patrols[data.runId].polylines.forEach(p => map.removeLayer(p));
-            patrols[data.runId].markers.forEach(m => map.removeLayer(m));
-            patrols[data.runId].polylines = [];
-            patrols[data.runId].markers = [];
-
-            const latLngs = data.checkpoints.map(cp => [cp.lat, cp.lng]).filter(ll => ll[0] && ll[1]);
-            if (latLngs.length > 1) {
-                const polyline = L.polyline(latLngs, { color: '#3b82f6', weight: 3, opacity: 0.5, dashArray: '5, 10' }).addTo(map);
-                patrols[data.runId].polylines.push(polyline);
-            }
-
-            data.checkpoints.forEach((cp) => {
-                if (!cp.lat || !cp.lng) return;
-                const isScanned = data.scannedCheckpoints.includes(cp.id);
-                const color = isScanned ? '#10b981' : '#9ca3af';
-                const marker = L.circleMarker([cp.lat, cp.lng], {
-                    radius: 6, fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8
-                }).addTo(map).bindPopup(`<b>Checkpoint: ${cp.name}</b><br>Status: ${isScanned ? 'Scanned' : 'Pending'}`);
-                patrols[data.runId].markers.push(marker);
+        else if (isPanic) {
+            icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: "<div class='animate-ping' style='background-color: #c084fc; width: 20px; height: 20px; border-radius: 50%; opacity: 0.7;'></div><div style='background-color: #7e22ce; width: 12px; height: 12px; border-radius: 50%; position: absolute; top: 4px; left: 4px; border: 2px solid white;'></div>",
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+        }
+        else {
+            let color = '#ef4444';
+            if (priority === 'critical') color = '#7f1d1d';
+            if (priority === 'high') color = '#ef4444';
+            if (priority === 'medium') color = '#f59e0b';
+            if (priority === 'low') color = '#10b981';
+            icon = L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style='background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
             });
         }
 
-        socket.emit('request_active_users');
-        socket.emit('join_room', 'command_center');
-    });
+        const marker = L.marker([lat, lng], { icon });
+        if (popupHtml) marker.bindPopup(popupHtml);
+        
+        clusterGroup.addLayer(marker);
+        markers[key] = marker;
+
+        // For Heatmap
+        if (type === 'incident' || type === 'panic') {
+            incidentPoints.push([lat, lng, isPanic ? 1.0 : 0.5]);
+            if (heatmapLayer) heatmapLayer.setLatLngs(incidentPoints);
+        }
+    }
+
+    function removeMarker(id, type) {
+        const key = `${type}_${id}`;
+        if (markers[key]) {
+            clusterGroup.removeLayer(markers[key]);
+            delete markers[key];
+        }
+    }
+
+    function updateUserMarker(data) {
+        if (!map || !clusterGroup || !data.userId || !data.lat) return;
+        
+        const userId = data.userId;
+        const lat = data.lat;
+        const lng = data.lng;
+
+        let iconColor = '#10b981'; // Default: idle/online
+        if (data.status === 'active') iconColor = '#ef4444'; // On Duty
+        if (data.status === 'scheduled') iconColor = '#f97316'; // Upcoming
+
+        const icon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div class="relative">
+                    ${data.status === 'active' ? '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>' : ''}
+                    <div style='background-color: ${iconColor}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black; position: relative;'></div>
+                   </div>`,
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
+        });
+
+        if (userMarkers[userId]) {
+            userMarkers[userId].setLatLng([lat, lng]);
+            userMarkers[userId].setIcon(icon);
+        } else {
+            const marker = L.marker([lat, lng], { icon });
+            marker.bindPopup(`<b>${data.name}</b><br>Role: ${data.role}<br>Status: ${data.status || 'online'}`);
+            clusterGroup.addLayer(marker);
+            userMarkers[userId] = marker;
+        }
+    }
+
+    function updatePatrolVisualization(data) {
+        // Implementation for drawing lines between checkpoints if needed
+        console.log("Patrol visualization update:", data);
+    }
 </script>

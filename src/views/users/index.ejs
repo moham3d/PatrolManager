@@ -1,4 +1,3 @@
-<%- include('../partials/header') %>
 
     <div class="container mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-6">
@@ -6,10 +5,12 @@
                 <h1 class="text-3xl font-bold text-gray-800">User Management</h1>
                 <p class="text-gray-600">Manage system users and their roles</p>
             </div>
-            <a href="/users/create"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex items-center">
-                <i class="fas fa-plus mr-2"></i> Add New User
-            </a>
+            <% if (['admin', 'manager'].includes(user.Role.name.toLowerCase())) { %>
+                <button onclick="document.getElementById('createUserModal').classList.remove('hidden')"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex items-center">
+                    <i data-lucide="user-plus" class="w-5 h-5 mr-2"></i> Add New User
+                </button>
+            <% } %>
         </div>
 
         <!-- Filters & Search -->
@@ -17,7 +18,7 @@
             <div class="w-full md:w-1/3">
                 <div class="relative">
                     <label for="searchInput" class="sr-only">Search users</label>
-                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
                     <input type="text" id="searchInput" placeholder="Search users..."
                         class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
@@ -30,15 +31,15 @@
                     <tr>
                         <th onclick="sortTable(0)"
                             class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
-                            Name <i class="fas fa-sort ml-1"></i>
+                            Name <i data-lucide="chevrons-up-down" class="inline w-4 h-4 ml-1"></i>
                         </th>
                         <th onclick="sortTable(1)"
                             class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
-                            Email <i class="fas fa-sort ml-1"></i>
+                            Email <i data-lucide="chevrons-up-down" class="inline w-4 h-4 ml-1"></i>
                         </th>
                         <th onclick="sortTable(2)"
                             class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
-                            Role <i class="fas fa-sort ml-1"></i>
+                            Role <i data-lucide="chevrons-up-down" class="inline w-4 h-4 ml-1"></i>
                         </th>
                         <th
                             class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -55,33 +56,33 @@
                             </td>
                         </tr>
                         <% } else { %>
-                            <% users.forEach(function(user) { %>
-                                <tr class="user-row hover:bg-gray-50 transition duration-150" data-search="<%= user.name.toLowerCase() %> <%= user.email.toLowerCase() %>">
+                            <% users.forEach(function(u) { %>
+                                <tr class="user-row hover:bg-gray-50 transition duration-150" data-search="<%= u.name.toLowerCase() %> <%= u.email.toLowerCase() %>">
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 w-10 h-10">
-                                                <% if (user.profilePicture) { %>
-                                                    <img class="w-10 h-10 rounded-full object-cover border border-gray-200" src="<%= user.profilePicture %>" alt="" />
+                                                <% if (u.profilePicture) { %>
+                                                    <img class="w-10 h-10 rounded-full object-cover border border-gray-200" src="<%= u.profilePicture %>" alt="" />
                                                 <% } else { %>
                                                     <div
                                                         class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl">
-                                                        <%= user.name.charAt(0).toUpperCase() %>
+                                                        <%= u.name.charAt(0).toUpperCase() %>
                                                     </div>
                                                 <% } %>
                                             </div>
                                             <div class="ml-3">
                                                 <p class="text-gray-900 whitespace-no-wrap font-medium">
-                                                    <%= user.name %>
+                                                    <%= u.name %>
                                                 </p>
-                                                <% if (user.phoneNumber) { %>
-                                                    <p class="text-gray-500 text-xs"><%= user.phoneNumber %></p>
+                                                <% if (u.phoneNumber) { %>
+                                                    <p class="text-gray-500 text-xs"><%= u.phoneNumber %></p>
                                                 <% } %>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
                                         <p class="text-gray-900 whitespace-no-wrap">
-                                            <%= user.email %>
+                                            <%= u.email %>
                                         </p>
                                     </td>
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
@@ -90,23 +91,25 @@
                                             <span aria-hidden
                                                 class="absolute inset-0 bg-green-200 opacity-50 rounded-full"></span>
                                             <span class="relative">
-                                                <%= user.Role ? (user.Role.displayName || user.Role.name) : 'No Role' %>
+                                                <%= u.Role ? (u.Role.displayName || u.Role.name) : 'No Role' %>
                                             </span>
                                         </span>
                                     </td>
                                     <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
-                                        <a href="/users/<%= user.id %>/edit"
-                                            class="text-blue-600 hover:text-blue-900 mr-4" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="/users/<%= user.id %>/delete" method="POST" class="inline-block"
-                                            onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <button type="submit" class="text-red-600 hover:text-red-900"
-                                                title="Delete">
-                                                <i class="fas fa-trash"></i>
+                                        <% if (['admin', 'manager'].includes(user.Role.name.toLowerCase())) { %>
+                                            <button onclick="openEditUserModal('<%= u.id %>')"
+                                                class="text-blue-600 hover:text-blue-900 mr-4" title="Edit">
+                                                <i data-lucide="edit" class="w-5 h-5 inline"></i>
                                             </button>
-                                        </form>
+                                            <form action="/users/<%= u.id %>/delete" method="POST" class="inline-block"
+                                                onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="text-red-600 hover:text-red-900"
+                                                    title="Delete">
+                                                    <i data-lucide="trash-2" class="w-5 h-5 inline"></i>
+                                                </button>
+                                            </form>
+                                        <% } %>
                                     </td>
                                 </tr>
                                 <% }); %>
@@ -115,26 +118,119 @@
             </table>
         </div>
 
+        <!-- Create User Modal -->
+        <div id="createUserModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate__animated animate__fadeInUp">
+                <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center">
+                        <i data-lucide="user-plus" class="w-5 h-5 mr-2 text-blue-600"></i> Create New User
+                    </h3>
+                    <button onclick="document.getElementById('createUserModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <form action="/users" method="POST" class="p-6 space-y-4">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Full Name</label>
+                        <input type="text" name="name" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Email Address</label>
+                        <input type="email" name="email" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Password</label>
+                        <input type="password" name="password" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Role</label>
+                        <select name="roleId" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <!-- Roles should be passed from controller -->
+                            <% if (locals.roles) { %>
+                                <% roles.forEach(r => { %>
+                                    <option value="<%= r.id %>"><%= r.displayName || r.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="flex justify-end pt-4 gap-3">
+                        <button type="button" onclick="document.getElementById('createUserModal').classList.add('hidden')"
+                            class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition">
+                            Create User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit User Modal -->
+        <div id="editUserModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md animate__animated animate__fadeInUp">
+                <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50 rounded-t-xl">
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center">
+                        <i data-lucide="edit" class="w-5 h-5 mr-2 text-blue-600"></i> Edit User: <span id="editUserTitleName"></span>
+                    </h3>
+                    <button onclick="document.getElementById('editUserModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+                <form id="editUserForm" method="POST" class="p-6 space-y-4">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Full Name</label>
+                        <input type="text" id="edit-user-name" name="name" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Email Address</label>
+                        <input type="email" id="edit-user-email" name="email" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Password (Leave blank to keep current)</label>
+                        <input type="password" name="password" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Role</label>
+                        <select id="edit-user-role" name="roleId" class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required>
+                            <% if (locals.roles) { %>
+                                <% roles.forEach(r => { %>
+                                    <option value="<%= r.id %>"><%= r.displayName || r.name %></option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    <div class="flex justify-end pt-4 gap-3">
+                        <button type="button" onclick="document.getElementById('editUserModal').classList.add('hidden')"
+                            class="px-4 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg">Cancel</button>
+                        <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Pagination -->
         <% if (totalPages > 1) { %>
-            <div class="mt-6 flex justify-between items-center">
-                <p class="text-sm text-gray-600">
+            <div class="mt-6 flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-slate-100">
+                <p class="text-sm text-slate-600">
                     Showing <%= (currentPage - 1) * limit + 1 %> to <%= Math.min(currentPage * limit, totalUsers) %> of <%= totalUsers %> users
                 </p>
                 <div class="flex gap-2">
                     <% if (currentPage > 1) { %>
-                        <a href="/users?page=<%= currentPage - 1 %>&limit=<%= limit %>" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition font-bold text-sm">Previous</a>
+                        <a href="/users?page=<%= currentPage - 1 %>&limit=<%= limit %>" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition font-bold text-sm">Previous</a>
                     <% } %>
                     
                     <% for(let i = 1; i <= totalPages; i++) { %>
                         <a href="/users?page=<%= i %>&limit=<%= limit %>" 
-                           class="px-4 py-2 rounded-lg font-bold text-sm transition <%= currentPage === i ? 'bg-blue-600 text-white' : 'bg-gray-200 hover:bg-gray-300' %>">
+                           class="px-4 py-2 rounded-lg font-bold text-sm transition <%= currentPage === i ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200' %>">
                             <%= i %>
                         </a>
                     <% } %>
 
                     <% if (currentPage < totalPages) { %>
-                        <a href="/users?page=<%= currentPage + 1 %>&limit=<%= limit %>" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition font-bold text-sm">Next</a>
+                        <a href="/users?page=<%= currentPage + 1 %>&limit=<%= limit %>" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition font-bold text-sm">Next</a>
                     <% } %>
                 </div>
             </div>
@@ -142,54 +238,47 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            
+            window.openEditUserModal = function(id) {
+                fetch(`/users/${id}/edit`, { headers: { 'Accept': 'application/json' } })
+                    .then(res => res.json())
+                    .then(data => {
+                        const userData = data.user || data;
+                        document.getElementById('editUserForm').action = `/users/${userData.id}`;
+                        document.getElementById('editUserTitleName').innerText = userData.name;
+                        document.getElementById('edit-user-name').value = userData.name;
+                        document.getElementById('edit-user-email').value = userData.email;
+                        document.getElementById('edit-user-role').value = userData.roleId;
+                        
+                        document.getElementById('editUserModal').classList.remove('hidden');
+                    });
+            };
+        });
+
         function sortTable(n) {
             const table = document.getElementById("usersTable");
             const tbody = document.getElementById("usersTableBody");
-            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            switching = true;
-            dir = "asc";
-            while (switching) {
-                switching = false;
-                rows = tbody.rows;
-                for (i = 0; i < (rows.length - 1); i++) {
-                    shouldSwitch = false;
-                    x = rows[i].getElementsByTagName("TD")[n];
-                    y = rows[i + 1].getElementsByTagName("TD")[n];
-                    if (dir == "asc") {
-                        if (x.innerText.toLowerCase() > y.innerText.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    } else if (dir == "desc") {
-                        if (x.innerText.toLowerCase() < y.innerText.toLowerCase()) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    }
-                }
-                if (shouldSwitch) {
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    switchcount++;
-                } else {
-                    if (switchcount == 0 && dir == "asc") {
-                        dir = "desc";
-                        switching = true;
-                    }
-                }
-            }
+            let rows = Array.from(tbody.rows);
+            let dir = tbody.getAttribute('data-sort-dir') === 'asc' ? 'desc' : 'asc';
+            tbody.setAttribute('data-sort-dir', dir);
+            
+            rows.sort((a, b) => {
+                let x = a.cells[n].innerText.toLowerCase();
+                let y = b.cells[n].innerText.toLowerCase();
+                return dir === 'asc' ? x.localeCompare(y) : y.localeCompare(x);
+            });
+            rows.forEach(r => tbody.appendChild(r));
         }
 
         const searchInput = document.getElementById('searchInput');
-        const rows = document.querySelectorAll('.user-row');
-
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.toLowerCase();
-            rows.forEach(row => {
-                const searchData = row.dataset.search;
-                row.style.display = searchData.includes(query) ? '' : 'none';
+            document.querySelectorAll('.user-row').forEach(row => {
+                row.style.display = row.dataset.search.includes(query) ? '' : 'none';
             });
         });
     </script>
 
-    <%- include('../partials/footer') %>
+    

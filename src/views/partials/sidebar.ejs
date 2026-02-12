@@ -1,0 +1,134 @@
+<% const currentRole=(typeof user !=='undefined' && user && user.Role) ? user.Role.name.toLowerCase() : '' ; const
+    canManage=['admin', 'manager' , 'supervisor' ].includes(currentRole); const canViewReports=['admin', 'manager'
+    ].includes(currentRole); %>
+
+    <!-- Sidebar -->
+    <aside
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-brand transform transition-transform duration-300 ease-in-out md:translate-x-0"
+        :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" x-cloak>
+        <!-- Logo -->
+        <div class="flex items-center justify-between h-16 px-6 border-b border-brand-light">
+            <a href="/" class="flex items-center space-x-2 text-white">
+                <i data-lucide="shield" class="w-8 h-8"></i>
+                <span class="text-xl font-bold">PatrolShield</span>
+            </a>
+            <button @click="sidebarOpen = false" class="md:hidden text-white hover:text-slate-300">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            <% if (canManage) { %>
+                <a href="/sites"
+                    class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                    <i data-lucide="building-2" class="w-5 h-5 mr-3"></i>
+                    <span>Sites</span>
+                </a>
+                <a href="/patrols"
+                    class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                    <i data-lucide="route" class="w-5 h-5 mr-3"></i>
+                    <span>Patrols</span>
+                </a>
+                <a href="/incidents"
+                    class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 mr-3"></i>
+                    <span>Incidents</span>
+                </a>
+                <% } %>
+
+                    <% if (canViewReports) { %>
+                        <a href="/reports"
+                            class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                            <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3"></i>
+                            <span>Reports</span>
+                        </a>
+                        <% } %>
+
+                            <% if (canManage) { %>
+                                <a href="/shifts"
+                                    class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                    <i data-lucide="clock" class="w-5 h-5 mr-3"></i>
+                                    <span>Shifts</span>
+                                </a>
+                                <a href="/schedules"
+                                    class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                    <i data-lucide="calendar" class="w-5 h-5 mr-3"></i>
+                                    <span>Rostering</span>
+                                </a>
+                                <% } else if (currentRole==='guard' ) { %>
+                                    <a href="/shifts/my-schedule"
+                                        class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                        <i data-lucide="calendar-check" class="w-5 h-5 mr-3"></i>
+                                        <span>My Schedule</span>
+                                    </a>
+                                    <% } %>
+
+                                        <% if (['admin', 'manager' ].includes(currentRole)) { %>
+                                            <a href="/users"
+                                                class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                                <i data-lucide="users" class="w-5 h-5 mr-3"></i>
+                                                <span>Users</span>
+                                            </a>
+                                            <% } %>
+
+                                                <% if (currentRole==='admin' ) { %>
+                                                    <a href="/admin/roles"
+                                                        class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                                        <i data-lucide="shield-check" class="w-5 h-5 mr-3"></i>
+                                                        <span>Roles</span>
+                                                    </a>
+                                                    <% } %>
+
+                                                        <!-- Divider -->
+                                                        <div class="border-t border-brand-light my-4"></div>
+
+                                                        <!-- Documentation -->
+                                                        <% if (typeof user !=='undefined' && user && user.Role) { %>
+                                                            <% if (['admin', 'manager'
+                                                                ].includes(user.Role.name.toLowerCase())) { %>
+                                                                <a href="/docs/admin"
+                                                                    class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                                                    <i data-lucide="book-open" class="w-5 h-5 mr-3"></i>
+                                                                    <span>Manual</span>
+                                                                </a>
+                                                                <% } else { %>
+                                                                    <a href="/docs/guard"
+                                                                        class="flex items-center px-4 py-3 text-slate-300 hover:bg-brand-light hover:text-white rounded-lg transition-colors">
+                                                                        <i data-lucide="book-open"
+                                                                            class="w-5 h-5 mr-3"></i>
+                                                                        <span>Manual</span>
+                                                                    </a>
+                                                                    <% } %>
+                                                                        <% } %>
+        </nav>
+
+        <!-- User Profile -->
+        <% if (typeof user !=='undefined' && user) { %>
+            <div class="border-t border-brand-light p-4">
+                <div class="flex items-center space-x-3">
+                    <div
+                        class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold">
+                        <%= user.name.charAt(0).toUpperCase() %>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate">
+                            <%= user.name %>
+                        </p>
+                        <p class="text-xs text-slate-400 truncate">
+                            <%= user.Role ? user.Role.name : 'User' %>
+                        </p>
+                    </div>
+                </div>
+                <a href="/logout"
+                    class="mt-3 flex items-center justify-center w-full px-4 py-2 text-sm text-slate-300 hover:text-white hover:bg-brand-light rounded-lg transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
+                    Logout
+                </a>
+            </div>
+            <% } %>
+    </aside>
+
+    <!-- Mobile Sidebar Overlay -->
+    <div x-show="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
+        x-cloak></div>

@@ -1,21 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title><%= title %> - PatrolShield</title>
-
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Design System -->
-    <link rel="stylesheet" href="/css/design-system.css">
+    <%- include('../partials/head') %>
 
     <%- style %>
 
@@ -396,13 +382,13 @@
                     <div class="sidebar-section-title">Management</div>
                     <ul class="sidebar-nav">
                         <li class="sidebar-nav-item">
-                            <a href="/admin/sites" class="sidebar-nav-link <%= path?.startsWith('/admin/sites') ? 'active' : '' %>">
+                            <a href="/sites" class="sidebar-nav-link <%= path?.startsWith('/sites') ? 'active' : '' %>">
                                 <i data-lucide="building"></i>
                                 <span class="sidebar-nav-text">Sites</span>
                             </a>
                         </li>
                         <li class="sidebar-nav-item">
-                            <a href="/admin/users" class="sidebar-nav-link <%= path?.startsWith('/admin/users') ? 'active' : '' %>">
+                            <a href="/users" class="sidebar-nav-link <%= path?.startsWith('/users') ? 'active' : '' %>">
                                 <i data-lucide="users"></i>
                                 <span class="sidebar-nav-text">Users</span>
                             </a>
@@ -576,6 +562,8 @@
             });
         });
     </script>
+
+    <%- include('../partials/walkie_talkie') %>
 
     <%- script %>
 </body>

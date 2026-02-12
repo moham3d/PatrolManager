@@ -23,11 +23,13 @@ exports.index = async (req, res) => {
             order: [['name', 'ASC']]
         });
 
+        const roles = await Role.findAll({ order: [['name', 'ASC']] });
         const totalPages = Math.ceil(count / limit);
 
         renderOrJson(res, 'users/index', {
             title: 'User Management',
             users,
+            roles,
             currentPage: page,
             totalPages,
             totalUsers: count,

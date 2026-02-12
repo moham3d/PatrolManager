@@ -1,0 +1,148 @@
+<!-- Page Header -->
+<div class="mb-6">
+    <h1 class="text-3xl font-bold text-slate-900 mb-2">Dashboard</h1>
+    <p class="text-slate-600">Welcome back! Here's what's happening today.</p>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Active Patrols -->
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-600 mb-1">Active Patrols</p>
+                <p class="text-3xl font-bold text-slate-900">12</p>
+            </div>
+            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="route" class="w-6 h-6 text-primary"></i>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+            <span class="text-success font-medium">+8%</span>
+            <span class="text-slate-600 ml-2">from last week</span>
+        </div>
+    </div>
+
+    <!-- Total Incidents -->
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-600 mb-1">Total Incidents</p>
+                <p class="text-3xl font-bold text-slate-900">24</p>
+            </div>
+            <div class="w-12 h-12 bg-alert/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="alert-triangle" class="w-6 h-6 text-alert"></i>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+            <span class="text-alert font-medium">+3</span>
+            <span class="text-slate-600 ml-2">new today</span>
+        </div>
+    </div>
+
+    <!-- Guards on Duty -->
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-600 mb-1">Guards on Duty</p>
+                <p class="text-3xl font-bold text-slate-900">18</p>
+            </div>
+            <div class="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
+                <i data-lucide="users" class="w-6 h-6 text-success"></i>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+            <span class="badge badge-success">All Active</span>
+        </div>
+    </div>
+
+    <!-- Sites Monitored -->
+    <div class="card">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-slate-600 mb-1">Sites Monitored</p>
+                <p class="text-3xl font-bold text-slate-900">8</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i data-lucide="building-2" class="w-6 h-6 text-blue-600"></i>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center text-sm">
+            <span class="text-slate-600">100% Coverage</span>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Incidents -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">Recent Incidents</h2>
+            <a href="/incidents" class="text-sm text-primary hover:text-primary-hover">View All</a>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-start p-3 bg-slate-50 rounded-lg">
+                <div class="w-2 h-2 bg-alert rounded-full mt-2 mr-3"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900">Suspicious Activity</p>
+                    <p class="text-xs text-slate-600 mt-1">Site A - Building 3</p>
+                    <p class="text-xs text-slate-500 mt-1">2 hours ago</p>
+                </div>
+                <span class="badge badge-danger">High</span>
+            </div>
+            <div class="flex items-start p-3 bg-slate-50 rounded-lg">
+                <div class="w-2 h-2 bg-amber-500 rounded-full mt-2 mr-3"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-slate-900">Equipment Malfunction</p>
+                    <p class="text-xs text-slate-600 mt-1">Site B - Main Gate</p>
+                    <p class="text-xs text-slate-500 mt-1">5 hours ago</p>
+                </div>
+                <span class="badge badge-warning">Medium</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Patrols -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-slate-900">Active Patrols</h2>
+            <a href="/patrols" class="text-sm text-primary hover:text-primary-hover">View All</a>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div class="flex items-center">
+                    <div
+                        class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                        JD
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-900">John Doe</p>
+                        <p class="text-xs text-slate-600">Site A - Perimeter Check</p>
+                    </div>
+                </div>
+                <span class="badge badge-success">In Progress</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                <div class="flex items-center">
+                    <div
+                        class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-semibold mr-3">
+                        MS
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-900">Mary Smith</p>
+                        <p class="text-xs text-slate-600">Site B - Building Inspection</p>
+                    </div>
+                </div>
+                <span class="badge badge-success">In Progress</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Initialize Lucide icons for this page
+    document.addEventListener('DOMContentLoaded', function () {
+        lucide.createIcons();
+    });
+</script>

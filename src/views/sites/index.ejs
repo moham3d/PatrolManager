@@ -1,10 +1,12 @@
-<%- include('../partials/header') %>
 
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-semibold text-gray-800">Sites</h1>
-        <a href="/sites/create" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 shadow">
-            <i class="fas fa-plus mr-2"></i> Add New Site
-        </a>
+        <% if (['admin', 'manager'].includes(user.Role.name.toLowerCase())) { %>
+            <button onclick="document.getElementById('createSiteModal').classList.remove('hidden')" 
+                class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-500 shadow flex items-center">
+                <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> Add New Site
+            </button>
+        <% } %>
     </div>
 
     <!-- Filters & Search -->
@@ -12,7 +14,7 @@
         <div class="w-full md:w-1/3">
             <div class="relative">
                 <label for="searchInput" class="sr-only">Search sites</label>
-                <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                <i data-lucide="search" class="absolute left-3 top-3 text-gray-400 w-5 h-5"></i>
                 <input type="text" id="searchInput" placeholder="Search sites..."
                     class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
@@ -25,11 +27,11 @@
                 <tr>
                     <th onclick="sortTable(0)"
                         class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
-                        Name <i class="fas fa-sort ml-1"></i>
+                        Name <i data-lucide="chevrons-up-down" class="inline w-4 h-4 ml-1"></i>
                     </th>
                     <th onclick="sortTable(1)"
                         class="hidden md:table-cell px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-200 transition">
-                        Address <i class="fas fa-sort ml-1"></i>
+                        Address <i data-lucide="chevrons-up-down" class="inline w-4 h-4 ml-1"></i>
                     </th>
                     <th
                         class="hidden sm:table-cell px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -66,8 +68,14 @@
                             </span>
                         </td>
                         <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right space-x-2">
-                            <a href="/sites/<%= site.id %>" class="inline-block bg-blue-50 text-blue-600 px-3 py-2 rounded-md font-bold text-xs hover:bg-blue-100 transition">View</a>
-                            <a href="/sites/<%= site.id %>/edit" class="inline-block bg-indigo-50 text-indigo-600 px-3 py-2 rounded-md font-bold text-xs hover:bg-indigo-100 transition">Edit</a>
+                            <a href="/sites/<%= site.id %>" class="inline-block bg-blue-50 text-blue-600 px-3 py-2 rounded-md font-bold text-xs hover:bg-blue-100 transition flex items-center">
+                                <i data-lucide="eye" class="w-4 h-4 mr-1"></i> View
+                            </a>
+                            <% if (['admin', 'manager'].includes(user.Role.name.toLowerCase())) { %>
+                                <button onclick="openEditModal('<%= site.id %>')" class="inline-block bg-indigo-50 text-indigo-600 px-3 py-2 rounded-md font-bold text-xs hover:bg-indigo-100 transition">
+                                    <i data-lucide="edit" class="w-4 h-4 inline mr-1"></i> Edit
+                                </button>
+                            <% } %>
                         </td>
                     </tr>
                     <% }); %>
@@ -83,6 +91,243 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Create Site Modal -->
+    <div id="createSiteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate__animated animate__fadeInUp">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center">
+                    <i data-lucide="building-2" class="w-5 h-5 mr-2 text-blue-600"></i> Create New Site
+                </h3>
+                <button onclick="document.getElementById('createSiteModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto p-6">
+                <form action="/sites" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-slate-700 text-sm font-bold mb-2" for="name">
+                                    Site Name
+                                </label>
+                                <input
+                                    class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    id="name" name="name" type="text" placeholder="e.g. Headquarters" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-slate-700 text-sm font-bold mb-2" for="address">
+                                    Address
+                                </label>
+                                <input
+                                    class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    id="address" name="address" type="text" placeholder="e.g. 123 Security Blvd">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-slate-700 text-sm font-bold mb-2" for="details">
+                                    Details / Notes
+                                </label>
+                                <textarea
+                                    class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    id="details" name="details" rows="4"></textarea>
+                            </div>
+
+                            <!-- GPS Storage -->
+                            <input type="hidden" id="latitude" name="lat" value="">
+                            <input type="hidden" id="longitude" name="lng" value="">
+                            <input type="hidden" id="boundaries" name="boundaries" value="">
+                        </div>
+
+                        <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-2">
+                                Site Location & Geofence <span class="text-rose-500">*</span>
+                            </label>
+                            <div id="create-site-map" class="h-64 rounded-lg border border-slate-200 shadow-inner"></div>
+                            <div id="coords-display" class="mt-2 text-xs text-slate-500 italic">Place a marker or draw a polygon.</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 border-t pt-4">
+                        <button type="button" onclick="document.getElementById('createSiteModal').classList.add('hidden')"
+                            class="px-6 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg transition">
+                            Cancel
+                        </button>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-lg shadow transition"
+                            type="submit">
+                            Create Site
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Site Modal -->
+    <div id="editSiteModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate__animated animate__fadeInUp">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center">
+                    <i data-lucide="edit" class="w-5 h-5 mr-2 text-blue-600"></i> Edit Site: <span id="editSiteNameTitle"></span>
+                </h3>
+                <button onclick="document.getElementById('editSiteModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto p-6">
+                <form id="editSiteForm" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <div class="mb-4">
+                                <label class="block text-slate-700 text-sm font-bold mb-2">
+                                    Site Name
+                                </label>
+                                <input id="edit-name" name="name" class="w-full border rounded-lg px-4 py-2 outline-none" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-slate-700 text-sm font-bold mb-2">
+                                    Address
+                                </label>
+                                <input id="edit-address" name="address" class="w-full border rounded-lg px-4 py-2 outline-none">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-slate-700 text-sm font-bold mb-2">
+                                    Details
+                                </label>
+                                <textarea id="edit-details" name="details" rows="4" class="w-full border rounded-lg px-4 py-2 outline-none"></textarea>
+                            </div>
+                            <input type="hidden" id="edit-latitude" name="lat">
+                            <input type="hidden" id="edit-longitude" name="lng">
+                            <input type="hidden" id="edit-boundaries" name="boundaries">
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-2">
+                                Location & Geofence
+                            </label>
+                            <div id="edit-site-map" class="h-64 rounded-lg border border-slate-200 shadow-inner"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-end gap-3 border-t pt-4">
+                        <button type="button" onclick="document.getElementById('editSiteModal').classList.add('hidden')"
+                            class="px-6 py-2 text-slate-600 font-bold hover:bg-slate-100 rounded-lg">Cancel</button>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-8 rounded-lg shadow" type="submit">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+            
+            let createMap, editMap, createDrawnItems, editDrawnItems;
+            
+            window.initCreateMap = function() {
+                if (createMap) { setTimeout(() => createMap.invalidateSize(), 100); return; }
+                createMap = L.map('create-site-map').setView([30.0444, 31.2357], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(createMap);
+                createDrawnItems = new L.FeatureGroup();
+                createMap.addLayer(createDrawnItems);
+                new L.Control.Draw({ edit: { featureGroup: createDrawnItems }, draw: { polygon: true, marker: true, polyline: false, rectangle: false, circle: false, circlemarker: false } }).addTo(createMap);
+                createMap.on(L.Draw.Event.CREATED, (e) => {
+                    const layer = e.layer; createDrawnItems.clearLayers(); createDrawnItems.addLayer(layer);
+                    if (e.layerType === 'marker') {
+                        document.getElementById('latitude').value = layer.getLatLng().lat.toFixed(6);
+                        document.getElementById('longitude').value = layer.getLatLng().lng.toFixed(6);
+                    } else {
+                        const latlngs = layer.getLatLngs()[0];
+                        document.getElementById('boundaries').value = JSON.stringify(latlngs);
+                        document.getElementById('latitude').value = layer.getBounds().getCenter().lat.toFixed(6);
+                        document.getElementById('longitude').value = layer.getBounds().getCenter().lng.toFixed(6);
+                    }
+                });
+            };
+
+            window.initEditMap = function(lat, lng, boundaries) {
+                if (!editMap) {
+                    editMap = L.map('edit-site-map').setView([lat || 30.0444, lng || 31.2357], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(editMap);
+                    editDrawnItems = new L.FeatureGroup();
+                    editMap.addLayer(editDrawnItems);
+                    new L.Control.Draw({ edit: { featureGroup: editDrawnItems }, draw: { polygon: true, marker: true, polyline: false, rectangle: false, circle: false, circlemarker: false } }).addTo(editMap);
+                    editMap.on(L.Draw.Event.CREATED, (e) => {
+                        const layer = e.layer; editDrawnItems.clearLayers(); editDrawnItems.addLayer(layer);
+                        document.getElementById('edit-latitude').value = layer instanceof L.Marker ? layer.getLatLng().lat.toFixed(6) : layer.getBounds().getCenter().lat.toFixed(6);
+                        document.getElementById('edit-longitude').value = layer instanceof L.Marker ? layer.getLatLng().lng.toFixed(6) : layer.getBounds().getCenter().lng.toFixed(6);
+                        if (e.layerType === 'polygon') document.getElementById('edit-boundaries').value = JSON.stringify(layer.getLatLngs()[0]);
+                    });
+                } else {
+                    editMap.setView([lat, lng], 15);
+                    editDrawnItems.clearLayers();
+                    setTimeout(() => editMap.invalidateSize(), 100);
+                }
+
+                if (lat && lng) L.marker([lat, lng]).addTo(editDrawnItems);
+                if (boundaries) {
+                    try {
+                        const poly = L.polygon(JSON.parse(boundaries)).addTo(editDrawnItems);
+                        editMap.fitBounds(poly.getBounds());
+                    } catch(e) {}
+                }
+            };
+
+            window.openEditModal = function(id) {
+                fetch(`/sites/${id}`, { headers: { 'Accept': 'application/json' } })
+                    .then(res => res.json())
+                    .then(data => {
+                        const site = data.site || data;
+                        document.getElementById('editSiteForm').action = `/sites/${site.id}`;
+                        document.getElementById('editSiteNameTitle').innerText = site.name;
+                        document.getElementById('edit-name').value = site.name;
+                        document.getElementById('edit-address').value = site.address || '';
+                        document.getElementById('edit-details').value = site.details || '';
+                        document.getElementById('edit-latitude').value = site.lat || '';
+                        document.getElementById('edit-longitude').value = site.lng || '';
+                        document.getElementById('edit-boundaries').value = site.boundaries || '';
+                        
+                        document.getElementById('editSiteModal').classList.remove('hidden');
+                        window.initEditMap(site.lat, site.lng, site.boundaries);
+                    });
+            };
+
+            const obs = new MutationObserver((ms) => {
+                ms.forEach((m) => {
+                    if (m.attributeName === "class" && !m.target.classList.contains("hidden")) {
+                        if (m.target.id === 'createSiteModal') window.initCreateMap();
+                    }
+                });
+            });
+            obs.observe(document.getElementById('createSiteModal'), { attributes: true });
+        });
+
+        function sortTable(n) {
+            const tbody = document.getElementById("sitesTableBody");
+            let rows = Array.from(tbody.rows);
+            let dir = tbody.getAttribute('data-sort-dir') === 'asc' ? 'desc' : 'asc';
+            tbody.setAttribute('data-sort-dir', dir);
+            
+            rows.sort((a, b) => {
+                let x = a.cells[n].innerText.toLowerCase();
+                let y = b.cells[n].innerText.toLowerCase();
+                return dir === 'asc' ? x.localeCompare(y) : y.localeCompare(x);
+            });
+            rows.forEach(r => tbody.appendChild(r));
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            document.querySelectorAll('.site-row').forEach(row => {
+                row.style.display = row.dataset.search.includes(query) ? '' : 'none';
+            });
+        });
+    </script>
 
     <script>
         function sortTable(n) {
@@ -135,4 +380,4 @@
         });
     </script>
 
-    <%- include('../partials/footer') %>
+    

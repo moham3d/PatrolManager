@@ -67,6 +67,18 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             allowNull: true
         }
+    }, {
+        getterMethods: {
+            location() {
+                if (this.lat && this.lng) {
+                    return {
+                        type: 'Point',
+                        coordinates: [this.lng, this.lat] // GeoJSON is [lng, lat]
+                    };
+                }
+                return null;
+            }
+        }
     });
 
     Incident.associate = (models) => {

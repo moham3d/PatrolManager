@@ -1,37 +1,56 @@
-<%- include('partials/header') %>
+<!-- Welcome Section -->
+<div class="text-center mb-12">
+    <h1 class="text-4xl font-bold text-slate-900 mb-4">Welcome to PatrolShield Enterprise</h1>
+    <p class="text-xl text-slate-600">Integrated Security Workforce Management System</p>
+</div>
 
-    <div class="text-center py-12">
-        <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to PatrolShield Enterprise</h1>
-        <p class="text-xl text-gray-600 mb-8">Integrated Security Workforce Management System</p>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <!-- Site Management -->
-            <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                <div class="text-blue-600 text-4xl mb-4"><i class="fas fa-building"></i></div>
-                <h2 class="text-2xl font-bold mb-2">Site Management</h2>
-                <p class="text-gray-600 mb-4">Manage client locations, zones, and checkpoints.</p>
-                <a href="/sites" class="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Manage
-                    Sites</a>
-            </div>
-
-            <!-- Patrol Operations -->
-            <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                <div class="text-green-600 text-4xl mb-4"><i class="fas fa-route"></i></div>
-                <h2 class="text-2xl font-bold mb-2">Patrol Operations</h2>
-                <p class="text-gray-600 mb-4">Create patrol routes and track officer rounds.</p>
-                <a href="/patrols"
-                    class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">View Patrols</a>
-            </div>
-
-            <!-- Live Dashboard -->
-            <div class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition">
-                <div class="text-red-600 text-4xl mb-4"><i class="fas fa-satellite-dish"></i></div>
-                <h2 class="text-2xl font-bold mb-2">Live Dashboard</h2>
-                <p class="text-gray-600 mb-4">Real-time monitoring of incidents and alerts.</p>
-                <a href="/dashboard" class="inline-block bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Open
-                    Dashboard</a>
-            </div>
+<!-- Feature Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+    <!-- Site Management -->
+    <div class="card hover:shadow-lg transition-shadow cursor-pointer group">
+        <div
+            class="flex items-center justify-center w-16 h-16 bg-primary/10 rounded-xl mb-4 group-hover:bg-primary/20 transition-colors">
+            <i data-lucide="building-2" class="w-8 h-8 text-primary"></i>
         </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Site Management</h2>
+        <p class="text-slate-600 mb-4">Manage client locations, zones, and checkpoints.</p>
+        <a href="/sites" class="btn btn-primary">
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            Manage Sites
+        </a>
     </div>
 
-    <%- include('partials/footer') %>
+    <!-- Patrol Operations -->
+    <div class="card hover:shadow-lg transition-shadow cursor-pointer group">
+        <div
+            class="flex items-center justify-center w-16 h-16 bg-success/10 rounded-xl mb-4 group-hover:bg-success/20 transition-colors">
+            <i data-lucide="route" class="w-8 h-8 text-success"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Patrol Operations</h2>
+        <p class="text-slate-600 mb-4">Create patrol routes and track officer rounds.</p>
+        <a href="/patrols" class="btn btn-success">
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            View Patrols
+        </a>
+    </div>
+
+    <!-- Live Dashboard -->
+    <div class="card hover:shadow-lg transition-shadow cursor-pointer group">
+        <div
+            class="flex items-center justify-center w-16 h-16 bg-alert/10 rounded-xl mb-4 group-hover:bg-alert/20 transition-colors">
+            <i data-lucide="activity" class="w-8 h-8 text-alert"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Live Dashboard</h2>
+        <p class="text-slate-600 mb-4">Real-time monitoring of incidents and alerts.</p>
+        <a href="/dashboard" class="btn btn-danger">
+            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            Open Dashboard
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        lucide.createIcons();
+    });
+</script>
