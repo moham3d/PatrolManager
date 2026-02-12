@@ -7,7 +7,7 @@ const listRolesPage = async (req, res) => {
     try {
         const roles = await Role.findAll({
             include: [
-                { model: Permission },
+                { model: Permission, as: 'permissions' },
                 { model: User, attributes: ['id'] } // Just count users
             ],
             order: [['name', 'ASC']]
@@ -24,8 +24,7 @@ const listRolesPage = async (req, res) => {
         res.render('admin/roles/index', {
             title: 'Role Management',
             roles: rolesWithCounts,
-            success: req.flash('success'),
-            error: req.flash('error')
+            path: req.path
         });
     } catch (error) {
         console.error('Error loading roles:', error);
@@ -40,23 +39,18 @@ const createRolePage = async (req, res) => {
             order: [['slug', 'ASC']]
         });
 
-        // Group permissions by category
-        const groupedPermissions = {
-            'Sites': permissions.filter(p => p.slug.startsWith('SITE')),
-            'Users': permissions.filter(p => p.slug.startsWith('USER')),
-            'Reports': permissions.filter(p => p.slug.startsWith('REPORT')),
-            'Patrols': permissions.filter(p => p.slug.startsWith('PATROL')),
-            'Incidents': permissions.filter(p => p.slug.startsWith('INCIDENT')),
-            'Schedules': permissions.filter(p => p.slug.startsWith('SCHEDULE')),
-            'Zones': permissions.filter(p => p.slug.startsWith('ZONE')),
-            'Roles': permissions.filter(p => p.slug.startsWith('ROLE'))
-        };
+        // Group permissions by category from DB
+        const groupedPermissions = permissions.reduce((acc, p) => {
+            const cat = p.category || 'Other';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(p);
+            return acc;
+        }, {});
 
         res.render('admin/roles/create', {
             title: 'Create Role',
             groupedPermissions,
-            success: req.flash('success'),
-            error: req.flash('error')
+            path: req.path
         });
     } catch (error) {
         console.error('Error loading create role page:', error);
@@ -68,7 +62,7 @@ const createRolePage = async (req, res) => {
 const editRolePage = async (req, res) => {
     try {
         const role = await Role.findByPk(req.params.id, {
-            include: [{ model: Permission }]
+            include: [{ model: Permission, as: 'permissions' }]
         });
 
         if (!role) {
@@ -81,19 +75,15 @@ const editRolePage = async (req, res) => {
         });
 
         // Get assigned permission IDs
-        const assignedPermissionIds = role.Permissions.map(p => p.id);
+        const assignedPermissionIds = role.permissions.map(p => p.id);
 
-        // Group permissions by category
-        const groupedPermissions = {
-            'Sites': permissions.filter(p => p.slug.startsWith('SITE')),
-            'Users': permissions.filter(p => p.slug.startsWith('USER')),
-            'Reports': permissions.filter(p => p.slug.startsWith('REPORT')),
-            'Patrols': permissions.filter(p => p.slug.startsWith('PATROL')),
-            'Incidents': permissions.filter(p => p.slug.startsWith('INCIDENT')),
-            'Schedules': permissions.filter(p => p.slug.startsWith('SCHEDULE')),
-            'Zones': permissions.filter(p => p.slug.startsWith('ZONE')),
-            'Roles': permissions.filter(p => p.slug.startsWith('ROLE'))
-        };
+        // Group permissions by category from DB
+        const groupedPermissions = permissions.reduce((acc, p) => {
+            const cat = p.category || 'Other';
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(p);
+            return acc;
+        }, {});
 
         res.render('admin/roles/edit', {
             title: `Edit Role: ${role.name}`,
@@ -101,8 +91,7 @@ const editRolePage = async (req, res) => {
             assignedPermissionIds,
             groupedPermissions,
             isSystemRole: ['admin', 'supervisor', 'guard'].includes(role.name.toLowerCase()),
-            success: req.flash('success'),
-            error: req.flash('error')
+            path: req.path
         });
     } catch (error) {
         console.error('Error loading edit role page:', error);
@@ -115,7 +104,7 @@ const editRolePage = async (req, res) => {
 // Create role (Web POST)
 const createRoleWeb = async (req, res) => {
     try {
-        const { name, description, permissionIds } = req.body;
+        const { name, displayName, description, permissionIds } = req.body;
 
         // Check if role name is already taken
         const existingRole = await Role.findOne({
@@ -129,13 +118,15 @@ const createRoleWeb = async (req, res) => {
 
         const role = await Role.create({
             name: name.toLowerCase(),
+            displayName: displayName || name,
             description,
             createdBy: req.user.id
         });
 
         // Assign permissions
-        if (permissionIds && Array.isArray(permissionIds)) {
-            await role.setPermissions(permissionIds);
+        if (permissionIds !== undefined) {
+            const ids = Array.isArray(permissionIds) ? permissionIds : (permissionIds ? [permissionIds] : []);
+            await role.setPermissions(ids);
         }
 
         req.flash('success', `Role "${name}" created successfully`);
@@ -157,23 +148,26 @@ const updateRoleWeb = async (req, res) => {
             return res.redirect('/admin/roles');
         }
 
-        // Prevent editing system roles
-        if (['admin', 'supervisor', 'guard'].includes(role.name.toLowerCase())) {
-            req.flash('error', 'Cannot edit system roles');
-            return res.redirect('/admin/roles');
-        }
+        const { name, displayName, description, permissionIds } = req.body;
+        const isSystemRole = ['admin', 'supervisor', 'guard'].includes(role.name.toLowerCase());
 
-        const { name, description, permissionIds } = req.body;
-
-        await role.update({
-            name: name ? name.toLowerCase() : role.name,
+        const updateData = {
+            displayName: displayName || role.displayName,
             description,
             updatedBy: req.user.id
-        });
+        };
 
-        // Update permissions
+        // Only allow name change if not a system role
+        if (!isSystemRole && name) {
+            updateData.name = name.toLowerCase();
+        }
+
+        await role.update(updateData);
+
+        // Update permissions (Allow for all roles)
         if (permissionIds !== undefined) {
-            await role.setPermissions(permissionIds);
+            const ids = Array.isArray(permissionIds) ? permissionIds : (permissionIds ? [permissionIds] : []);
+            await role.setPermissions(ids);
         }
 
         req.flash('success', `Role "${role.name}" updated successfully`);

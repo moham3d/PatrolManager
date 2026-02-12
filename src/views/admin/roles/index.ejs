@@ -1,112 +1,90 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> - PatrolShield</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/"><i class="bi bi-shield-lock me-2"></i>PatrolShield</a>
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/admin/users">Users</a>
-                <a class="nav-link active" href="/admin/roles">Roles</a>
-                <a class="nav-link" href="/dashboard">Dashboard</a>
-                <a class="nav-link" href="/logout">Logout</a>
-            </div>
+<%- include('../../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Role Management</h1>
+            <p class="text-gray-600">Configure system roles and granular permissions</p>
         </div>
-    </nav>
-
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card shadow">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i><%= title %></h5>
-                        <a href="/admin/roles/create" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus-circle me-1"></i>Create Role
-                        </a>
-                    </div>
-                    <div class="card-body">
-                        <% if (success.length > 0) { %>
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                <%= success %>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <% } %>
-                        <% if (error.length > 0) { %>
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <%= error %>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <% } %>
-
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>Permissions</th>
-                                        <th>Users</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% roles.forEach(role => { %>
-                                        <tr>
-                                            <td>
-                                                <span class="badge bg-<%= ['admin', 'supervisor', 'guard'].includes(role.name) ? 'primary' : 'secondary' %>">
-                                                    <%= role.name.toUpperCase() %>
-                                                </span>
-                                            </td>
-                                            <td><%= role.description || 'No description' %></td>
-                                            <td>
-                                                <span class="badge bg-info text-dark">
-                                                    <%= role.Permissions ? role.Permissions.length : 0 %> permissions
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-<%= role.userCount > 0 ? 'success' : 'light' %>">
-                                                    <%= role.userCount %> users
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="/admin/roles/<%= role.id %>/edit" class="btn btn-outline-primary">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </a>
-                                                    <% if (!['admin', 'supervisor', 'guard'].includes(role.name)) { %>
-                                                        <form action="/admin/roles/<%= role.id %>/delete" method="POST" class="d-inline"
-                                                              onsubmit="return confirm('Are you sure you want to delete this role?');">
-                                                            <button type="submit" class="btn btn-outline-danger">
-                                                                <i class="bi bi-trash"></i>
-                                                            </button>
-                                                        </form>
-                                                    <% } %>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <% }); %>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <% if (roles.length === 0) { %>
-                            <div class="text-center py-5">
-                                <i class="bi bi-person-badge display-4 text-muted"></i>
-                                <p class="text-muted mt-3">No roles found. Create your first role!</p>
-                            </div>
-                        <% } %>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <a href="/admin/roles/create"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition duration-200 flex items-center">
+            <i class="fas fa-plus-circle mr-2"></i> Create New Role
+        </a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
+        <table class="min-w-full leading-normal">
+            <thead>
+                <tr>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Role Name
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Description
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                        Permissions
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider text-center">
+                        Users
+                    </th>
+                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <% roles.forEach(role => { %>
+                    <tr class="hover:bg-gray-50 transition duration-150">
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <span class="px-3 py-1 font-bold text-blue-800 bg-blue-100 rounded-full text-xs uppercase tracking-wider">
+                                <%= role.displayName || role.name %>
+                            </span>
+                            <div class="text-[10px] text-gray-400 mt-1">Code: <%= role.name %></div>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-gray-600">
+                            <%= role.description || 'No description' %>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                            <span class="font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                                <%= role.permissions ? role.permissions.length : 0 %>
+                            </span>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                            <span class="font-bold <%= role.userCount > 0 ? 'text-green-600 bg-green-50' : 'text-gray-400 bg-gray-50' %> px-2 py-1 rounded">
+                                <%= role.userCount %>
+                            </span>
+                        </td>
+                        <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-right">
+                            <div class="flex justify-end space-x-3">
+                                <a href="/admin/roles/<%= role.id %>/edit" class="text-blue-600 hover:text-blue-900" title="Edit Permissions">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <% if (!['admin', 'supervisor', 'guard'].includes(role.name.toLowerCase())) { %>
+                                    <form action="/admin/roles/<%= role.id %>/delete" method="POST" class="inline-block"
+                                          onsubmit="return confirm('Are you sure you want to delete this role?');">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit" class="text-red-600 hover:text-red-900" title="Delete Role">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                <% } else { %>
+                                    <i class="fas fa-lock text-gray-300" title="System Protected"></i>
+                                <% } %>
+                            </div>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+
+    <% if (roles.length === 0) { %>
+        <div class="text-center py-12 bg-white rounded-lg shadow mt-6">
+            <i class="fas fa-user-tag text-gray-200 text-6xl mb-4"></i>
+            <p class="text-gray-500 font-medium">No custom roles found. Create one to get started!</p>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../../partials/footer') %>

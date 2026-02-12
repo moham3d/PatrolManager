@@ -12,8 +12,7 @@
 
         <!-- Active Shift Card -->
         <% if (activeShift) { %>
-            <div
-                class="bg-green-600 rounded-xl shadow-lg p-6 mb-6 text-white text-center transform hover:-translate-y-1 transition duration-300">
+            <div class="bg-green-600 rounded-xl shadow-lg p-6 mb-6 text-white text-center transform hover:-translate-y-1 transition duration-300">
                 <div class="inline-block p-3 rounded-full bg-green-700 mb-3">
                     <i class="fas fa-clock text-2xl"></i>
                 </div>
@@ -21,8 +20,10 @@
                 <p class="opacity-90">
                     <%= activeShift.site.name %>
                 </p>
-                <p class="text-xs mt-4 opacity-75">Started: <%= new Date(activeShift.startTime).toLocaleTimeString() %>
-                </p>
+                
+                <!-- Real-time Timer -->
+                <div class="text-4xl font-bold mt-2 font-mono tracking-widest" id="shiftTimer">00:00:00</div>
+                <p class="text-xs opacity-75 mb-4">Started: <%= new Date(activeShift.startTime).toLocaleTimeString() %></p>
 
                 <form action="/shifts/clock-out" method="POST" class="mt-6" id="clockOutForm">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -35,62 +36,135 @@
                 </form>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <a href="/incidents/create"
-                    class="bg-white p-4 rounded-xl shadow-md text-center hover:bg-gray-50 transition border border-gray-100">
-                    <i class="fas fa-exclamation-circle text-orange-500 text-2xl mb-2"></i>
-                    <p class="font-bold text-gray-700 text-sm">Report Incident</p>
-                </a>
-                <a href="/patrols"
-                    class="bg-white p-4 rounded-xl shadow-md text-center hover:bg-gray-50 transition border border-gray-100">
-                    <i class="fas fa-walking text-blue-500 text-2xl mb-2"></i>
-                    <p class="font-bold text-gray-700 text-sm">Start Patrol</p>
-                </a>
-            </div>
-
-            <% } else { %>
-                <div class="bg-white rounded-xl shadow-lg p-8 mb-6 text-center border-t-4 border-gray-400">
-                    <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
-                        <i class="fas fa-coffee text-gray-400 text-3xl"></i>
+            <!-- Active Patrol Interface -->
+            <% if (activePatrol) { %>
+                <div class="bg-blue-600 rounded-xl shadow-lg p-6 mb-6 text-white border-l-4 border-blue-400">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold"><%= activePatrol.template.name %></h2>
+                            <p class="text-xs opacity-75">Active Patrol</p>
+                        </div>
+                        <div class="bg-blue-800 p-2 rounded-full animate-pulse">
+                            <i class="fas fa-walking"></i>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-bold text-gray-800 mb-2">Off Duty</h2>
-                    <% if (nextShift) { %>
-                        <p class="text-gray-600 mb-6">Next shift at <strong class="text-blue-600">
-                                <%= nextShift.site.name %>
-                            </strong><br>starts <%= new Date(nextShift.startTime).toLocaleString() %>
-                        </p>
-                        <% } else { %>
-                            <p class="text-gray-500 mb-6">No upcoming shifts scheduled.</p>
-                            <% } %>
-
-                            <a href="/shifts/my-schedule" class="text-blue-600 font-bold hover:underline block mt-2">
-                                VIEW SCHEDULE
-                            </a>
-
-                                <% if (nextShift) { %>
-                                    <form action="/shifts/clock-in" method="POST" class="mt-4" id="clockInForm">
-                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                        <input type="hidden" name="siteId" value="<%= nextShift.siteId %>">
-                                        <input type="hidden" name="latitude" id="inLat">
-                                        <input type="hidden" name="longitude" id="inLng">
-
-                                        <button type="button" onclick="clockIn()"
-                                            class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-md transition animate-pulse">
-                                            <i class="fas fa-sign-in-alt mr-2"></i> CLOCK IN NOW
-                                        </button>
-                                        <p class="text-xs text-gray-500 mt-2 text-center">Location required</p>
-                                    </form>
+                    
+                    <div class="space-y-3">
+                        <% if (patrolCheckpoints && patrolCheckpoints.length > 0) { %>
+                            <% patrolCheckpoints.forEach((cp, index) => { %>
+                                <% const isDone = completedVisits.includes(cp.id); %>
+                                <div class="flex items-center p-3 bg-blue-700 bg-opacity-50 rounded-lg border border-blue-500 <%= isDone ? 'opacity-60' : '' %>">
+                                    <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full mr-3 <%= isDone ? 'bg-green-500 text-white' : 'bg-blue-900 text-blue-200' %>">
+                                        <% if (isDone) { %>
+                                            <i class="fas fa-check text-xs"></i>
+                                        <% } else { %>
+                                            <span class="font-bold text-sm"><%= index + 1 %></span>
+                                        <% } %>
+                                    </div>
+                                    <div class="flex-grow min-w-0">
+                                        <p class="font-bold text-sm truncate"><%= cp.name %></p>
+                                        <p class="text-[10px] opacity-75 truncate"><%= cp.location ? 'GPS Location Set' : 'Location Pending' %></p>
+                                    </div>
+                                    <% if (!isDone) { %>
+                                        <form action="/patrols/scan" method="POST" class="ml-2 flex-shrink-0">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="runId" value="<%= activePatrol.id %>">
+                                            <input type="hidden" name="checkpointId" value="<%= cp.id %>">
+                                            <!-- Mock GPS for Web Interface -->
+                                            <input type="hidden" name="lat" value="0"> 
+                                            <input type="hidden" name="lng" value="0">
+                                            <button class="bg-white text-blue-600 text-xs font-bold px-3 py-1.5 rounded hover:bg-gray-100 shadow-sm transition">
+                                                SCAN
+                                            </button>
+                                        </form>
                                     <% } %>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <p class="text-sm opacity-75 italic text-center">No checkpoints defined.</p>
+                        <% } %>
+                    </div>
                 </div>
+            <% } else { %>
+                <!-- Start Patrol Button (Only if no active patrol) -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <a href="/incidents/create"
+                        class="bg-white p-4 rounded-xl shadow-md text-center hover:bg-gray-50 transition border border-gray-100 group">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-orange-200 transition">
+                            <i class="fas fa-exclamation-circle text-orange-500 text-xl"></i>
+                        </div>
+                        <p class="font-bold text-gray-700 text-sm">Report Incident</p>
+                    </a>
+                    <a href="/patrols"
+                        class="bg-white p-4 rounded-xl shadow-md text-center hover:bg-gray-50 transition border border-gray-100 group">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 group-hover:bg-blue-200 transition">
+                            <i class="fas fa-walking text-blue-500 text-xl"></i>
+                        </div>
+                        <p class="font-bold text-gray-700 text-sm">Start Patrol</p>
+                    </a>
+                </div>
+            <% } %>
+
+        <% } else { %>
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-6 text-center border-t-4 border-gray-400">
+                <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
+                    <i class="fas fa-coffee text-gray-400 text-3xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Off Duty</h2>
+                <% if (nextShift) { %>
+                    <p class="text-gray-600 mb-6">Next shift at <strong class="text-blue-600">
+                            <%= nextShift.site.name %>
+                        </strong><br>starts <%= new Date(nextShift.startTime).toLocaleString() %>
+                    </p>
+                <% } else { %>
+                    <p class="text-gray-500 mb-6">No upcoming shifts scheduled.</p>
                 <% } %>
+
+                <a href="/shifts/my-schedule" class="text-blue-600 font-bold hover:underline block mt-2">
+                    VIEW SCHEDULE
+                </a>
+
+                <% if (nextShift) { %>
+                    <form action="/shifts/clock-in" method="POST" class="mt-4" id="clockInForm">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <input type="hidden" name="siteId" value="<%= nextShift.siteId %>">
+                        <input type="hidden" name="latitude" id="inLat">
+                        <input type="hidden" name="longitude" id="inLng">
+
+                        <button type="button" onclick="clockIn()"
+                            class="w-full bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-md transition animate-pulse">
+                            <i class="fas fa-sign-in-alt mr-2"></i> CLOCK IN NOW
+                        </button>
+                        <p class="text-xs text-gray-500 mt-2 text-center">Location required</p>
+                    </form>
+                <% } %>
+            </div>
+        <% } %>
     </div>
 
     <script>
-        // Initialize Notyf if not already done (it might be in flash.ejs)
-        // If flash.ejs didn't run (no messages), we might need to init it.
-        // But flash.ejs includes the script tag conditionally.
-        // Safer to include it here or rely on global.
-        // Let's assume we need to ensure it's loaded.
+        <% if (activeShift) { %>
+            const startTime = new Date('<%= activeShift.startTime %>').getTime();
+            function updateTimer() {
+                const now = new Date().getTime();
+                const diff = now - startTime;
+                
+                if (diff < 0) {
+                    // Clock skew or future start
+                    document.getElementById('shiftTimer').innerText = "00:00:00";
+                    return;
+                }
+
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                document.getElementById('shiftTimer').innerText = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }
+            setInterval(updateTimer, 1000);
+            updateTimer();
+        <% } %>
 
         function getLocationAndSubmit() {
             if (navigator.geolocation) {
@@ -100,7 +174,6 @@
                     document.getElementById('clockOutForm').submit();
                 }, function (error) {
                     console.warn("GPS Error: " + error.message);
-                    // Fallback or let server handle missing
                     document.getElementById('clockOutForm').submit();
                 });
             } else {
@@ -116,7 +189,6 @@
                     document.getElementById('clockInForm').submit();
                 }, function (error) {
                     console.warn("GPS Error: " + error.message);
-                    // Fallback
                     document.getElementById('clockInForm').submit();
                 });
             } else {
@@ -124,7 +196,6 @@
             }
         }
 
-        // Panic Button Logic
         const panicBtn = document.getElementById('panicBtn');
         if (panicBtn) {
             panicBtn.addEventListener('click', () => {
@@ -140,7 +211,6 @@
                     navigator.geolocation.getCurrentPosition((position) => {
                         sendPanic(position.coords.latitude, position.coords.longitude);
                     }, (err) => {
-                        // Send anyway without precise location if GPS fails
                         console.error(err);
                         sendPanic(null, null);
                     }, { enableHighAccuracy: true, timeout: 5000 });
@@ -165,7 +235,6 @@
                             if (data.error) {
                                 alert('Failed to send SOS: ' + data.message);
                             } else {
-                                // Show success feedback
                                 alert("🚨 SOS ALERT SENT! HELP IS ON THE WAY.");
                                 panicBtn.parentElement.innerHTML = '<div class="text-red-600 font-bold animate-pulse text-xl">SOS SIGNAL ACTIVE</div>';
                             }

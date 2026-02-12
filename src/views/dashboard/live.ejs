@@ -5,9 +5,9 @@
         <p class="text-gray-600">Real-time feed of patrol activities and incidents.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-screen" style="max-height: 80vh;">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-200px)] min-h-[600px]">
         <!-- Map Area -->
-        <div class="md:col-span-2">
+        <div class="md:col-span-2 h-full">
             <%- include('../partials/live_map') %>
         </div>
 
@@ -21,8 +21,26 @@
     </div>
 
     <script>
-        // Use the socket initialized in live_map.ejs if possible, or init here
-        // ... (rest of the script)
+        const socket = window.socket;
+        const feed = document.getElementById('activity-feed');
+
+        function addFeedItem(title, message, type = 'info') {
+            const li = document.createElement('li');
+            li.className = `p-3 rounded text-sm border-l-4 ${type === 'success' ? 'bg-green-50 border-green-500' : (type === 'danger' ? 'bg-red-50 border-red-500' : 'bg-blue-50 border-blue-500')}`;
+            li.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <span class="font-bold">${title}</span>
+                    <span class="text-[10px] text-gray-400">${new Date().toLocaleTimeString()}</span>
+                </div>
+                <p class="text-gray-600 mt-1">${message}</p>
+            `;
+            feed.prepend(li);
+            
+            // Limit feed to 20 items
+            if (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
         
         socket.on('patrol_started', (data) => {
             addFeedItem('Patrol Started', `Guard ${data.userName} started a patrol at Site ID: ${data.siteId}`);
@@ -34,6 +52,14 @@
 
         socket.on('patrol_completed', (data) => {
             addFeedItem('Patrol Completed', `Patrol #${data.runId} completed with ${data.completionPercentage}%`, 'success');
+        });
+
+        socket.on('new_incident', (data) => {
+            addFeedItem('New Incident', `${data.type}: ${data.description}`, 'danger');
+        });
+
+        socket.on('panic_alert', (data) => {
+            addFeedItem('🆘 PANIC ALERT', `Guard ${data.userName || data.guard} needs immediate assistance!`, 'danger');
         });
     </script>
 

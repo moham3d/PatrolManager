@@ -168,6 +168,10 @@ The mobile app is *already built* and hard to change. The API *must* bend to fit
 *   Do not install `react` or `python` in the new project.
 *   The output is a standard Node.js server rendering HTML.
 
+### Rule #5: PM2 Restart Required
+*   After EACH code change, you MUST restart the application using PM2 to ensure the changes are reflected in the running environment.
+*   Command: `pm2 restart ecosystem.config.js` or `pm2 restart all`.
+
 ## 5. Development Workflow
 1.  **Pick a Task**: detailed in `PROJECT_PLAN.md`.
 2.  **Check Legacy**: Look at the old code to see how it worked.

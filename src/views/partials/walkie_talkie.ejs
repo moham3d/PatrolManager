@@ -1,0 +1,204 @@
+<!-- Walkie Talkie Widget -->
+<div id="walkie-talkie" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;">
+    <!-- Incoming Transmission Indicator -->
+    <div id="incoming-transmission" class="mb-2 hidden bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg flex items-center animate-pulse">
+        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+        <span class="text-sm font-bold" id="speaker-name">User</span>
+        <i class="fas fa-volume-up ml-3"></i>
+    </div>
+
+    <!-- PTT Button -->
+    <button id="ptt-btn" 
+        class="w-16 h-16 rounded-full bg-gray-800 text-gray-400 shadow-xl border-4 border-gray-600 focus:outline-none transition-all duration-100 active:scale-95 active:bg-blue-600 active:border-blue-400 active:text-white select-none touch-none">
+        <i class="fas fa-microphone text-2xl" id="ptt-icon"></i>
+    </button>
+    <div id="ptt-status" class="text-[10px] font-bold text-gray-500 mt-1 bg-white px-2 py-0.5 rounded shadow uppercase tracking-wider">Hold to Talk</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const pttBtn = document.getElementById('ptt-btn');
+        const pttIcon = document.getElementById('ptt-icon');
+        const pttStatus = document.getElementById('ptt-status');
+        const incomingIndicator = document.getElementById('incoming-transmission');
+        const speakerName = document.getElementById('speaker-name');
+        const socket = window.socket || io(); 
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let activeStream = null;
+        let stopRequested = false; // Flag to handle quick taps during async init
+        
+        // --- 1. Browser Autoplay Policy Helper ---
+        // ... (keep existing unlockAudio)
+        let audioUnlocked = false;
+        const unlockAudio = () => {
+            if (audioUnlocked) return;
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            if (context.state === 'suspended') {
+                context.resume();
+            }
+            audioUnlocked = true;
+            console.log("🔊 Audio system unlocked for this session");
+        };
+
+        // --- 2. Mic Management (Optimized & Fixed for Async) ---
+        const startRecording = async (e) => {
+            if (e.cancelable) e.preventDefault();
+            unlockAudio();
+            
+            if (isRecording) return;
+            stopRequested = false; // Reset flag
+            
+            try {
+                // UI Feedback: Warm up
+                pttBtn.classList.add('bg-yellow-600', 'border-yellow-400', 'scale-95');
+                pttStatus.innerText = "Connecting...";
+
+                // Request mic ONLY when button is pressed
+                activeStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // Check if user released the button while we were waiting for the mic
+                if (stopRequested) {
+                    console.log("⏹️ Button released during init. Aborting.");
+                    activeStream.getTracks().forEach(track => track.stop());
+                    activeStream = null;
+                    resetUI();
+                    return;
+                }
+
+                mediaRecorder = new MediaRecorder(activeStream);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    if (audioChunks.length === 0) return;
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioChunks = [];
+                    const siteId = window.currentSiteId || null;
+                    socket.emit('voice_message', { audio: audioBlob, siteId: siteId });
+                };
+
+                // Start actual recording
+                isRecording = true;
+                audioChunks = [];
+                mediaRecorder.start();
+                
+                // UI Feedback: Live
+                pttBtn.classList.remove('bg-yellow-600', 'border-yellow-400');
+                pttBtn.classList.add('bg-blue-600', 'border-blue-400', 'text-white');
+                pttIcon.classList.replace('fa-microphone', 'fa-broadcast-tower');
+                pttStatus.innerText = "Broadcasting...";
+                
+                if (navigator.vibrate) navigator.vibrate(50);
+            } catch (err) {
+                console.error("PTT Initialization Failed:", err);
+                pttStatus.innerText = "Mic Error";
+                pttBtn.classList.remove('bg-yellow-600', 'border-yellow-400');
+                isRecording = false;
+            }
+        };
+
+        const stopRecording = (e) => {
+            if (e && e.cancelable) e.preventDefault();
+            
+            if (!isRecording) {
+                // If we are still in the "Connecting..." phase, set flag to abort once ready
+                stopRequested = true;
+                return;
+            }
+            
+            isRecording = false;
+            
+            try {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.stop();
+                }
+                
+                // Stop all tracks to release microphone hardware
+                if (activeStream) {
+                    activeStream.getTracks().forEach(track => track.stop());
+                    activeStream = null;
+                }
+            } catch (err) { 
+                console.error("PTT Stop Failed:", err); 
+            }
+            
+            resetUI();
+        };
+
+        function resetUI() {
+            pttBtn.classList.remove('bg-blue-600', 'border-blue-400', 'bg-yellow-600', 'border-yellow-400', 'text-white', 'scale-95');
+            pttIcon.className = 'fas fa-microphone text-2xl';
+            pttStatus.innerText = "Hold to Talk";
+            pttStatus.classList.remove('text-blue-600');
+        }
+
+        // --- 3. Socket Health Check ---
+        socket.on('disconnect', () => {
+            pttBtn.classList.add('grayscale');
+            pttStatus.innerText = "Offline";
+        });
+        socket.on('connect', () => {
+            pttBtn.classList.remove('grayscale');
+            pttStatus.innerText = "Hold to Talk";
+        });
+
+        pttBtn.addEventListener('mousedown', startRecording);
+        pttBtn.addEventListener('touchstart', startRecording, { passive: false });
+        window.addEventListener('mouseup', stopRecording);
+        window.addEventListener('touchend', stopRecording, { passive: false });
+        window.addEventListener('touchcancel', stopRecording);
+
+        // --- 5. Playback Logic (Queued) ---
+        const audioQueue = [];
+        let isPlaying = false;
+
+        socket.on('voice_message', (data) => {
+            if (data.userId === '<%= user.id %>') return; // Don't play own voice back
+            audioQueue.push(data);
+            processQueue();
+        });
+
+        function processQueue() {
+            if (isPlaying || audioQueue.length === 0) return;
+
+            isPlaying = true;
+            const msg = audioQueue.shift();
+            speakerName.innerText = msg.userName;
+            incomingIndicator.classList.remove('hidden');
+
+            try {
+                const blob = new Blob([msg.audio], { type: 'audio/webm' });
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
+
+                audio.onended = () => {
+                    incomingIndicator.classList.add('hidden');
+                    isPlaying = false;
+                    URL.revokeObjectURL(audioUrl);
+                    processQueue();
+                };
+
+                // Browsers may still block if no user interaction occurred yet
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.warn("🔊 Playback blocked. Interaction needed.", e);
+                        isPlaying = false;
+                        incomingIndicator.classList.add('hidden');
+                        // Optional: show a small button to "Enable Audio"
+                    });
+                }
+            } catch (err) {
+                console.error("Audio Processing Error:", err);
+                isPlaying = false;
+                incomingIndicator.classList.add('hidden');
+                processQueue();
+            }
+        }
+    });
+</script>

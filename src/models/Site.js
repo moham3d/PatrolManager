@@ -30,6 +30,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT, // Store as JSON string or use JSONB if on Postgres
             allowNull: true
         },
+        layoutImage: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         createdBy: {
             type: DataTypes.INTEGER,
             allowNull: true

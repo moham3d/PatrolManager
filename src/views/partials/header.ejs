@@ -7,7 +7,7 @@
     <title>
         <%= typeof title !=='undefined' ? title : 'PatrolShield' %>
     </title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Leaflet Maps -->
@@ -20,6 +20,7 @@
             z-index: 10;
         }
     </style>
+    <%- include('socketClient') %>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -66,6 +67,10 @@
                             <a href="/users" class="hover:text-blue-200 transition-colors">Users</a>
                         <% } %>
 
+                        <% if (currentRole === 'admin') { %>
+                            <a href="/admin/roles" class="hover:text-blue-200 transition-colors">Roles</a>
+                        <% } %>
+
                         <% if (typeof user !=='undefined' && user && user.Role) { %>
                             <% if (['admin', 'manager' ].includes(user.Role.name.toLowerCase())) { %>
                                 <a href="/docs/admin" class="hover:text-blue-200 transition-colors"><i
@@ -96,97 +101,99 @@
 
             <!-- Mobile Menu (Hidden by default) -->
             <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4 border-t border-blue-800">
-                <div class="flex flex-col space-y-3 mt-4">
+                <div class="flex flex-col space-y-1 mt-4">
                     <% 
-                    // Redefine for safety in this scope block if needed, or reuse if EJS scope permits. 
-                    // Assuming local scope per scriptlet tag group, better to redefine or check.
                     const mRole = (typeof user !== 'undefined' && user && user.Role) ? user.Role.name.toLowerCase() : '';
                     const mCanManage = ['admin', 'manager', 'supervisor'].includes(mRole);
                     const mCanViewReports = ['admin', 'manager'].includes(mRole);
                     %>
 
                     <% if (mCanManage) { %>
-                        <a href="/sites" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Sites</a>
-                        <a href="/patrols" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Patrols</a>
-                        <a href="/incidents" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Incidents</a>
+                        <a href="/sites" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-building w-6"></i> Sites</a>
+                        <a href="/patrols" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-walking w-6"></i> Patrols</a>
+                        <a href="/incidents" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-exclamation-triangle w-6"></i> Incidents</a>
                     <% } %>
 
                     <% if (mCanViewReports) { %>
-                        <a href="/reports" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Data & Reports</a>
+                        <a href="/reports" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-chart-bar w-6"></i> Data & Reports</a>
                     <% } %>
 
                     <% if (mCanManage) { %>
-                        <a href="/shifts" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Shifts</a>
-                        <a href="/schedules" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Rostering</a>
+                        <a href="/shifts" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-clock w-6"></i> Shifts</a>
+                        <a href="/schedules" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-calendar-alt w-6"></i> Rostering</a>
                     <% } else if (mRole === 'guard') { %>
-                        <a href="/shifts/my-schedule" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">My Schedule</a>
+                        <a href="/shifts/my-schedule" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-calendar-check w-6"></i> My Schedule</a>
                     <% } %>
 
                     <% if (['admin', 'manager'].includes(mRole)) { %>
-                        <a href="/users" class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors">Users</a>
+                        <a href="/users" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-users w-6"></i> Users</a>
+                    <% } %>
+
+                    <% if (mRole === 'admin') { %>
+                        <a href="/admin/roles" class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i class="fas fa-user-tag w-6"></i> Roles</a>
                     <% } %>
 
                     <% if (typeof user !=='undefined' && user && user.Role) { %>
                         <% if (['admin', 'manager' ].includes(user.Role.name.toLowerCase())) { %>
                             <a href="/docs/admin"
-                                class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
-                                    class="fas fa-book"></i> Manual</a>
+                                class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i
+                                    class="fas fa-book w-6"></i> Manual</a>
                         <% } else { %>
                             <a href="/docs/guard"
-                                class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
-                                    class="fas fa-book"></i> Manual</a>
+                                class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i
+                                    class="fas fa-book w-6"></i> Manual</a>
                         <% } %>
                     <% } else { %>
                         <a href="/docs/manual"
-                            class="block hover:bg-blue-800 px-3 py-2 rounded transition-colors"><i
-                                class="fas fa-book"></i> Manual</a>
+                            class="block hover:bg-blue-800 px-4 py-3 rounded-lg transition-colors font-bold flex items-center"><i
+                                class="fas fa-book w-6"></i> Manual</a>
                     <% } %>
 
                     <div class="border-t border-blue-800 pt-3 mt-2">
-                                                        <% if (typeof user !=='undefined' && user) { %>
-                                                            <div class="px-3 py-2 mb-2 text-blue-200 text-sm">Signed in
-                                                                as <%= user.name %>
-                                                            </div>
-                                                            <a href="/logout"
-                                                                class="block bg-blue-800 px-3 py-2 rounded text-center hover:bg-blue-700 transition-colors">Logout</a>
-                                                            <% } else { %>
-                                                                <a href="/login"
-                                                                    class="block bg-blue-800 px-3 py-2 rounded text-center hover:bg-blue-700 transition-colors">Login</a>
-                                                                <% } %>
-                                                    </div>
+                        <% if (typeof user !=='undefined' && user) { %>
+                            <div class="px-4 py-3 mb-2 text-blue-200 text-sm flex items-center">
+                                <i class="fas fa-user-circle mr-2"></i> Signed in as <%= user.name %>
+                            </div>
+                            <a href="/logout"
+                                class="block bg-blue-700 hover:bg-blue-600 px-4 py-3 rounded-lg text-center font-bold transition-colors">Logout</a>
+                        <% } else { %>
+                            <a href="/login"
+                                class="block bg-blue-700 hover:bg-blue-600 px-4 py-3 rounded-lg text-center font-bold transition-colors">Login</a>
+                        <% } %>
+                    </div>
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu-overlay" style="display: none;" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('mobile-menu-btn');
             const menu = document.getElementById('mobile-menu');
+            const overlay = document.getElementById('mobile-menu-overlay');
 
-            if (btn && menu) {
-                btn.addEventListener('click', () => {
-                    menu.classList.toggle('hidden');
-                });
+            if (btn && menu && overlay) {
+                const toggleMenu = () => {
+                    const isHidden = menu.classList.contains('hidden');
+                    if (isHidden) {
+                        menu.classList.remove('hidden');
+                        overlay.style.display = 'block';
+                        document.body.classList.add('overflow-hidden');
+                    } else {
+                        menu.classList.add('hidden');
+                        overlay.style.display = 'none';
+                        document.body.classList.remove('overflow-hidden');
+                    }
+                };
+
+                btn.addEventListener('click', toggleMenu);
+                overlay.addEventListener('click', toggleMenu);
             }
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const notyf = new Notyf({
-                duration: 3000,
-                position: { x: 'right', y: 'top' }
-            });
-
-            <% if (locals.success && locals.success.length > 0) { %>
-                notyf.success("<%= success %>");
-            <% } %>
-
-            <% if (locals.error && locals.error.length > 0) { %>
-                notyf.error("<%= error %>");
-            <% } %>
-        });
-    </script>
     <main class="container mx-auto px-6 py-8 flex-grow">

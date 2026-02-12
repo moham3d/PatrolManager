@@ -12,18 +12,13 @@ router.use(apiRateLimit);
 
 router.get('/', ensureAuth, incidentController.index);
 router.get('/create', ensureAuth, ensureRole(['manager', 'supervisor', 'guard']), incidentController.create); // Guards can report
-router.get('/:id', ensureAuth, incidentController.show);
-router.post('/', ensureAuth, upload.single('evidence'), incidentValidation, validateRequest, incidentController.store);
 
-// Panic Button
-router.post('/panic', ensureAuth, panicRateLimit, [
-    body('location').optional(),
-    body('patrolRunId').optional().isInt()
-], validateRequest, incidentController.triggerPanic);
-
-// Monitor & API
+// Specific routes first
 router.get('/monitor', ensureAuth, ensureRole(['manager', 'supervisor']), incidentController.monitor);
 router.get('/active', ensureAuth, incidentController.apiList);
+
+router.get('/:id', ensureAuth, incidentController.show);
+router.post('/', ensureAuth, upload.single('evidence'), incidentValidation, validateRequest, incidentController.store);
 // Assignment & Mobile Resolution
 // Assignment & Resolution
 router.post('/:id/claim', ensureAuth, ensureRole(['guard', 'manager', 'supervisor']), [

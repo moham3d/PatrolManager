@@ -90,6 +90,19 @@ app.use((req, res, next) => {
     res.locals.user = req.user;
     res.locals.success = req.flash('success');
     res.locals.error = req.flash('error');
+    
+    // Generate JWT for Socket.io authentication in web views
+    if (req.user) {
+        const jwt = require('jsonwebtoken');
+        res.locals.socketToken = jwt.sign(
+            { id: req.user.id }, 
+            process.env.JWT_SECRET || 'secret', 
+            { expiresIn: '1h' }
+        );
+    } else {
+        res.locals.socketToken = null;
+    }
+
     if (req.csrfToken) {
         res.locals.csrfToken = req.csrfToken();
     }

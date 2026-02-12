@@ -1,15 +1,46 @@
 <script>
-    const notyf = new Notyf({
-        duration: 4000,
-        position: { x: 'center', y: 'top' },
-        dismissible: true
-    });
+    // Global Notyf instance
+    if (!window.notyf) {
+        window.notyf = new Notyf({
+            duration: 4000,
+            position: { x: 'right', y: 'top' },
+            dismissible: true
+        });
+    }
 
-    <% if (success.length > 0) { %>
-        notyf.success('<%= success[0] %>');
+    // Helper to show deduplicated toasts
+    window.showToast = (type, message) => {
+        // Prevent empty messages
+        if (!message) return;
+        
+        // Simple deduplication using a global set of active messages
+        if (!window.activeToasts) window.activeToasts = new Set();
+        
+        if (window.activeToasts.has(message)) return;
+        
+        window.activeToasts.add(message);
+        
+        if (type === 'success') {
+            window.notyf.success(message);
+        } else {
+            window.notyf.error(message);
+        }
+        
+        // Clear from active set after duration
+        setTimeout(() => {
+            window.activeToasts.delete(message);
+        }, 4000);
+    };
+
+    <% if (locals.success && success.length > 0) { %>
+        <% (Array.isArray(success) ? success : [success]).forEach(msg => { %>
+            window.showToast('success', "<%= msg %>");
+        <% }) %>
     <% } %>
 
-    <% if (error.length > 0) { %>
-        notyf.error('<%= error[0] %>');
+    <% if (locals.error && error.length > 0) { %>
+        <% (Array.isArray(error) ? error : [error]).forEach(msg => { %>
+            window.showToast('error', "<%= msg %>");
+        <% }) %>
     <% } %>
 </script>

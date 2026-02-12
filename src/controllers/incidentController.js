@@ -95,7 +95,8 @@ exports.store = async (req, res) => {
             siteId,
             zoneId: zoneId || null,
             reporterId: req.user.id,
-            location: geom,
+            lat: location ? location.lat : null,
+            lng: location ? location.lng : null,
             status: 'new',
             evidencePath
         });
@@ -199,7 +200,8 @@ exports.triggerPanic = async (req, res) => {
         const panic = await PanicAlert.create({
             guardId: req.user.id,
             patrolRunId,
-            location: geom,
+            lat: location ? location.lat : null,
+            lng: location ? location.lng : null,
             triggeredAt: new Date(),
             resolved: false
         });
@@ -253,6 +255,9 @@ exports.monitor = async (req, res) => {
 
 exports.apiList = async (req, res) => {
     try {
+        const persistenceMinutes = parseInt(process.env.PANIC_ALERT_PERSISTENCE_MINUTES) || 15;
+        const cutoffTime = new Date(Date.now() - persistenceMinutes * 60 * 1000);
+
         const incidents = await Incident.findAll({
             where: { status: ['new', 'investigating'] },
             include: [
@@ -264,7 +269,10 @@ exports.apiList = async (req, res) => {
         });
 
         const panics = await PanicAlert.findAll({
-            where: { resolved: false },
+            where: { 
+                resolved: false,
+                triggeredAt: { [db.Sequelize.Op.gt]: cutoffTime }
+            },
             order: [['triggeredAt', 'DESC']]
         });
 

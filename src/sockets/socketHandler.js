@@ -53,10 +53,7 @@ exports.init = (httpServer) => {
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             const user = await User.findByPk(decoded.id, {
-                include: [{
-                    model: Role,
-                    include: [Permission]
-                }]
+                include: [Role]
             });
 
             if (!user) {
@@ -71,9 +68,10 @@ exports.init = (httpServer) => {
     });
 
     io.on("connection", async (socket) => {
-        console.log("New client connected", socket.id);
         const user = socket.user;
         const roleName = user.Role.name.toLowerCase();
+
+        console.log(`[Socket] User Connected: ${user.name} (Role: ${roleName}, ID: ${socket.id})`);
 
         onlineUsers.set(socket.id, {
             userId: user.id,
@@ -85,14 +83,19 @@ exports.init = (httpServer) => {
         // 1. Join Personal Room
         socket.join(`user_${user.id}`);
 
-        // 2. Join Role Room
+        // 2. Join Role Room (Ensure lowercase for consistency)
         socket.join(roleName);
+        console.log(`[Socket] ${user.name} joined room: ${roleName}`);
 
         // 3. Join Site Rooms
         const assignedSites = await user.getAssignedSites();
         for (const site of assignedSites) {
             socket.join(`site_${site.id}`);
+            console.log(`[Socket] ${user.name} joined room: site_${site.id}`);
         }
+
+        // 4. Join Global Voice Room
+        socket.join('global_voice');
 
         io.to('command_center').emit('user_connected', {
             userId: user.id,
@@ -103,32 +106,39 @@ exports.init = (httpServer) => {
 
         socket.on("join_room", (room) => {
             socket.join(room);
+            console.log(`[Socket] ${user.name} manually joined room: ${room}`);
         });
 
         // --- Walkie Talkie (PTT) ---
-        socket.on('voice_message', (data) => {
-            // data: { siteId, audioBlob }
-            if (!data || !data.audioBlob || !data.siteId) return;
+        socket.on('voice_message', async (data) => {
+            const audio = data.audio || data.audioBlob;
+            let siteId = data.siteId;
 
-            // Broadcast to site room (Guards + Supervisors + Admin)
-            // Only allows broadcasting if user is actually joined to that room (Security)
-            if (socket.rooms.has(`site_${data.siteId}`)) {
-                socket.to(`site_${data.siteId}`).emit('play_voice', {
-                    userId: user.id,
-                    userName: user.name,
-                    audioBlob: data.audioBlob,
-                    siteId: data.siteId
+            if (!audio) return;
+
+            // Auto-detect site if missing
+            if (!siteId) {
+                const activeShift = await Shift.findOne({
+                    where: { userId: user.id, status: 'active' }
                 });
+                if (activeShift) siteId = activeShift.siteId;
+            }
+
+            const payload = {
+                userId: user.id,
+                userName: user.name,
+                audio: audio,
+                siteId: siteId || 'global'
+            };
+
+            if (siteId) {
+                console.log(`[PTT] Voice from ${user.name} to site_${siteId} + admin`);
+                // Broadcast to site AND all admins
+                socket.to(`site_${siteId}`).to('admin').emit('voice_message', payload);
             } else {
-                // Allow admins to speak to any site
-                if (roleName === 'admin') {
-                     socket.to(`site_${data.siteId}`).emit('play_voice', {
-                        userId: user.id,
-                        userName: user.name,
-                        audioBlob: data.audioBlob,
-                        siteId: data.siteId
-                    });
-                }
+                console.log(`[PTT] Voice from ${user.name} to global_voice + admin`);
+                // Broadcast to global AND all admins
+                socket.to('global_voice').to('admin').emit('voice_message', payload);
             }
         });
 

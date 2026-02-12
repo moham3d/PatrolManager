@@ -409,3 +409,53 @@ exports.printQRCodes = async (req, res) => {
     }
 };
 
+exports.getMapEditor = async (req, res) => {
+    try {
+        const site = await Site.findByPk(req.params.id, {
+            include: [{ model: Checkpoint, as: 'checkpoints' }]
+        });
+        if (!site) return res.status(404).send('Site not found');
+        res.render('sites/map_editor', { title: 'Indoor Map Editor', site });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+};
+
+exports.uploadLayout = async (req, res) => {
+    try {
+        const site = await Site.findByPk(req.params.id);
+        if (!site) return res.status(404).send('Site not found');
+
+        if (req.file) {
+            const layoutPath = '/uploads/sites/' + req.file.filename;
+            await site.update({ layoutImage: layoutPath });
+            req.flash('success', 'Floor plan uploaded successfully');
+        }
+        res.redirect('/sites/' + site.id + '/map-editor');
+    } catch (err) {
+        console.error(err);
+        req.flash('error', 'Error uploading layout');
+        res.redirect('/sites/' + req.params.id);
+    }
+};
+
+exports.saveMapPositions = async (req, res) => {
+    try {
+        const { positions } = req.body; 
+        
+        if (!positions) return res.status(400).json({ error: 'No data' });
+
+        for (const [cpId, pos] of Object.entries(positions)) {
+            await Checkpoint.update(
+                { layoutX: pos.x, layoutY: pos.y },
+                { where: { id: cpId } }
+            );
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Error saving positions' });
+    }
+};
+

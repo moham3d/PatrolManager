@@ -5,10 +5,16 @@ const { ensureAuth, ensureRole } = require('../middleware/auth');
 const { apiRateLimit } = require('../middleware/rateLimiter');
 const { body } = require('express-validator');
 const { validateRequest, siteValidation } = require('../middleware/validator');
+const siteUpload = require('../middleware/siteUpload');
 
 router.use(apiRateLimit);
 
 router.get('/', ensureAuth, siteController.index);
+
+// Map Editor Routes
+router.get('/:id/map-editor', ensureAuth, ensureRole(['admin', 'manager']), siteController.getMapEditor);
+router.post('/:id/layout', ensureAuth, ensureRole(['admin', 'manager']), siteUpload.single('layout'), siteController.uploadLayout);
+router.post('/:id/map-positions', ensureAuth, ensureRole(['admin', 'manager']), siteController.saveMapPositions);
 
 // Admin & Manager Only
 router.get('/create', ensureAuth, ensureRole(['admin', 'manager']), siteController.create);

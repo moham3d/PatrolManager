@@ -27,6 +27,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.FLOAT,
             allowNull: true
         },
+        layoutX: {
+            type: DataTypes.FLOAT,
+            allowNull: true
+        },
+        layoutY: {
+            type: DataTypes.FLOAT,
+            allowNull: true
+        },
         siteId: {
             type: DataTypes.INTEGER,
             allowNull: false

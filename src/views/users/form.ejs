@@ -97,7 +97,7 @@
                                         <% roles.forEach(function(role) { %>
                                             <option value="<%= role.id %>" <%=(user && user.roleId===role.id)
                                                 ? 'selected' : '' %>>
-                                                <%= role.name %>
+                                                <%= role.displayName || role.name %>
                                             </option>
                                             <% }); %>
                                     </select>
@@ -127,7 +127,7 @@
                                                 <% if (!user || user.id !==manager.id) { %>
                                                     <option value="<%= manager.id %>" <%=(user &&
                                                         user.managerId===manager.id) ? 'selected' : '' %>>
-                                                        <%= manager.name %> (<%= manager.Role ? manager.Role.name
+                                                        <%= manager.name %> (<%= manager.Role ? (manager.Role.displayName || manager.Role.name)
                                                                 : 'Unknown' %>)
                                                     </option>
                                                     <% } %>

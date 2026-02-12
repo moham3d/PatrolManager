@@ -1,9 +1,21 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
+    // Initialize Socket.io with JWT if available
+    window.socket = io({
+        auth: {
+            token: "<%= locals.socketToken %>"
+        },
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
-        // Expose globally for other scripts (like footer tracking)
-        window.socket = io();
         const socket = window.socket;
+
+        // Connection feedback
+        socket.on('connect', () => console.log('Connected to PatrolShield Real-time Engine'));
+        socket.on('connect_error', (err) => console.warn('Socket connection error:', err.message));
 
         // Listen for Panic Alerts (Global)
         socket.on('panic_alert', (data) => {

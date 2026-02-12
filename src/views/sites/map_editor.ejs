@@ -1,0 +1,140 @@
+<%- include('../partials/header') %>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Indoor Map Editor: <%= site.name %></h1>
+        <a href="/sites/<%= site.id %>" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">Back to Site</a>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4">Floor Plan</h2>
+        <form action="/sites/<%= site.id %>/layout" method="POST" enctype="multipart/form-data" class="flex items-end gap-4">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="flex-grow">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Upload Layout Image (JPG/PNG)</label>
+                <input type="file" name="layout" accept="image/*" class="w-full border rounded p-2">
+            </div>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-bold h-10">Upload</button>
+        </form>
+    </div>
+
+    <!-- Map Editor -->
+    <% if (site.layoutImage) { %>
+        <div class="bg-white rounded-lg shadow overflow-hidden relative">
+            <div id="editor-map" style="height: 700px; width: 100%; background: #f3f4f6;"></div>
+            
+            <div class="absolute top-4 right-4 z-[400] bg-white p-4 rounded shadow-lg w-64">
+                <h3 class="font-bold text-gray-700 mb-2">Checkpoints</h3>
+                <p class="text-xs text-gray-500 mb-4">Drag markers to their location on the floor plan.</p>
+                <button onclick="savePositions()" id="saveBtn" class="w-full bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700 transition">
+                    Save Positions
+                </button>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const map = L.map('editor-map', {
+                    crs: L.CRS.Simple,
+                    minZoom: -2,
+                    maxZoom: 2
+                });
+
+                const imageUrl = '<%= site.layoutImage %>';
+
+                // Load image to get dimensions
+                const img = new Image();
+                img.src = imageUrl;
+                img.onload = function() {
+                    const w = this.width;
+                    const h = this.height;
+                    const imageBounds = [[0, 0], [h, w]];
+                    
+                    L.imageOverlay(imageUrl, imageBounds).addTo(map);
+                    map.fitBounds(imageBounds);
+
+                    // Add Checkpoints
+                    const checkpoints = <%- JSON.stringify(site.checkpoints) %>;
+                    const markers = {};
+
+                    checkpoints.forEach(cp => {
+                        // Calculate position based on image size and percentages
+                        // Leaflet ImageOverlay: [0,0] is bottom-left, [h,w] is top-right (Cartesian)
+                        // If we use standard image coord system (0,0 top-left), we need to invert Y.
+                        // But L.CRS.Simple usually treats y positive as up.
+                        // Let's assume layoutY is stored as % from BOTTOM (0) to TOP (100).
+                        
+                        let lat = (cp.layoutY !== null && cp.layoutY !== undefined) ? (cp.layoutY / 100) * h : h/2;
+                        let lng = (cp.layoutX !== null && cp.layoutX !== undefined) ? (cp.layoutX / 100) * w : w/2;
+
+                        const marker = L.marker([lat, lng], { 
+                            draggable: true,
+                            title: cp.name
+                        }).addTo(map);
+
+                        marker.bindPopup(`<b>${cp.name}</b><br>Drag to position`);
+                        markers[cp.id] = marker;
+                    });
+
+                    window.savePositions = function() {
+                        const btn = document.getElementById('saveBtn');
+                        const originalText = btn.innerText;
+                        btn.innerText = 'Saving...';
+                        btn.disabled = true;
+
+                        const positions = {};
+                        Object.keys(markers).forEach(id => {
+                            const latLng = markers[id].getLatLng();
+                            // Convert back to percentage (0-100)
+                            const pctX = (latLng.lng / w) * 100;
+                            const pctY = (latLng.lat / h) * 100;
+                            
+                            positions[id] = { x: pctX, y: pctY };
+                        });
+
+                        fetch('/sites/<%= site.id %>/map-positions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'CSRF-Token': '<%= csrfToken %>'
+                            },
+                            body: JSON.stringify({ positions })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                alert('Positions saved!');
+                            } else {
+                                alert('Error saving positions: ' + (data.error || 'Unknown'));
+                            }
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Network Error');
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        });
+                    };
+                }
+            });
+        </script>
+    <% } else { %>
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-yellow-700">
+                        Please upload a floor plan layout to enable the map editor.
+                    </p>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+<%- include('../partials/footer') %>

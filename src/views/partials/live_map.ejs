@@ -1,18 +1,17 @@
 <!-- Live Map Widget -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-<div class="bg-white rounded-lg shadow overflow-hidden relative" style="height: 500px;">
-    <div id="command-map" class="h-full w-full z-0"></div>
+<div class="bg-white rounded-lg shadow overflow-hidden relative h-full min-h-[500px]">
+    <div id="command-map" class="absolute inset-0 z-0"></div>
 
     <!-- Floating Map Controls -->
-    <div class="absolute top-4 left-4 z-[400] bg-white px-2 py-2 rounded shadow flex flex-col gap-2">
-        <button onclick="toggleLayer('markers')" id="btn-markers" class="p-2 rounded hover:bg-gray-100 transition bg-blue-50 text-blue-600" title="Toggle Markers">
-            <i class="fas fa-map-marker-alt"></i>
+    <div class="absolute top-4 left-4 z-[400] bg-white px-1 py-1 rounded-lg shadow-lg flex flex-col gap-1">
+        <button onclick="toggleLayer('markers')" id="btn-markers" class="w-12 h-12 rounded-md hover:bg-gray-100 transition bg-blue-50 text-blue-600 flex items-center justify-center" title="Toggle Markers">
+            <i class="fas fa-map-marker-alt fa-lg"></i>
         </button>
-        <button onclick="toggleLayer('heatmap')" id="btn-heatmap" class="p-2 rounded hover:bg-gray-100 transition text-gray-600" title="Toggle Heatmap">
-            <i class="fas fa-fire"></i>
+        <button onclick="toggleLayer('heatmap')" id="btn-heatmap" class="w-12 h-12 rounded-md hover:bg-gray-100 transition text-gray-600 flex items-center justify-center" title="Toggle Heatmap">
+            <i class="fas fa-fire fa-lg"></i>
         </button>
     </div>
 
@@ -30,16 +29,28 @@
 <!-- Audio for alerts -->
 <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
-<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-<script src="/socket.io/socket.io.js"></script>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        if (typeof L === 'undefined') {
+            console.error("Critical Error: Leaflet library not loaded.");
+            const mapContainer = document.getElementById('command-map');
+            if (mapContainer) {
+                mapContainer.innerHTML = '<div class="flex items-center justify-center h-full text-red-500 font-bold">Error: Leaflet library not loaded.</div>';
+            }
+            return;
+        }
+
         // --- Map Setup ---
         const map = L.map('command-map').setView([30.0444, 31.2357], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Force a resize check after initialization
+        setTimeout(() => map.invalidateSize(), 500);
 
         const clusterGroup = L.markerClusterGroup().addTo(map);
         const heatmapLayer = L.heatLayer([], { radius: 25, blur: 15 });
@@ -49,6 +60,9 @@
         const sitePolygons = {};
         const patrols = {}; // Store patrol data by runId
         const incidentPoints = []; // For heatmap
+        
+        // --- Persistence Config ---
+        const ALERT_PERSISTENCE_MS = (<%= process.env.PANIC_ALERT_PERSISTENCE_MINUTES || 15 %>) * 60 * 1000;
 
         window.toggleLayer = function(type) {
             const btnM = document.getElementById('btn-markers');
@@ -91,17 +105,17 @@
         });
 
         const guardStatusIcon = (status) => {
-            // status can be 'active', 'scheduled', 'offline'
             if (status === 'active') {
-                // Red/Orange for active/on patrol
                 return L.divIcon({
                     className: 'custom-div-icon',
-                    html: "<div style='background-color: #ef4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
+                    html: `<div class="relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <div style='background-color: #ef4444; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black; position: relative;'></div>
+                           </div>`,
                     iconSize: [16, 16],
                     iconAnchor: [8, 8]
                 });
             } else if (status === 'scheduled') {
-                // Orange for scheduled/upcoming
                 return L.divIcon({
                     className: 'custom-div-icon',
                     html: "<div style='background-color: #f97316; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
@@ -109,7 +123,6 @@
                     iconAnchor: [8, 8]
                 });
             } else {
-                // Green for idle/offline
                 return L.divIcon({
                     className: 'custom-div-icon',
                     html: "<div style='background-color: #10b981; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px black;'></div>",
@@ -119,8 +132,20 @@
             }
         };
 
+        const siteIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background-color: #3b82f6; width: 18px; height: 18px; border-radius: 4px; border: 2px solid white; box-shadow: 0 0 4px black; display: flex; align-items: center; justify-center;'><i class='fas fa-building' style='color: white; font-size: 10px;'></i></div>",
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
         // --- Socket Setup ---
-        const socket = window.socket || io();
+        const socket = window.socket;
+        if (!socket) {
+            console.error("Critical Error: Socket.io not initialized.");
+            return;
+        }
+
         const statusDot = document.getElementById('status-dot');
         const pingDot = document.getElementById('ping-dot');
         const alertSound = document.getElementById('alert-sound');
@@ -136,12 +161,12 @@
         });
 
         // --- Marker Logic ---
-        function addMarker(id, type, lat, lng, popupContent, priority = 'medium', isPanic = false) {
-            if (!lat || !lng) return;
+        function addMarker(id, type, lat, lng, popupContent, priority = 'medium', isPanic = false, timestamp = null) {
+            if (lat === null || lng === null) return;
             const key = `${type}_${id}`;
             if (markers[key]) return;
 
-            const icon = isPanic ? panicIcon : getIncidentIcon(priority);
+            const icon = isPanic ? panicIcon : (type === 'site' ? siteIcon : getIncidentIcon(priority));
             const marker = L.marker([lat, lng], { icon }).bindPopup(popupContent);
             
             if (isPanic) {
@@ -161,6 +186,22 @@
             }
             
             markers[key] = marker;
+
+            // --- Auto-clear logic for dynamic alerts ---
+            if (type === 'incident' || type === 'panic') {
+                const startTime = timestamp ? new Date(timestamp).getTime() : Date.now();
+                const elapsed = Date.now() - startTime;
+                const remaining = ALERT_PERSISTENCE_MS - elapsed;
+
+                if (remaining <= 0) {
+                    removeMarker(id, type);
+                } else {
+                    setTimeout(() => {
+                        console.log(`⏰ Alert ${key} expired. Removing from map.`);
+                        removeMarker(id, type);
+                    }, remaining);
+                }
+            }
         }
 
         function removeMarker(id, type) {
@@ -177,7 +218,7 @@
                 userMarkers[data.userId].setLatLng([data.lat, data.lng]);
                 userMarkers[data.userId].setPopupContent(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span><br><small>Status: ${data.status || 'Unknown'}</small>`);
             } else {
-                const icon = guardStatusIcon(data.status); // Use the new status-based icon
+                const icon = guardStatusIcon(data.status);
                 const marker = L.marker([data.lat, data.lng], { icon })
                     .bindPopup(`<b>${data.name}</b><br><span class='text-xs text-gray-500'>${data.role}</span><br><small>Status: ${data.status || 'Unknown'}</small>`);
                 clusterGroup.addLayer(marker);
@@ -186,43 +227,74 @@
         }
 
         // --- Initialize State ---
-        fetch('/incidents/active')
-            .then(res => res.json())
+        fetch('/incidents/active', { headers: { 'Accept': 'application/json' } })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch active incidents');
+                return res.json();
+            })
             .then(data => {
                 const bounds = [];
-                data.incidents.forEach(inc => {
-                    if (inc.location) {
-                        const lat = inc.location.coordinates[0];
-                        const lng = inc.location.coordinates[1];
-                        addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}<br><a href="/incidents/${inc.id}">View</a>`, inc.priority);
-                        bounds.push([lat, lng]);
-                    }
-                });
-                data.panics.forEach(panic => {
-                    if (panic.location) {
-                        const lat = panic.location.coordinates[0];
-                        const lng = panic.location.coordinates[1];
-                        addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>Guard ID: ${panic.guardId}`, 'critical', true);
-                        bounds.push([lat, lng]);
-                    }
-                });
+                if (data.incidents) {
+                    data.incidents.forEach(inc => {
+                        const lat = inc.lat != null ? inc.lat : (inc.location && inc.location.coordinates ? inc.location.coordinates[1] : null);
+                        const lng = inc.lng != null ? inc.lng : (inc.location && inc.location.coordinates ? inc.location.coordinates[0] : null);
+                        
+                        if (lat != null && lng != null) {
+                            addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}<br><a href="/incidents/${inc.id}">View</a>`, inc.priority, false, inc.createdAt);
+                            bounds.push([lat, lng]);
+                        }
+                    });
+                }
+                if (data.panics) {
+                    data.panics.forEach(panic => {
+                        const lat = panic.lat != null ? panic.lat : (panic.location && panic.location.coordinates ? panic.location.coordinates[1] : null);
+                        const lng = panic.lng != null ? panic.lng : (panic.location && panic.location.coordinates ? panic.location.coordinates[0] : null);
+                        
+                        if (lat != null && lng != null) {
+                            addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>Guard ID: ${panic.guardId}`, 'critical', true, panic.triggeredAt);
+                            bounds.push([lat, lng]);
+                        }
+                    });
+                }
                 if (bounds.length > 0) map.fitBounds(bounds, { padding: [50, 50] });
-            });
+            })
+            .catch(err => console.warn('Live Map Initialization Error:', err));
 
-        fetch('/sites')
-            .then(res => res.json())
+        fetch('/sites', { headers: { 'Accept': 'application/json' } })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to fetch sites');
+                return res.json();
+            })
             .then(data => {
-                data.sites.forEach(site => {
-                    if (site.boundaries) {
-                        try {
-                            const latlngs = JSON.parse(site.boundaries);
-                            const polygon = L.polygon(latlngs, { color: '#3b82f6', weight: 2, opacity: 0.5, fillOpacity: 0.1 }).addTo(map);
-                            polygon.bindPopup(`<b>Site: ${site.name}</b><br>Geofence Active`);
-                            sitePolygons[site.id] = polygon;
-                        } catch (e) { console.error(e); }
-                    }
-                });
-            });
+                const siteBounds = [];
+                const sites = data.sites || data; // Handle both direct array and wrapped object
+                
+                if (Array.isArray(sites)) {
+                    sites.forEach(site => {
+                        // 1. Add Site Marker
+                        if (site.lat != null && site.lng != null) {
+                            addMarker(site.id, 'site', site.lat, site.lng, `<b>Site: ${site.name}</b><br>${site.address || ''}<br><a href="/sites/${site.id}">View Site</a>`);
+                            siteBounds.push([site.lat, site.lng]);
+                        }
+
+                        // 2. Add Geofence
+                        if (site.boundaries) {
+                            try {
+                                const latlngs = JSON.parse(site.boundaries);
+                                const polygon = L.polygon(latlngs, { color: '#3b82f6', weight: 2, opacity: 0.5, fillOpacity: 0.1 }).addTo(map);
+                                polygon.bindPopup(`<b>Site: ${site.name}</b><br>Geofence Active`);
+                                sitePolygons[site.id] = polygon;
+                            } catch (e) { console.error("Geofence parse error:", e); }
+                        }
+                    });
+                }
+                
+                // If map hasn't been fitted by incidents, and we have sites, fit to sites
+                if (siteBounds.length > 0 && map.getZoom() <= 12) {
+                    map.fitBounds(siteBounds, { padding: [50, 50] });
+                }
+            })
+            .catch(err => console.warn('Geofence Loading Error:', err));
 
         // --- Socket Listeners ---
         socket.on('active_users_list', (users) => users.forEach(u => updateUserMarker(u)));
@@ -236,16 +308,20 @@
         });
 
         socket.on('new_incident', (inc) => {
-            if (inc.location) {
-                const lat = inc.location.coordinates[0];
-                const lng = inc.location.coordinates[1];
-                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority);
+            const lat = inc.lat != null ? inc.lat : (inc.location && inc.location.coordinates ? inc.location.coordinates[1] : null);
+            const lng = inc.lng != null ? inc.lng : (inc.location && inc.location.coordinates ? inc.location.coordinates[0] : null);
+            
+            if (lat != null && lng != null) {
+                addMarker(inc.id, 'incident', lat, lng, `<b>${inc.type}</b> (Priority: ${inc.priority})<br>${inc.description}`, inc.priority, false, inc.createdAt);
             }
         });
 
         socket.on('panic_alert', (panic) => {
-            if (panic.location) {
-                addMarker(panic.id, 'panic', panic.location.lat, panic.location.lng, `<b>PANIC ALERT</b><br>${panic.guard}`, 'critical', true);
+            const lat = panic.lat || (panic.location ? (panic.location.lat || (panic.location.coordinates ? panic.location.coordinates[1] : null)) : null);
+            const lng = panic.lng || (panic.location ? (panic.location.lng || (panic.location.coordinates ? panic.location.coordinates[1] : null)) : null);
+            
+            if (lat != null && lng != null) {
+                addMarker(panic.id, 'panic', lat, lng, `<b>PANIC ALERT</b><br>${panic.userName || panic.guard}`, 'critical', true, panic.timestamp || new Date());
             }
         });
 

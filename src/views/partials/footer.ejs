@@ -5,7 +5,7 @@
     </div>
 </footer>
 
-<% if (user) { %>
+<% if (locals.user) { %>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             if (!navigator.geolocation) return;
@@ -72,7 +72,9 @@
     </script>
     <% } %>
         <%- include('flash') %>
-            <%- include('socketClient') %>
+            <% if (typeof user !== 'undefined' && user) { %>
+                <%- include('walkie_talkie') %>
+            <% } %>
                 </body>
 
                 </html>

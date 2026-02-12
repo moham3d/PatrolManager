@@ -1,5 +1,6 @@
 const passport = require('passport');
-const { Role, Permission } = require('../models'); // Import models
+const { Role, Permission, Sequelize } = require('../models'); // Import models
+const { Op } = Sequelize;
 
 // Helper to check permission(s)
 const checkPermission = (permissionSlugs) => {
@@ -13,40 +14,29 @@ const checkPermission = (permissionSlugs) => {
                 return res.redirect('/login');
             }
 
-            // Super Admin bypass (Optional, but useful)
+            // Super Admin bypass
             if (req.user.Role.name.toLowerCase() === 'admin') {
                 return next();
             }
 
-            const isArray = Array.isArray(permissionSlugs);
-            let hasPermission = false;
-
-            if (isArray) {
-                // Check if Role has ANY of the provided Permissions
+            const slugs = Array.isArray(permissionSlugs) ? permissionSlugs : [permissionSlugs];
+            
+            // Try to use pre-loaded permissions first (efficiency)
+            if (req.user.Role.permissions) {
+                const userPermissionSlugs = req.user.Role.permissions.map(p => p.slug);
+                const hasPerm = slugs.some(s => userPermissionSlugs.includes(s));
+                if (hasPerm) return next();
+            } else {
+                // Fallback to DB query if not loaded
                 const roleWithPermissions = await Role.findByPk(req.user.roleId, {
                     include: [{
                         model: Permission,
-                        as: 'permissions', // Use the alias defined in Role.js
-                        where: { slug: { [Sequelize.Op.in]: permissionSlugs } },
-                        required: true // Ensures that the role must have at least one of these permissions
-                    }]
-                });
-                hasPermission = !!roleWithPermissions;
-            } else {
-                // Check if Role has the single Permission
-                const roleWithPermission = await Role.findByPk(req.user.roleId, {
-                    include: [{
-                        model: Permission,
-                        as: 'permissions', // Use the alias defined in Role.js
-                        where: { slug: permissionSlugs },
+                        as: 'permissions',
+                        where: { slug: { [Op.in]: slugs } },
                         required: true
                     }]
                 });
-                hasPermission = !!roleWithPermission;
-            }
-
-            if (hasPermission) {
-                return next();
+                if (roleWithPermissions) return next();
             }
 
             // Access Denied
@@ -58,7 +48,6 @@ const checkPermission = (permissionSlugs) => {
 
         } catch (err) {
             console.error('RBAC Error:', err);
-            // In case of any error, ensure an appropriate response is sent
             res.status(500).json({ error: true, message: 'Internal Server Error' });
         }
     };
